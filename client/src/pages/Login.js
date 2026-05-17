@@ -13,11 +13,13 @@ const Login = ({ onLogin }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const res = await axios.post('/api/auth/login', { email, password });
+      const base = process.env.REACT_APP_API_URL || '';
+      const res = await axios.post(`${base}/api/auth/login`, { email, password });
       onLogin(res.data.user, res.data.token);
       navigate('/dashboard');
     } catch (err) {
-      alert(err.response?.data?.error || 'Login gagal');
+      const msg = err.response?.data?.message || err.response?.data?.error || err.message || 'Login gagal';
+      alert(msg);
     }
   };
 

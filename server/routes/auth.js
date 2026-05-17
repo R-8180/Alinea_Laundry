@@ -3,7 +3,7 @@ const router = express.Router();
 const db = require('../db');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const SECRET = 'alinea-secret-key';
+const SECRET = process.env.JWT_SECRET || 'alinea-secret-key';
 
 // Register
 router.post('/register', async (req, res) => {

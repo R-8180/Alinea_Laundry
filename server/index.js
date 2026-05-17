@@ -8,6 +8,9 @@ const logger = require('./utils/logger');
 const { apiLimiter, speedLimiter } = require('./middleware/rateLimiter');
 const app = express();
 
+// Trust Vercel's reverse proxy to get correct client IP for rate limiting
+app.set('trust proxy', 1);
+
 // Security Headers
 app.use(helmet({
   contentSecurityPolicy: {

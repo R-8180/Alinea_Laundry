@@ -3,7 +3,7 @@ import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import {
   FiMapPin, FiPackage, FiTag, FiCamera, FiFileText,
-  FiPlus, FiTrash2, FiSend, FiAlertCircle, FiCheckCircle, FiClock, FiArrowLeft, FiZap, FiDroplet
+  FiPlus, FiTrash2, FiSend, FiCheckCircle, FiClock, FiArrowLeft, FiZap, FiDroplet
 } from 'react-icons/fi';
 import { GiWashingMachine } from 'react-icons/gi';
 

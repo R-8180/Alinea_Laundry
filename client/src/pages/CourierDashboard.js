@@ -223,7 +223,7 @@ const CourierDashboard = () => {
                       <tr key={order.id}>
                         <td><div className="order-code">{order.order_code}</div></td>
                         <td><div className="customer-name">{order.customer_name}</div><div className="customer-phone">{order.customer_phone}</div></td>
-                        <td style={{ maxWidth: '300px', whiteSpace: 'normal', fontSize: '0.8rem' }}><FiMapPin size={12} /> {order.customer_address}</td>
+                        <td style={{ maxWidth: '300px', whiteSpace: 'normal', fontSize: '0.8rem' }}><FiMapPin size={12} /> {order.address}</td>
                         <td>
                           <div style={{ display: 'flex', gap: 8 }}>
                             <button className="btn-detail" onClick={() => openDetail(order)}><FiInfo /> Detail</button>
@@ -263,7 +263,7 @@ const CourierDashboard = () => {
                     {order.service_speed === 'express' ? <FiZap /> : <FiPackage />} {formatServiceLabel(order)}
                   </span>
                 </div>
-                <div style={{ fontSize: '0.82rem', color: 'var(--text-3)', marginBottom: 12 }}><FiMapPin /> {order.customer_address}</div>
+                <div style={{ fontSize: '0.82rem', color: 'var(--text-3)', marginBottom: 12 }}><FiMapPin /> {order.address}</div>
                 <div style={{ display: 'flex', gap: 10 }}>
                   <button className="btn btn-detail" onClick={() => openDetail(order)} style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}><FiInfo /> Detail</button>
                   <button className="btn" style={{ flex: 1.5, background: '#10b981', color: 'white', justifyContent: 'center', alignItems: 'center' }} onClick={() => { if (window.confirm('Yakin pesanan sudah dijemput?')) updateStatus(order.id, 'cuci'); }}><FiCheckCircle /> Dijemput</button>
@@ -309,7 +309,7 @@ const CourierDashboard = () => {
                           </div>
                         </td>
                         <td><div className="customer-name">{order.customer_name}</div><div className="customer-phone">{order.customer_phone}</div></td>
-                        <td style={{ maxWidth: '300px', whiteSpace: 'normal', fontSize: '0.8rem' }}><FiMapPin size={12} /> {order.customer_address}</td>
+                        <td style={{ maxWidth: '300px', whiteSpace: 'normal', fontSize: '0.8rem' }}><FiMapPin size={12} /> {order.address}</td>
                         <td>
                           <div style={{ display: 'flex', gap: 8 }}>
                             <button className="btn-detail" onClick={() => openDetail(order)}><FiInfo /> Detail</button>
@@ -363,7 +363,7 @@ const CourierDashboard = () => {
                     {order.service_speed === 'express' ? <FiZap /> : <FiPackage />} {formatServiceLabel(order)}
                   </span>
                 </div>
-                <div style={{ fontSize: '0.82rem', color: 'var(--text-3)', marginBottom: 12 }}><FiMapPin /> {order.customer_address}</div>
+                <div style={{ fontSize: '0.82rem', color: 'var(--text-3)', marginBottom: 12 }}><FiMapPin /> {order.address}</div>
                 <div style={{ display: 'flex', gap: 10 }}>
                   <button className="btn btn-detail" onClick={() => openDetail(order)} style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}><FiInfo /> Detail</button>
                   {order.status === 'antar' ? (
@@ -400,13 +400,13 @@ const CourierDashboard = () => {
               <div className="detail-grid">
                 <div className="detail-item"><div className="detail-label">Nama</div><div className="detail-value">{detailModal.customer_name}</div></div>
                 <div className="detail-item"><div className="detail-label">Telepon</div><div className="detail-value">{detailModal.customer_phone || '-'}</div></div>
-                <div className="detail-item"><div className="detail-label">Alamat</div><div className="detail-value">{detailModal.customer_address}</div></div>
+                <div className="detail-item"><div className="detail-label">Alamat</div><div className="detail-value">{detailModal.address}</div></div>
                 <div className="detail-item" style={{ gridColumn: '1 / -1' }}><div className="detail-label">Catatan untuk Kurir</div><div className="detail-value" style={{ color: 'var(--blue)', fontWeight: 600 }}>{detailModal.courier_notes || detailModal.notes || '-'}</div></div>
                 <div className="detail-item"><div className="detail-label">Layanan</div><div className="detail-value" style={{ display: 'flex', alignItems: 'center', gap: 4 }}>{detailModal.service_speed === 'express' ? <FiZap /> : <FiPackage />} {formatServiceLabel(detailModal)}</div></div>
               </div>
-              {detailModal.customer_address && (
+              {detailModal.address && (
                 <div className="detail-actions" style={{ marginTop: 10, display: 'flex', gap: 10 }}>
-                  <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(detailModal.customer_address)}`} target="_blank" rel="noreferrer" className="btn btn-sm btn-secondary"><FiMapPin /> Google Maps</a>
+                  <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(detailModal.address)}`} target="_blank" rel="noreferrer" className="btn btn-sm btn-secondary"><FiMapPin /> Google Maps</a>
                   {detailModal.customer_phone && (
                     <a href={`https://wa.me/${formatWA(detailModal.customer_phone)}`} target="_blank" rel="noreferrer" className="btn btn-sm" style={{ background: '#25D366', color: 'white' }}><FiPhone /> WhatsApp</a>
                   )}

@@ -126,6 +126,7 @@ const OrderForm = () => {
     e.preventDefault();
     
     if (!selectedAddressId) return alert('Pilih alamat penjemputan');
+    if (selectedAddressId === 'new') return alert('Silakan simpan alamat baru Anda terlebih dahulu');
     if (!selectedService) return alert('Pilih layanan terlebih dahulu');
     
     // Validasi items

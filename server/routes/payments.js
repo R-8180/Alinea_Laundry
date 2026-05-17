@@ -10,6 +10,10 @@ router.post('/:orderId/upload', auth, uploadLimiter, uploadPayment.single('proof
   if (req.user.role !== 'customer') return res.status(403).json({ message: 'Hanya customer' });
   const orderId = req.params.orderId;
   
+  if (req.fileUploadError) {
+    return res.status(400).json({ message: `Gagal mengunggah foto ke Supabase: ${req.fileUploadError}` });
+  }
+
   const fileUrl = getFileUrl(req.file);
   if (!fileUrl) {
     return res.status(400).json({ message: 'File bukti pembayaran tidak ditemukan' });

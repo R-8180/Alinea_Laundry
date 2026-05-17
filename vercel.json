@@ -23,7 +23,7 @@
       "dest": "server/index.js"
     },
     {
-      "src": "/(static|favicon\\.ico|manifest\\.json|robots\\.txt|images)(/.*)?$",
+      "src": "/(static|favicon\\.ico|manifest\\.json|robots\\.txt|images|qris\\.jpg|qris\\.png)(/.*)?$",
       "dest": "client/$1$2"
     },
     {

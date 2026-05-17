@@ -134,9 +134,16 @@ const CustomerDashboard = () => {
     const inp = document.createElement('input');
     inp.type = 'file'; inp.accept = 'image/*';
     inp.onchange = async (e) => {
-      const fd = new FormData(); fd.append('proof', e.target.files[0]);
-      await axios.post(`/api/payments/${orderId}/upload`, fd, { headers: { Authorization: `Bearer ${token}` } });
-      alert('Bukti pembayaran berhasil diupload!'); fetchOrders();
+      const file = e.target.files[0];
+      if (!file) return;
+      const fd = new FormData(); fd.append('proof', file);
+      try {
+        await axios.post(`/api/payments/${orderId}/upload`, fd, { headers: { Authorization: `Bearer ${token}` } });
+        alert('Bukti pembayaran berhasil diupload!'); 
+        fetchOrders();
+      } catch (err) {
+        alert(err.response?.data?.message || err.message || 'Gagal mengupload bukti pembayaran');
+      }
     };
     inp.click();
   };

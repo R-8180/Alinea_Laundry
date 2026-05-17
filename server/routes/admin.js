@@ -218,7 +218,7 @@ router.put('/orders/:id/assign', async (req, res) => {
   }
   if (express_fee !== undefined && express_fee !== null) {
     updates.push(`express_fee = $${paramIndex++}`);
-    values.push(express_fee);
+    values.push(Math.round(parseFloat(express_fee)) || 0);
   }
 
   if (updates.length === 0) {
@@ -241,9 +241,13 @@ router.put('/orders/:id/assign', async (req, res) => {
       const itemsRes = await client.query('SELECT * FROM order_items WHERE order_id = $1', [orderId]);
       let subtotal = 0;
       itemsRes.rows.forEach(item => {
+        // item.weight & price_per_unit from DB can be string/decimal, cast explicitly
+        const w = parseFloat(item.weight) || 0;
+        const qty = parseInt(item.qty_items) || 0;
+        const ppu = parseInt(item.price_per_unit) || 0;
         subtotal += item.service_type === 'kiloan' 
-          ? (item.weight || 0) * (item.price_per_unit || 7000) 
-          : (item.qty_items || 0) * (item.price_per_unit || 5000);
+          ? w * (ppu || 7000) 
+          : qty * (ppu || 5000);
       });
       const total = subtotal + (express_fee || 0);
       
@@ -291,11 +295,13 @@ router.put('/orders/:id/validate-items', async (req, res) => {
       if (item.manual_price !== undefined) {
         const isKiloan = item.weight !== undefined;
         const field = isKiloan ? 'weight' : 'qty_items';
-        const value = isKiloan ? item.weight : (item.qty || 1);
+        // Cast user inputs: price to integer, weight to float, qty to integer
+        const priceInt = Math.round(parseFloat(item.manual_price)) || 0;
+        const value = isKiloan ? (parseFloat(item.weight) || 0) : (parseInt(item.qty) || 1);
         
         await client.query(
           `UPDATE order_items SET price_per_unit = $1, ${field} = $2 WHERE id = $3 AND order_id = $4`,
-          [item.manual_price, value, item.item_id, orderId]
+          [priceInt, value, item.item_id, orderId]
         );
       } else {
         const itemResult = await client.query('SELECT service_id FROM order_items WHERE id = $1', [item.item_id]);
@@ -308,7 +314,7 @@ router.put('/orders/:id/validate-items', async (req, res) => {
             ? Math.round(parseFloat(serviceResult.rows[0].price_per_unit))
             : (item.weight !== undefined ? 7000 : 5000);
           const field = item.weight !== undefined ? 'weight' : 'qty_items';
-          const value = item.weight !== undefined ? item.weight : item.qty;
+          const value = item.weight !== undefined ? (parseFloat(item.weight) || 0) : (parseInt(item.qty) || 0);
           
           await client.query(
             `UPDATE order_items SET ${field} = $1, price_per_unit = $2 WHERE id = $3 AND order_id = $4`,
@@ -316,7 +322,7 @@ router.put('/orders/:id/validate-items', async (req, res) => {
           );
         } else {
           const field = item.weight !== undefined ? 'weight' : 'qty_items';
-          const value = item.weight !== undefined ? item.weight : item.qty;
+          const value = item.weight !== undefined ? (parseFloat(item.weight) || 0) : (parseInt(item.qty) || 0);
           await client.query(
             `UPDATE order_items SET ${field} = $1 WHERE id = $2 AND order_id = $3`,
             [value, item.item_id, orderId]
@@ -329,15 +335,19 @@ router.put('/orders/:id/validate-items', async (req, res) => {
     const rowsRes = await client.query('SELECT * FROM order_items WHERE order_id = $1', [orderId]);
     let subtotal = 0;
     rowsRes.rows.forEach(item => {
-      const price = item.price_per_unit || (item.service_type === 'kiloan' ? 7000 : 5000);
-      if (item.service_type === 'kiloan' || (item.weight > 0 && !item.qty_items)) {
-        subtotal += (item.weight || 0) * price;
+      // Cast DB DECIMAL/string values to proper JS numbers before arithmetic
+      const w = parseFloat(item.weight) || 0;
+      const qty = parseInt(item.qty_items) || 0;
+      const ppu = parseInt(item.price_per_unit) || 0;
+      const price = ppu || (item.service_type === 'kiloan' ? 7000 : 5000);
+      if (item.service_type === 'kiloan' || (w > 0 && !qty)) {
+        subtotal += w * price;
       } else {
-        subtotal += (item.qty_items || 0) * price;
+        subtotal += qty * price;
       }
     });
 
-    const total = subtotal + (express_fee || 0);
+    const total = Math.round(subtotal + (parseFloat(express_fee) || 0));
     await client.query('UPDATE orders SET total_price = $1, admin_note = $2 WHERE id = $3', [total, admin_note || null, orderId]);
     
     await client.query('COMMIT');
@@ -475,6 +485,52 @@ router.get('/chart', async (req, res) => {
     res.json(result.rows);
   } catch (err) {
     console.error('Get chart data error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+// Laporan harian detail (per-hari dalam range atau 30 hari terakhir)
+router.get('/daily-report', async (req, res) => {
+  const { start, end } = req.query;
+  let query = `SELECT created_at::date AS date, SUM(total_price) AS total, COUNT(*) AS order_count
+    FROM orders WHERE payment_status = 'paid'`;
+  const params = [];
+  let paramIndex = 1;
+
+  if (start && end) {
+    query += ` AND created_at::date BETWEEN $${paramIndex++} AND $${paramIndex++}`;
+    params.push(start, end);
+  } else {
+    query += ` AND created_at >= CURRENT_DATE - INTERVAL '30 days'`;
+  }
+
+  query += ' GROUP BY created_at::date ORDER BY date DESC';
+
+  try {
+    const result = await db.query(query, params);
+    res.json(result.rows);
+  } catch (err) {
+    console.error('Get daily report error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Laporan bulanan (12 bulan terakhir)
+router.get('/monthly-report', async (req, res) => {
+  try {
+    const result = await db.query(`
+      SELECT 
+        TO_CHAR(created_at, 'YYYY-MM') AS month,
+        COUNT(*)::integer AS order_count,
+        SUM(total_price) AS total
+      FROM orders
+      WHERE payment_status = 'paid'
+        AND created_at >= CURRENT_DATE - INTERVAL '12 months'
+      GROUP BY TO_CHAR(created_at, 'YYYY-MM')
+      ORDER BY month DESC
+    `);
+    res.json(result.rows);
+  } catch (err) {
+    console.error('Get monthly report error:', err);
     res.status(500).json({ error: err.message });
   }
 });

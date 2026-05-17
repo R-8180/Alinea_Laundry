@@ -1,19 +1,21 @@
 import './App.css';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import QuickAccessBar from './components/QuickAccessBar';
 import AdminLayout from './components/AdminLayout';
-import Home from './pages/Home';
-import Login from './pages/Login';
-import Register from './pages/Register';
-import CustomerDashboard from './pages/CustomerDashboard';
-import OrderForm from './pages/OrderForm';
-import AdminDashboard from './pages/AdminDashboard';
-import CourierDashboard from './pages/CourierDashboard';
-import OrderHistory from './pages/OrderHistory';
-import CourierHistory from './pages/CourierHistory';
-import ServicesManagement from './pages/ServicesManagement';
+
+// Lazy load pages for ultimate performance and minimal initial bundle size!
+const Home = lazy(() => import('./pages/Home'));
+const Login = lazy(() => import('./pages/Login'));
+const Register = lazy(() => import('./pages/Register'));
+const CustomerDashboard = lazy(() => import('./pages/CustomerDashboard'));
+const OrderForm = lazy(() => import('./pages/OrderForm'));
+const AdminDashboard = lazy(() => import('./pages/AdminDashboard'));
+const CourierDashboard = lazy(() => import('./pages/CourierDashboard'));
+const OrderHistory = lazy(() => import('./pages/OrderHistory'));
+const CourierHistory = lazy(() => import('./pages/CourierHistory'));
+const ServicesManagement = lazy(() => import('./pages/ServicesManagement'));
 
 function App() {
   const [user, setUser] = useState(null);
@@ -84,48 +86,55 @@ function App() {
       {!useAdminLayout && <Navbar user={user} onLogout={handleLogout} />}
       {user && <QuickAccessBar user={user} />}
 
-      <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/login" element={!user ? <Login onLogin={handleLogin} /> : <Navigate to="/dashboard" />} />
-        <Route path="/register" element={!user ? <Register /> : <Navigate to="/dashboard" />} />
-        <Route path="/history" element={user ? <OrderHistory /> : <Navigate to="/login" />} />
-        <Route path="/courier/history" element={user?.role === 'courier' ? <AdminLayout user={user} onLogout={handleLogout}><CourierHistory /></AdminLayout> : <Navigate to="/login" />} />
+      <Suspense fallback={
+        <div className="app-loading">
+          <div className="app-loading-spinner"></div>
+          <p>Memuat...</p>
+        </div>
+      }>
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/login" element={!user ? <Login onLogin={handleLogin} /> : <Navigate to="/dashboard" />} />
+          <Route path="/register" element={!user ? <Register /> : <Navigate to="/dashboard" />} />
+          <Route path="/history" element={user ? <OrderHistory /> : <Navigate to="/login" />} />
+          <Route path="/courier/history" element={user?.role === 'courier' ? <AdminLayout user={user} onLogout={handleLogout}><CourierHistory /></AdminLayout> : <Navigate to="/login" />} />
 
-        <Route
-          path="/dashboard"
-          element={
-            user ? (
-              isAdmin ? (
+          <Route
+            path="/dashboard"
+            element={
+              user ? (
+                isAdmin ? (
+                  <AdminLayout user={user} onLogout={handleLogout}>
+                    <AdminDashboard />
+                  </AdminLayout>
+                ) : isCourier ? (
+                  <AdminLayout user={user} onLogout={handleLogout}>
+                    <CourierDashboard />
+                  </AdminLayout>
+                ) : (
+                  <CustomerDashboard />
+                )
+              ) : <Navigate to="/login" />
+            }
+          />
+
+          <Route
+            path="/order"
+            element={user?.role === 'customer' ? <OrderForm /> : <Navigate to="/login" />}
+          />
+
+          <Route
+            path="/services"
+            element={
+              user?.role === 'admin' ? (
                 <AdminLayout user={user} onLogout={handleLogout}>
-                  <AdminDashboard />
+                  <ServicesManagement />
                 </AdminLayout>
-              ) : isCourier ? (
-                <AdminLayout user={user} onLogout={handleLogout}>
-                  <CourierDashboard />
-                </AdminLayout>
-              ) : (
-                <CustomerDashboard />
-              )
-            ) : <Navigate to="/login" />
-          }
-        />
-
-        <Route
-          path="/order"
-          element={user?.role === 'customer' ? <OrderForm /> : <Navigate to="/login" />}
-        />
-
-        <Route
-          path="/services"
-          element={
-            user?.role === 'admin' ? (
-              <AdminLayout user={user} onLogout={handleLogout}>
-                <ServicesManagement />
-              </AdminLayout>
-            ) : <Navigate to="/login" />
-          }
-        />
-      </Routes>
+              ) : <Navigate to="/login" />
+            }
+          />
+        </Routes>
+      </Suspense>
     </BrowserRouter>
   );
 }

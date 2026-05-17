@@ -5,8 +5,8 @@ import Footer from '../components/Footer';
 import FloatingWA from '../components/FloatingWA';
 import {
   FiPackage, FiDroplet, FiBox, FiBriefcase, FiHeart,
-  FiShield, FiTv, FiSettings, FiTool, FiCloud,
-  FiWatch, FiStar, FiClock, FiTruck, FiMapPin, FiSearch, FiPlus, FiMinus, FiUser, FiClipboard, FiCheckCircle, FiCreditCard, FiMessageCircle
+  FiShield, FiSettings, FiTool,
+  FiWatch, FiStar, FiClock, FiTruck, FiMapPin, FiSearch, FiPlus, FiMinus, FiUser, FiClipboard, FiCheckCircle, FiCreditCard
 } from 'react-icons/fi';
 import { FaWhatsapp, FaInstagram, FaTiktok } from 'react-icons/fa';
 

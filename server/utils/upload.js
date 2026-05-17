@@ -3,6 +3,8 @@ const path = require('path');
 const crypto = require('crypto');
 const fs = require('fs');
 
+const isVercel = process.env.VERCEL === '1' || !!process.env.VERCEL;
+
 // Whitelist MIME types
 const ALLOWED_MIME_TYPES = [
   'image/jpeg',
@@ -16,9 +18,14 @@ const ALLOWED_MIME_TYPES = [
 const MAX_IMAGE_SIZE = 5 * 1024 * 1024; // 5MB
 
 // Ensure upload directory exists
-const uploadDir = process.env.UPLOAD_PATH || './uploads';
-if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir, { recursive: true });
+const uploadDir = isVercel ? '/tmp' : (process.env.UPLOAD_PATH || './uploads');
+
+if (!isVercel && !fs.existsSync(uploadDir)) {
+  try {
+    fs.mkdirSync(uploadDir, { recursive: true });
+  } catch (err) {
+    console.error('Failed to create upload directory:', err);
+  }
 }
 
 // File filter

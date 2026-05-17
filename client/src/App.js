@@ -22,9 +22,10 @@ function App() {
   useEffect(() => {
     const storedUser = localStorage.getItem('user');
     const token = localStorage.getItem('token');
+    const apiBase = process.env.REACT_APP_API_URL || '';
 
     if (storedUser && token) {
-      fetch('/api/auth/me', {
+      fetch(`${apiBase}/api/auth/me`, {
         headers: { Authorization: `Bearer ${token}` }
       })
         .then(res => res.json())

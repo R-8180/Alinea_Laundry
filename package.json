@@ -6,6 +6,7 @@
     "client-install": "cd client && npm install",
     "server-install": "cd server && npm install",
     "install-all": "npm run client-install && npm run server-install",
+    "postinstall": "npm run install-all",
     "client-build": "cd client && npm run build",
     "server": "cd server && node index.js",
     "client": "cd client && npm start",

@@ -153,7 +153,7 @@ const ServicesManagement = () => {
   // Filter services
   const filteredServices = services.filter(s => {
     const categoryMatch = filterCategory === 'all' || s.category === filterCategory;
-    const activeMatch = showInactive || s.is_active === 1;
+    const activeMatch = showInactive || s.is_active;
     return categoryMatch && activeMatch;
   });
 

@@ -636,12 +636,12 @@ const AdminDashboard = () => {
                         {order.courier_name ? (
                           <>
                             <span className="courier-name-label"><FiTruck /> {order.courier_name}</span>
-                            <button className="btn-assign btn-sm" onClick={() => { setAssignModal({ orderId: order.id }); setSelectedCourier(order.courier_id || ''); fetchCouriers(); }}}>
+                            <button className="btn-assign btn-sm" onClick={() => { setAssignModal({ orderId: order.id }); setSelectedCourier(order.courier_id || ''); fetchCouriers(); }}>
                               <FiEdit2 /> Ganti
                             </button>
                           </>
                         ) : (
-                          <button className="btn-assign" onClick={() => { setAssignModal({ orderId: order.id }); setSelectedCourier(''); fetchCouriers(); }}}>
+                          <button className="btn-assign" onClick={() => { setAssignModal({ orderId: order.id }); setSelectedCourier(''); fetchCouriers(); }}>
                             <FiUserPlus /> Assign
                           </button>
                         )}
@@ -763,11 +763,11 @@ const AdminDashboard = () => {
                 </button>
 
                 {order.courier_name ? (
-                  <button className="btn-assign" onClick={() => { setAssignModal({ orderId: order.id }); setSelectedCourier(order.courier_id || ''); fetchCouriers(); }}}>
+                  <button className="btn-assign" onClick={() => { setAssignModal({ orderId: order.id }); setSelectedCourier(order.courier_id || ''); fetchCouriers(); }}>
                     <FiTruck /> {order.courier_name}
                   </button>
                 ) : (
-                  <button className="btn-assign" onClick={() => { setAssignModal({ orderId: order.id }); setSelectedCourier(''); fetchCouriers(); }}}>
+                  <button className="btn-assign" onClick={() => { setAssignModal({ orderId: order.id }); setSelectedCourier(''); fetchCouriers(); }}>
                     <FiUserPlus /> Assign Kurir
                   </button>
                 )}

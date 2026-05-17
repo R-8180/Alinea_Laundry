@@ -151,7 +151,6 @@ const LaporanTab = () => {
 
     // Draw active vertical dashed line
     if (activeIdx !== null && activeIdx < chartData.length) {
-      const dActive = chartData[activeIdx];
       const xActive = pad.left + activeIdx * stepX;
 
       ctx.save();

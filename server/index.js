@@ -48,11 +48,20 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // Logging
-const fs = require('fs');
-const accessLogStream = fs.createWriteStream(path.join(__dirname, 'logs/access.log'), { flags: 'a' });
-app.use(morgan('combined', { stream: accessLogStream }));
-if (process.env.NODE_ENV !== 'production') {
-  app.use(morgan('dev'));
+const isVercel = process.env.VERCEL === '1' || !!process.env.VERCEL;
+if (isVercel) {
+  app.use(morgan('common'));
+} else {
+  const fs = require('fs');
+  const logsDir = path.join(__dirname, 'logs');
+  if (!fs.existsSync(logsDir)) {
+    fs.mkdirSync(logsDir);
+  }
+  const accessLogStream = fs.createWriteStream(path.join(logsDir, 'access.log'), { flags: 'a' });
+  app.use(morgan('combined', { stream: accessLogStream }));
+  if (process.env.NODE_ENV !== 'production') {
+    app.use(morgan('dev'));
+  }
 }
 
 // Global Rate Limiters
@@ -137,7 +146,11 @@ app.use((err, req, res, next) => {
   });
 });
 
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, '0.0.0.0', () => {
-  console.log(`Server berjalan di port ${PORT}`);
-});
+if (process.env.NODE_ENV !== 'production' || !isVercel) {
+  const PORT = process.env.PORT || 5000;
+  app.listen(PORT, '0.0.0.0', () => {
+    console.log(`Server berjalan di port ${PORT}`);
+  });
+}
+
+module.exports = app;

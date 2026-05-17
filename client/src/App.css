@@ -848,13 +848,17 @@ label { font-size: 0.85rem; font-weight: 600; color: var(--text-3); }
 }
 
 @media (max-width: 580px) {
+  .parfum-content-container {
+    padding: 0 8px;
+  }
+
   .parfum-grid-new {
     grid-template-columns: repeat(2, 1fr); /* Grid 2 Kolom untuk HP */
-    gap: 12px;
+    gap: 8px;
   }
   
   .premium-parfum-section {
-    padding: 40px 12px;
+    padding: 40px 8px;
     margin: 40px 0;
     border-radius: 0;
     box-shadow: 0 -10px 20px rgba(0, 0, 0, 0.1), 0 10px 20px rgba(0, 0, 0, 0.1);
@@ -880,17 +884,23 @@ label { font-size: 0.85rem; font-weight: 600; color: var(--text-3); }
   }
 
   .parfum-footer-row {
+    flex-direction: column;
     padding: 0 8px;
     gap: 6px;
+    width: 100%;
   }
 
   .parfum-tag {
+    width: 100%;
+    text-align: center;
     padding: 5px 8px;
     font-size: 0.75rem;
   }
 
   .btn-parfum-buy {
-    padding: 5px 8px !important;
+    width: 100% !important;
+    justify-content: center;
+    padding: 6px 8px !important;
     font-size: 0.75rem !important;
   }
 }

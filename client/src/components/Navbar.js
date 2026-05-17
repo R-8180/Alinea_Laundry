@@ -73,6 +73,11 @@ const Navbar = ({ user, onLogout }) => {
             <>
               <Link to="/">Home</Link>
               <Link to="/dashboard">{dashLabel}</Link>
+              {user.role === 'customer' && (
+                <Link to="/dashboard?tab=profile" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <FiUser /> Profil Saya
+                </Link>
+              )}
   
               {/* User Dropdown */}
               <div style={{ position: 'relative' }}>
@@ -122,6 +127,18 @@ const Navbar = ({ user, onLogout }) => {
                       >
                         <FiGrid /> {dashLabel}
                       </Link>
+                      {user.role === 'customer' && (
+                        <Link to="/dashboard?tab=profile" onClick={() => setUserMenuOpen(false)} style={{
+                          display: 'flex', alignItems: 'center', gap: 8,
+                          padding: '10px 16px', color: 'var(--navy)', textDecoration: 'none',
+                          fontSize: '0.85rem', fontWeight: 600,
+                        }}
+                          onMouseEnter={e => e.currentTarget.style.background = '#f8faff'}
+                          onMouseLeave={e => e.currentTarget.style.background = 'none'}
+                        >
+                          <FiUser /> Profil Saya
+                        </Link>
+                      )}
                       <button
                         onClick={handleLogout}
                         style={{
@@ -177,6 +194,9 @@ const Navbar = ({ user, onLogout }) => {
               </div>
               <Link to="/" onClick={() => setOpen(false)}><FiHome /> Home</Link>
               <Link to="/dashboard" onClick={() => setOpen(false)}><FiGrid /> {dashLabel}</Link>
+              {user.role === 'customer' && (
+                <Link to="/dashboard?tab=profile" onClick={() => setOpen(false)}><FiUser /> Profil Saya</Link>
+              )}
               <button
                 onClick={handleLogout}
                 style={{

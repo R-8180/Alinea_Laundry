@@ -39,8 +39,9 @@ app.use(cors({
     
     // Auto-allow Vercel subdomains (e.g., preview and main deployment links)
     const isVercelOrigin = origin.endsWith('.vercel.app');
+    const isLocalhost = origin.startsWith('http://localhost:') || origin.startsWith('http://127.0.0.1:');
     
-    if (allowedOrigins.indexOf(origin) !== -1 || isVercelOrigin) {
+    if (allowedOrigins.indexOf(origin) !== -1 || isVercelOrigin || isLocalhost) {
       return callback(null, true);
     } else {
       return callback(new Error('The CORS policy for this site does not allow access from the specified Origin.'), false);

@@ -2,10 +2,11 @@ import React, { useState, useEffect } from 'react';
 import ProfileTab from '../components/ProfileTab';
 import FloatingWA from '../components/FloatingWA';
 import axios from 'axios';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import {
   FiClock, FiTruck, FiDroplet, FiPackage, FiCheckCircle,
-  FiList, FiPlus, FiGift, FiHome, FiCopy, FiEye, FiDollarSign, FiXCircle, FiZap, FiCreditCard, FiCamera, FiDownload
+  FiList, FiPlus, FiGift, FiHome, FiCopy, FiEye, FiDollarSign, FiXCircle, FiZap, FiCreditCard, FiCamera, FiDownload,
+  FiChevronDown, FiUser, FiFileText, FiMessageCircle
 } from 'react-icons/fi';
 
 const categoryLabels = { cuci_setrika: 'Cuci Setrika', cuci_lipat: 'Cuci Lipat', satuan: 'Satuan' };
@@ -18,6 +19,32 @@ const resolveFileUrl = (url) => {
     base = 'http://localhost:5000';
   }
   return `${base}${url}`;
+};
+
+const formatWA = (phone) => {
+  if (!phone) return null;
+  const clean = phone.replace(/\D/g, '');
+  if (clean.startsWith('62')) return clean;
+  return clean.startsWith('0') ? '62' + clean.slice(1) : '62' + clean;
+};
+
+const AccordionItem = ({ icon, label, children, hasContent }) => {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="accordion-card">
+      <div className="accordion-header" onClick={() => setOpen(!open)}>
+        <span className="accordion-title" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <span style={{ display: 'flex', alignItems: 'center' }}>{icon}</span>
+          {label}
+        </span>
+        <FiChevronDown 
+          className={`accordion-chevron ${open ? 'open' : ''}`} 
+          style={{ color: hasContent ? '#10b981' : '#3b82f6' }}
+        />
+      </div>
+      {open && <div className="accordion-body">{children}</div>}
+    </div>
+  );
 };
 
 /* ---------- COUNTDOWN HOOK ---------- */
@@ -95,10 +122,26 @@ const CustomerDashboard = () => {
   const [paymentModal, setPaymentModal] = useState(null);
   const [detailModal, setDetailModal] = useState(null);
   const [voucherStatus, setVoucherStatus] = useState(null);
-  const [activeTab, setActiveTab] = useState('orders');
   const navigate = useNavigate();
+  const location = useLocation();
   const token = localStorage.getItem('token');
   const user = JSON.parse(localStorage.getItem('user') || '{}');
+
+  const queryParams = new URLSearchParams(location.search);
+  const initialTab = queryParams.get('tab');
+  const [activeTab, setActiveTab] = useState(
+    initialTab && ['orders', 'history', 'profile'].includes(initialTab) 
+      ? initialTab 
+      : 'orders'
+  );
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const tabParam = params.get('tab');
+    if (tabParam && ['orders', 'history', 'profile'].includes(tabParam)) {
+      setActiveTab(tabParam);
+    }
+  }, [location.search]);
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { fetchOrders(); fetchVoucherStatus(); }, []);
@@ -170,6 +213,7 @@ const CustomerDashboard = () => {
   };
 
   const ongoing = orders.filter(o => o.status !== 'selesai' && o.status !== 'batal');
+  const historyOrders = orders.filter(o => o.status === 'selesai' || o.status === 'batal');
   const formatDateTime = (dateStr) => dateStr
     ? new Date(dateStr).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })
     : '-';
@@ -335,20 +379,25 @@ const CustomerDashboard = () => {
         {/* Stats singkat */}
 
         {/* Header Tabs */}
-        <div style={{ display: 'flex', gap: 16, marginBottom: 20, borderBottom: '1px solid var(--border)' }}>
+        <div className="custom-tab-container">
           <button 
-            onClick={() => setActiveTab('orders')}
-            style={{ padding: '12px 16px', background: 'none', border: 'none', borderBottom: activeTab === 'orders' ? '2px solid var(--blue)' : '2px solid transparent', color: activeTab === 'orders' ? 'var(--blue)' : 'var(--text-3)', fontWeight: activeTab === 'orders' ? 700 : 500, cursor: 'pointer', transition: 'all 0.2s' }}>
-            Pesanan Saya
+            onClick={() => { setActiveTab('orders'); navigate('/dashboard?tab=orders'); }}
+            className={`custom-tab-btn ${activeTab === 'orders' ? 'active' : ''}`}>
+            <FiPackage /> Pesanan Saya
           </button>
           <button 
-            onClick={() => setActiveTab('profile')}
-            style={{ padding: '12px 16px', background: 'none', border: 'none', borderBottom: activeTab === 'profile' ? '2px solid var(--blue)' : '2px solid transparent', color: activeTab === 'profile' ? 'var(--blue)' : 'var(--text-3)', fontWeight: activeTab === 'profile' ? 700 : 500, cursor: 'pointer', transition: 'all 0.2s' }}>
-            Profil & Alamat
+            onClick={() => { setActiveTab('history'); navigate('/dashboard?tab=history'); }}
+            className={`custom-tab-btn ${activeTab === 'history' ? 'active' : ''}`}>
+            <FiList /> Riwayat
+          </button>
+          <button 
+            onClick={() => { setActiveTab('profile'); navigate('/dashboard?tab=profile'); }}
+            className={`custom-tab-btn ${activeTab === 'profile' ? 'active' : ''}`}>
+            <FiUser /> Profil<span className="hide-mobile">&nbsp;& Alamat</span>
           </button>
         </div>
 
-        {activeTab === 'orders' ? (
+        {activeTab === 'orders' && (
           <>
             {/* Header Pesanan */}
             <div className="dashboard-header">
@@ -356,7 +405,6 @@ const CustomerDashboard = () => {
                 Pesanan Aktif
               </h2>
               <div className="header-actions">
-                <Link to="/history" className="btn btn-secondary"><FiList /> Riwayat</Link>
                 <button className="btn" onClick={() => navigate('/order')}><FiPlus /> Order Baru</button>
               </div>
             </div>
@@ -392,7 +440,35 @@ const CustomerDashboard = () => {
               <OrderCard key={order.id} order={order} />
             ))}
           </>
-        ) : (
+        )}
+
+        {activeTab === 'history' && (
+          <>
+            {/* Header Riwayat */}
+            <div className="dashboard-header">
+              <h2 style={{ fontFamily: 'Outfit, sans-serif', fontSize: '1.4rem', color: 'var(--navy)' }}>
+                Riwayat Pesanan
+              </h2>
+              <div className="header-actions">
+                <button className="btn" onClick={() => navigate('/order')}><FiPlus /> Order Baru</button>
+              </div>
+            </div>
+
+            {/* History List */}
+            {historyOrders.length === 0 ? (
+              <div className="card" style={{ textAlign: 'center', padding: '40px 20px' }}>
+                <FiCheckCircle style={{ fontSize: '2.5rem', color: 'var(--text-4)', marginBottom: 12 }} />
+                <p style={{ color: 'var(--text-3)', marginBottom: 16 }}>Belum ada riwayat pesanan.</p>
+              </div>
+            ) : (
+              historyOrders.map(order => (
+                <OrderCard key={order.id} order={order} />
+              ))
+            )}
+          </>
+        )}
+
+        {activeTab === 'profile' && (
           <ProfileTab user={user} />
         )}
 
@@ -562,6 +638,35 @@ const CustomerDashboard = () => {
                     <div style={{ fontSize: '0.85rem', color: '#14532d', whiteSpace: 'pre-wrap' }}>{detailModal.admin_note}</div>
                   </div>
                 )}
+              </div>
+
+              <div className="detail-section">
+                <h4>Dokumentasi & Bukti</h4>
+                {[
+                  { label: 'Foto Barang dari Laundry', key: 'photo_url', icon: <FiCamera /> },
+                  { label: 'Bukti Pembayaran', key: 'payment_proof', icon: <FiFileText /> },
+                  { label: 'Bukti Pengantaran', key: 'delivery_proof', icon: <FiTruck /> }
+                ].map(item => (
+                  <AccordionItem key={item.key} icon={item.icon} label={item.label} hasContent={!!detailModal[item.key]}>
+                    {detailModal[item.key] ? (
+                      <div>
+                        <img src={resolveFileUrl(detailModal[item.key])} alt={item.label} style={{ maxWidth: '100%', borderRadius: 12, marginBottom: 10 }} />
+                        {item.key === 'delivery_proof' && detailModal.courier_phone && (
+                          <a
+                            href={`https://wa.me/${formatWA(detailModal.courier_phone)}`}
+                            target="_blank" rel="noreferrer"
+                            className="btn btn-sm"
+                            style={{ background: '#25D366', color: 'white', display: 'flex', alignItems: 'center', gap: 6, justifyContent: 'center', textDecoration: 'none' }}
+                          >
+                            <FiMessageCircle /> Hubungi Kurir (WA)
+                          </a>
+                        )}
+                      </div>
+                    ) : (
+                      <p style={{ color: '#888', fontSize: '0.85rem' }}>Belum tersedia</p>
+                    )}
+                  </AccordionItem>
+                ))}
               </div>
 
               <div className="modal-footer">

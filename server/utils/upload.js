@@ -59,8 +59,10 @@ const uploadToSupabase = async (file) => {
   const randomName = crypto.randomBytes(16).toString('hex');
   const filename = `${file.fieldname || 'file'}-${randomName}${ext}`;
 
+  const bucketName = process.env.SUPABASE_BUCKET || 'uploads_foto';
+
   const { error } = await supabase.storage
-    .from('uploads')
+    .from(bucketName)
     .upload(filename, file.buffer, {
       contentType: file.mimetype,
       upsert: false
@@ -69,7 +71,7 @@ const uploadToSupabase = async (file) => {
   if (error) throw new Error(`Supabase storage error: ${error.message}`);
 
   const { data } = supabase.storage
-    .from('uploads')
+    .from(bucketName)
     .getPublicUrl(filename);
 
   return data.publicUrl;

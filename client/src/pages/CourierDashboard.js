@@ -17,6 +17,13 @@ const formatWA = (phone) => {
 
 const categoryLabels = { cuci_setrika: 'Cuci Setrika', cuci_lipat: 'Cuci Lipat', satuan: 'Satuan' };
 
+const resolveFileUrl = (url) => {
+  if (!url) return null;
+  if (url.startsWith('http://') || url.startsWith('https://')) return url;
+  const base = process.env.REACT_APP_API_URL || '';
+  return `${base}${url}`;
+};
+
 const formatServiceLabel = (order) => {
   const cat = categoryLabels[order.service_category] || order.service_name || '';
   const speed = order.service_speed === 'express' ? 'Express' : 'Reguler';
@@ -440,7 +447,7 @@ const CourierDashboard = () => {
                 <h4>Foto Barang (Tas)</h4>
                 <div style={{ background: '#f8faff', padding: 12, borderRadius: 12, textAlign: 'center', border: '1px solid var(--border)' }}>
                   <img 
-                    src={detailModal.photo_url} 
+                    src={resolveFileUrl(detailModal.photo_url)} 
                     alt="Foto Barang" 
                     style={{ maxWidth: '100%', maxHeight: 300, borderRadius: 8, display: 'block', margin: '0 auto' }} 
                   />

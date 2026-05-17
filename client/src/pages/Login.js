@@ -4,6 +4,8 @@ import axios from 'axios';
 import { FiMail, FiLock, FiEye, FiEyeOff } from 'react-icons/fi';
 import { FcGoogle } from 'react-icons/fc';
 
+const ADMIN_WA_NUMBER = '6281234567890'; // Ganti dengan nomor WA admin yang sebenarnya
+
 const Login = ({ onLogin }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -21,6 +23,13 @@ const Login = ({ onLogin }) => {
       const msg = err.response?.data?.message || err.response?.data?.error || err.message || 'Login gagal';
       alert(msg);
     }
+  };
+
+  const handleForgotPassword = () => {
+    const waMessage = encodeURIComponent(
+      `Halo Admin Alinea Laundry,\n\nSaya lupa password akun saya.\nEmail: ${email || '(belum diisi)'}\n\nMohon bantu reset password saya. Terima kasih.`
+    );
+    window.open(`https://wa.me/${ADMIN_WA_NUMBER}?text=${waMessage}`, '_blank');
   };
 
   return (
@@ -65,6 +74,25 @@ const Login = ({ onLogin }) => {
                 {showPassword ? <FiEyeOff /> : <FiEye />}
               </span>
             </div>
+          </div>
+
+          {/* Lupa Sandi link */}
+          <div style={{ textAlign: 'right', marginBottom: 12 }}>
+            <button
+              type="button"
+              onClick={handleForgotPassword}
+              style={{
+                background: 'none',
+                border: 'none',
+                color: 'var(--blue)',
+                fontSize: '0.82rem',
+                cursor: 'pointer',
+                fontWeight: 600,
+                padding: 0,
+              }}
+            >
+              Lupa Sandi?
+            </button>
           </div>
 
           <button className="btn login-submit-btn" type="submit">

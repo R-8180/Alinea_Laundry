@@ -10,6 +10,19 @@ router.use((req, res, next) => {
   next();
 });
 
+// GET daftar kurir
+router.get('/couriers', async (req, res) => {
+  try {
+    const result = await db.query(
+      `SELECT id, name, email, phone FROM users WHERE role = 'courier' ORDER BY name ASC`
+    );
+    res.json(result.rows);
+  } catch (err) {
+    console.error('Get couriers error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // GET semua order dengan badge perlu_validasi
 router.get('/orders', async (req, res) => {
   try {

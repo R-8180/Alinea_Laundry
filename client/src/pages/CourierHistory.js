@@ -7,6 +7,13 @@ import {
 
 const categoryLabels = { cuci_setrika: 'Cuci Setrika', cuci_lipat: 'Cuci Lipat', satuan: 'Satuan' };
 
+const resolveFileUrl = (url) => {
+  if (!url) return null;
+  if (url.startsWith('http://') || url.startsWith('https://')) return url;
+  const base = process.env.REACT_APP_API_URL || '';
+  return `${base}${url}`;
+};
+
 const formatServiceLabel = (order) => {
   const cat = categoryLabels[order.service_category] || order.service_name || '';
   const speed = order.service_speed === 'express' ? 'Express' : 'Reguler';
@@ -185,7 +192,7 @@ const CourierHistory = () => {
               ].map(item => (
                 <AccordionItem key={item.key} icon={item.icon} label={item.label}>
                   {detailModal[item.key] ? (
-                    <img src={detailModal[item.key]} alt={item.label} style={{ maxWidth: '100%', borderRadius: 12 }} />
+                    <img src={resolveFileUrl(detailModal[item.key])} alt={item.label} style={{ maxWidth: '100%', borderRadius: 12 }} />
                   ) : (
                     <p style={{ color: '#888' }}>Belum tersedia</p>
                   )}

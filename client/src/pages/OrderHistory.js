@@ -8,6 +8,13 @@ import { Link } from 'react-router-dom';
 
 const categoryLabels = { cuci_setrika: 'Cuci Setrika', cuci_lipat: 'Cuci Lipat', satuan: 'Satuan' };
 
+const resolveFileUrl = (url) => {
+  if (!url) return null;
+  if (url.startsWith('http://') || url.startsWith('https://')) return url;
+  const base = process.env.REACT_APP_API_URL || '';
+  return `${base}${url}`;
+};
+
 const formatServiceLabel = (order) => {
   const cat = categoryLabels[order.service_category] || order.service_name || '';
   const speed = order.service_speed === 'express' ? 'Express' : 'Reguler';
@@ -288,7 +295,7 @@ const OrderHistory = () => {
                   <AccordionItem key={item.key} icon={item.icon} label={item.label} hasContent={!!detailModal[item.key]}>
                     {detailModal[item.key] ? (
                       <div>
-                        <img src={detailModal[item.key]} alt={item.label} style={{ maxWidth: '100%', borderRadius: 12, marginBottom: 10 }} />
+                        <img src={resolveFileUrl(detailModal[item.key])} alt={item.label} style={{ maxWidth: '100%', borderRadius: 12, marginBottom: 10 }} />
                         {item.key === 'delivery_proof' && detailModal.courier_phone && (
                           <a
                             href={`https://wa.me/${formatWA(detailModal.courier_phone)}`}

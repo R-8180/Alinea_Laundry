@@ -9,6 +9,13 @@ import {
 
 const categoryLabels = { cuci_setrika: 'Cuci Setrika', cuci_lipat: 'Cuci Lipat', satuan: 'Satuan' };
 
+const resolveFileUrl = (url) => {
+  if (!url) return null;
+  if (url.startsWith('http://') || url.startsWith('https://')) return url;
+  const base = process.env.REACT_APP_API_URL || '';
+  return `${base}${url}`;
+};
+
 /* ---------- COUNTDOWN HOOK ---------- */
 const useCountdown = (order) => {
   const [remaining, setRemaining] = useState('');
@@ -401,7 +408,7 @@ const CustomerDashboard = () => {
                     </p>
                   )}
                   {paymentModal.payment_proof && (
-                    <img src={paymentModal.payment_proof} alt="Bukti" style={{ maxWidth: '100%', maxHeight: 200, borderRadius: 12, marginTop: 14 }} />
+                    <img src={resolveFileUrl(paymentModal.payment_proof)} alt="Bukti" style={{ maxWidth: '100%', maxHeight: 200, borderRadius: 12, marginTop: 14 }} />
                   )}
                 </div>
               ) : (

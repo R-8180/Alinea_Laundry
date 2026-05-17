@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { FiUser, FiMail, FiLock, FiPhone, FiMapPin, FiEye, FiEyeOff } from 'react-icons/fi';
+import { FiUser, FiMail, FiLock, FiPhone, FiMapPin, FiEye, FiEyeOff, FiCheck, FiX } from 'react-icons/fi';
+import GetMyLocation from '../components/GetMyLocation';
 
 const Register = () => {
   const [form, setForm] = useState({
@@ -10,8 +11,11 @@ const Register = () => {
     password: '',
     phone: '',
     address: '',
+    lat: null,
+    lng: null,
   });
   const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
   const handleChange = (e) => {
@@ -19,16 +23,52 @@ const Register = () => {
     setForm((prev) => ({ ...prev, [name]: value }));
   };
 
+  // Password strength checks
+  const pwChecks = useMemo(() => ({
+    minLength: form.password.length >= 8,
+    hasUpper: /[A-Z]/.test(form.password),
+    hasLower: /[a-z]/.test(form.password),
+    hasNumber: /\d/.test(form.password),
+  }), [form.password]);
+
+  const allPwValid = pwChecks.minLength && pwChecks.hasUpper && pwChecks.hasLower && pwChecks.hasNumber;
+
+  const handleLocationReady = (lat, lng, alamat) => {
+    setForm(prev => ({ ...prev, address: alamat, lat, lng }));
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!allPwValid) {
+      alert('Password belum memenuhi semua persyaratan keamanan.');
+      return;
+    }
+    setLoading(true);
     try {
-      await axios.post('/api/auth/register', form);
-      alert('Registrasi berhasil, silakan login');
+      const base = process.env.REACT_APP_API_URL || '';
+      await axios.post(`${base}/api/auth/register`, form);
+      alert('Registrasi berhasil! Silakan login.');
       navigate('/login');
     } catch (err) {
-      alert(err.response?.data?.error || 'Gagal mendaftar');
+      // Handle express-validator error array format
+      const data = err.response?.data;
+      if (data?.errors && Array.isArray(data.errors)) {
+        const messages = data.errors.map(e => e.msg).join('\n');
+        alert('Gagal mendaftar:\n' + messages);
+      } else {
+        alert(data?.message || data?.error || 'Gagal mendaftar. Coba lagi.');
+      }
+    } finally {
+      setLoading(false);
     }
   };
+
+  const PwCheck = ({ ok, label }) => (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.78rem', color: ok ? '#16a34a' : '#9ca3af', transition: 'color 0.2s' }}>
+      {ok ? <FiCheck style={{ color: '#16a34a' }} /> : <FiX style={{ color: '#d1d5db' }} />}
+      {label}
+    </div>
+  );
 
   return (
     <div className="register-page">
@@ -76,7 +116,7 @@ const Register = () => {
               <input
                 name="password"
                 type={showPassword ? 'text' : 'password'}
-                placeholder="Masukkan password Anda"
+                placeholder="Buat password yang kuat"
                 value={form.password}
                 onChange={handleChange}
                 required
@@ -85,6 +125,27 @@ const Register = () => {
                 {showPassword ? <FiEyeOff /> : <FiEye />}
               </span>
             </div>
+            {/* Password strength indicator */}
+            {form.password.length > 0 && (
+              <div style={{ marginTop: 8, padding: '8px 12px', background: '#f8fafc', borderRadius: 8, border: '1px solid #e2e8f0' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 4 }}>
+                  <PwCheck ok={pwChecks.minLength} label="Min. 8 karakter" />
+                  <PwCheck ok={pwChecks.hasUpper} label="Huruf besar (A-Z)" />
+                  <PwCheck ok={pwChecks.hasLower} label="Huruf kecil (a-z)" />
+                  <PwCheck ok={pwChecks.hasNumber} label="Angka (0-9)" />
+                </div>
+                {/* Strength bar */}
+                <div style={{ marginTop: 6, height: 4, borderRadius: 4, background: '#e5e7eb', overflow: 'hidden' }}>
+                  <div style={{
+                    height: '100%',
+                    borderRadius: 4,
+                    transition: 'width 0.3s, background 0.3s',
+                    width: `${Object.values(pwChecks).filter(Boolean).length * 25}%`,
+                    background: allPwValid ? '#16a34a' : Object.values(pwChecks).filter(Boolean).length >= 2 ? '#f59e0b' : '#ef4444',
+                  }} />
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="input-group">
@@ -114,10 +175,17 @@ const Register = () => {
                 style={{ paddingLeft: '40px' }}
               />
             </div>
+            {/* Location tracking button */}
+            <GetMyLocation onLocationReady={handleLocationReady} />
           </div>
 
-          <button className="btn login-submit-btn" type="submit" style={{ marginTop: 16 }}>
-            Daftar
+          <button
+            className="btn login-submit-btn"
+            type="submit"
+            style={{ marginTop: 16 }}
+            disabled={loading || !allPwValid}
+          >
+            {loading ? 'Mendaftar...' : 'Daftar'}
           </button>
         </form>
 

@@ -13,6 +13,15 @@ import LaporanTab from './LaporanTab';
 /* ---------- KONSTANTA ---------- */
 const statusLabels = { menunggu: 'Menunggu', pickup: 'Dijemput', cuci: 'Dicuci', antar: 'Diantar', selesai: 'Selesai', batal: 'Dibatalkan' };
 
+// Helper: resolve file URL for both old local paths and new Supabase URLs
+const resolveFileUrl = (url) => {
+  if (!url) return null;
+  if (url.startsWith('http://') || url.startsWith('https://')) return url;
+  // Old local path like /uploads/xxx — prefix with API base
+  const base = process.env.REACT_APP_API_URL || '';
+  return `${base}${url}`;
+};
+
 const statusOptions = ['menunggu', 'pickup', 'cuci', 'antar', 'selesai', 'batal'];
 // Tambah 'all_active' di paling depan
 
@@ -137,6 +146,7 @@ const AdminDashboard = () => {
   const [customerOrders, setCustomerOrders] = useState([]);
   const [addOrderModal, setAddOrderModal] = useState(null);
   const [newOrderForm, setNewOrderForm] = useState({ address: '', notes: '', service_speed: 'reguler', items: [{ service_type: 'kiloan', name: '' }] });
+  const [couriers, setCouriers] = useState([]);
   const token = localStorage.getItem('token');
   const h = { Authorization: `Bearer ${token}` };
 
@@ -172,11 +182,26 @@ const AdminDashboard = () => {
   useEffect(() => { if (tab === 'users') fetchCustomers(); }, [tab, fetchCustomers]);
 
   /* ---------- HANDLERS ---------- */
+  const fetchCouriers = async () => {
+    try {
+      const res = await axios.get('/api/admin/couriers', { headers: h });
+      setCouriers(res.data || []);
+    } catch (err) {
+      console.error('fetchCouriers error:', err);
+      setCouriers([]);
+    }
+  };
+
   const updateStatus = async (id, newStatus) => {
     if (newStatus === 'selesai') {
       setCompleteModal({ orderId: id });
       setCompletePhoto(null);
       return;
+    }
+    // Konfirmasi jika admin membatalkan order
+    if (newStatus === 'batal') {
+      const yakin = window.confirm('⚠️ Yakin ingin membatalkan pesanan ini?\nTindakan ini tidak dapat dibatalkan.');
+      if (!yakin) return;
     }
     await axios.put(`/api/admin/orders/${id}/status`, { status: newStatus }, { headers: h });
     setOrders(prev => prev.map(o => o.id === id ? { ...o, status: newStatus } : o));
@@ -248,11 +273,15 @@ const AdminDashboard = () => {
 
   const assignCourier = async () => {
     if (!assignModal || !selectedCourier) return;
-    await axios.put(`/api/admin/orders/${assignModal.orderId}/assign`, { courier_id: selectedCourier }, { headers: h });
-    alert('Kurir berhasil diassign');
-    setAssignModal(null);
-    setSelectedCourier('');
-    fetchOrders();
+    try {
+      await axios.put(`/api/admin/orders/${assignModal.orderId}/assign`, { courier_id: parseInt(selectedCourier) }, { headers: h });
+      alert('Kurir berhasil diassign');
+      setAssignModal(null);
+      setSelectedCourier('');
+      fetchOrders();
+    } catch (err) {
+      alert(err.response?.data?.message || err.response?.data?.error || 'Gagal assign kurir');
+    }
   };
 
   const editEstimasi = async (orderId) => {
@@ -607,12 +636,12 @@ const AdminDashboard = () => {
                         {order.courier_name ? (
                           <>
                             <span className="courier-name-label"><FiTruck /> {order.courier_name}</span>
-                            <button className="btn-assign btn-sm" onClick={() => { setAssignModal({ orderId: order.id }); setSelectedCourier(order.courier_id || ''); }}>
+                            <button className="btn-assign btn-sm" onClick={() => { setAssignModal({ orderId: order.id }); setSelectedCourier(order.courier_id || ''); fetchCouriers(); }}}>
                               <FiEdit2 /> Ganti
                             </button>
                           </>
                         ) : (
-                          <button className="btn-assign" onClick={() => { setAssignModal({ orderId: order.id }); setSelectedCourier(''); }}>
+                          <button className="btn-assign" onClick={() => { setAssignModal({ orderId: order.id }); setSelectedCourier(''); fetchCouriers(); }}}>
                             <FiUserPlus /> Assign
                           </button>
                         )}
@@ -734,11 +763,11 @@ const AdminDashboard = () => {
                 </button>
 
                 {order.courier_name ? (
-                  <button className="btn-assign" onClick={() => { setAssignModal({ orderId: order.id }); setSelectedCourier(order.courier_id || ''); }}>
+                  <button className="btn-assign" onClick={() => { setAssignModal({ orderId: order.id }); setSelectedCourier(order.courier_id || ''); fetchCouriers(); }}}>
                     <FiTruck /> {order.courier_name}
                   </button>
                 ) : (
-                  <button className="btn-assign" onClick={() => { setAssignModal({ orderId: order.id }); setSelectedCourier(''); }}>
+                  <button className="btn-assign" onClick={() => { setAssignModal({ orderId: order.id }); setSelectedCourier(''); fetchCouriers(); }}}>
                     <FiUserPlus /> Assign Kurir
                   </button>
                 )}
@@ -771,7 +800,7 @@ const AdminDashboard = () => {
             {paymentModal.payment_proof ? (
               <>
                 <img
-                  src={paymentModal.payment_proof}
+                  src={resolveFileUrl(paymentModal.payment_proof)}
                   alt="Bukti Pembayaran"
                   style={{ width: '100%', maxHeight: 300, objectFit: 'contain', borderRadius: 12, marginBottom: 12, border: '1px solid var(--border)' }}
                 />
@@ -806,8 +835,13 @@ const AdminDashboard = () => {
             </div>
             <select value={selectedCourier} onChange={e => setSelectedCourier(e.target.value)} className="form-select" style={{ marginTop: 12 }}>
               <option value="">-- Pilih Kurir --</option>
-              <option value="3">Rian (Tersedia)</option>
+              {couriers.map(c => (
+                <option key={c.id} value={c.id}>{c.name} ({c.phone || c.email})</option>
+              ))}
             </select>
+            {couriers.length === 0 && (
+              <p style={{ fontSize: '0.8rem', color: 'var(--text-4)', marginTop: 8 }}>Memuat daftar kurir...</p>
+            )}
             <div className="modal-footer">
               <button className="btn btn-secondary" onClick={() => setAssignModal(null)}>Batal</button>
               <button className="btn" onClick={assignCourier} disabled={!selectedCourier}>Assign</button>
@@ -962,7 +996,7 @@ const AdminDashboard = () => {
               ].map(item => (
                 <AccordionItem key={item.key} icon={item.icon} label={item.label}>
                   {detailModal[item.key] ? (
-                    <img src={detailModal[item.key]} alt={item.label} style={{ maxWidth: '100%', borderRadius: 10 }} />
+                    <img src={resolveFileUrl(detailModal[item.key])} alt={item.label} style={{ maxWidth: '100%', borderRadius: 10 }} />
                   ) : (
                     <p style={{ color: 'var(--text-4)', fontSize: '0.875rem' }}>Belum tersedia</p>
                   )}

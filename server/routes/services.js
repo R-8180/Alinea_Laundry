@@ -21,18 +21,10 @@ router.get('/category/:category', async (req, res) => {
   }
 });
 
-router.get('/:id', async (req, res) => {
-  try {
-    const result = await pool.query('SELECT * FROM services WHERE id = $1', [req.params.id]);
-    if (!result.rows.length) return res.status(404).json({ message: 'Layanan tidak ditemukan' });
-    res.json(result.rows[0]);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
 router.use(auth);
 router.use((req, res, next) => {
+  // Allow GET /:id without admin check (used by OrderForm)
+  if (req.method === 'GET' && req.path.match(/^\/\d+$/) && req.user.role !== 'admin') return next();
   if (req.user.role !== 'admin') return res.status(403).json({ message: 'Akses ditolak' });
   next();
 });
@@ -41,6 +33,16 @@ router.get('/admin/all', async (req, res) => {
   try {
     const result = await pool.query(`SELECT * FROM services ORDER BY is_active DESC, time_days DESC, time_hours DESC`);
     res.json(result.rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.get('/:id', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT * FROM services WHERE id = $1', [req.params.id]);
+    if (!result.rows.length) return res.status(404).json({ message: 'Layanan tidak ditemukan' });
+    res.json(result.rows[0]);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

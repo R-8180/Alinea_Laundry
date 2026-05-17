@@ -544,7 +544,9 @@ const Home = () => {
         <div className="container">
           <PromoSlider />
           <LayananSection />
-          <ParfumShop />
+        </div>
+        <ParfumShop />
+        <div className="container">
           <FAQSection />
           <HowToOrderSection />
           <TestimoniSection />

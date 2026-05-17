@@ -147,10 +147,11 @@ const CourierHistory = () => {
 
             <div className="detail-section">
               <h4>Informasi Pelanggan</h4>
-              <div className="detail-grid">
+               <div className="detail-grid">
                 <div className="detail-item"><div className="detail-label">Nama</div><div className="detail-value">{detailModal.customer_name}</div></div>
                 <div className="detail-item"><div className="detail-label">Telepon</div><div className="detail-value">{detailModal.customer_phone || '-'}</div></div>
                 <div className="detail-item"><div className="detail-label">Alamat</div><div className="detail-value">{detailModal.customer_address}</div></div>
+                <div className="detail-item" style={{ gridColumn: '1 / -1' }}><div className="detail-label">Catatan untuk Kurir</div><div className="detail-value" style={{ color: 'var(--blue)', fontWeight: 600 }}>{detailModal.courier_notes || detailModal.notes || '-'}</div></div>
                 <div className="detail-item"><div className="detail-label">Layanan</div><div className="detail-value" style={{ display: 'flex', alignItems: 'center', gap: 4 }}>{detailModal.service_speed === 'express' ? <FiZap /> : <FiPackage />} {formatServiceLabel(detailModal)}</div></div>
               </div>
               {detailModal.customer_address && (
@@ -159,32 +160,6 @@ const CourierHistory = () => {
                 </div>
               )}
             </div>
-
-            {detailModal.items?.length > 0 && (
-              <div className="detail-section">
-                <h4>Item Pesanan</h4>
-                <table className="invoice-table">
-                  <thead>
-                    <tr>
-                      <th>Layanan</th>
-                      <th>Nama</th>
-                      <th>Jumlah</th>
-                      <th>Parfum</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {detailModal.items.map(item => (
-                      <tr key={item.id}>
-                        <td>{item.service_type}</td>
-                        <td>{item.name || '-'}</td>
-                        <td>{item.service_type === 'kiloan' ? `${item.weight} kg` : `${item.qty_items} pcs`}</td>
-                        <td>{item.parfum ? item.parfum.replace(' (Gratis)', '') : '-'}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
 
             <div className="detail-section">
               <h4>Dokumentasi</h4>

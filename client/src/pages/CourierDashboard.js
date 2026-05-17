@@ -401,7 +401,7 @@ const CourierDashboard = () => {
                 <div className="detail-item"><div className="detail-label">Nama</div><div className="detail-value">{detailModal.customer_name}</div></div>
                 <div className="detail-item"><div className="detail-label">Telepon</div><div className="detail-value">{detailModal.customer_phone || '-'}</div></div>
                 <div className="detail-item"><div className="detail-label">Alamat</div><div className="detail-value">{detailModal.customer_address}</div></div>
-                <div className="detail-item" style={{ gridColumn: '1 / -1' }}><div className="detail-label">Catatan untuk Kurir</div><div className="detail-value" style={{ color: 'var(--blue)', fontWeight: 600 }}>{detailModal.courier_notes || '-'}</div></div>
+                <div className="detail-item" style={{ gridColumn: '1 / -1' }}><div className="detail-label">Catatan untuk Kurir</div><div className="detail-value" style={{ color: 'var(--blue)', fontWeight: 600 }}>{detailModal.courier_notes || detailModal.notes || '-'}</div></div>
                 <div className="detail-item"><div className="detail-label">Layanan</div><div className="detail-value" style={{ display: 'flex', alignItems: 'center', gap: 4 }}>{detailModal.service_speed === 'express' ? <FiZap /> : <FiPackage />} {formatServiceLabel(detailModal)}</div></div>
               </div>
               {detailModal.customer_address && (
@@ -413,37 +413,6 @@ const CourierDashboard = () => {
                 </div>
               )}
             </div>
-
-            {detailModal.items?.length > 0 && (
-              <div className="detail-section">
-                <h4>Item Pesanan</h4>
-                <div style={{ overflowX: 'auto', width: '100%', marginBottom: 10 }}>
-                  <table className="invoice-table" style={{ minWidth: '100%', fontSize: '0.85rem' }}>
-                    <thead>
-                      <tr>
-                        <th style={{ textAlign: 'left' }}>Item</th>
-                        <th style={{ textAlign: 'left' }}>Catatan</th>
-                        <th style={{ textAlign: 'center' }}>Jumlah</th>
-                        <th style={{ textAlign: 'left' }}>Parfum</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {detailModal.items.map(item => (
-                        <tr key={item.id}>
-                          <td>
-                            <div style={{ fontWeight: 600 }}>{item.name || '-'}</div>
-                            <div style={{ fontSize: '0.75rem', color: 'var(--text-3)' }}>{item.service_type === 'kiloan' ? 'Kiloan' : 'Satuan'}</div>
-                          </td>
-                          <td style={{ color: 'var(--red)', fontSize: '0.8rem' }}>{item.notes || '-'}</td>
-                          <td style={{ textAlign: 'center' }}>{item.service_type === 'kiloan' ? `${item.weight} kg` : `${item.qty_items} pcs`}</td>
-                          <td style={{ fontSize: '0.8rem' }}>{item.parfum || '-'}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            )}
 
             {detailModal.photo_url && (
               <div className="detail-section">

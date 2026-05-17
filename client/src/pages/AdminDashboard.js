@@ -972,7 +972,7 @@ const AdminDashboard = () => {
                 <div style={{ overflowX: 'auto' }}>
                   <table className="invoice-table">
                     <thead>
-                      <tr><th>Layanan</th><th>Nama</th><th>Jumlah</th><th>Satuan</th><th>Parfum</th><th>Harga</th></tr>
+                      <tr><th>Layanan</th><th>Nama</th><th>Catatan</th><th>Jumlah</th><th>Satuan</th><th>Parfum</th><th>Harga</th></tr>
                     </thead>
                     <tbody>
                       {detailModal.items.map(item => {
@@ -985,6 +985,7 @@ const AdminDashboard = () => {
                           <tr key={item.id}>
                             <td>{item.service_type}</td>
                             <td>{item.name || '-'}</td>
+                            <td style={{ color: 'var(--red)', fontWeight: 600 }}>{item.notes || '-'}</td>
                             <td>{qty}</td>
                             <td>{unit}</td>
                             <td>{item.parfum || '-'}</td>
@@ -995,7 +996,7 @@ const AdminDashboard = () => {
                     </tbody>
                     <tfoot>
                       <tr>
-                        <td colSpan="5" style={{ textAlign: 'right', fontWeight: 700 }}>Total</td>
+                        <td colSpan="6" style={{ textAlign: 'right', fontWeight: 700 }}>Total</td>
                         <td style={{ fontWeight: 700, color: 'var(--blue)' }}>{formatRupiah(detailModal.total_price)}</td>
                       </tr>
                     </tfoot>

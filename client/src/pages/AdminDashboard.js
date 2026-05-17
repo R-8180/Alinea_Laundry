@@ -17,8 +17,10 @@ const statusLabels = { menunggu: 'Menunggu', pickup: 'Dijemput', cuci: 'Dicuci',
 const resolveFileUrl = (url) => {
   if (!url) return null;
   if (url.startsWith('http://') || url.startsWith('https://')) return url;
-  // Old local path like /uploads/xxx — prefix with API base
-  const base = process.env.REACT_APP_API_URL || '';
+  let base = process.env.REACT_APP_API_URL || '';
+  if (!base && typeof window !== 'undefined' && window.location.hostname === 'localhost') {
+    base = 'http://localhost:5000';
+  }
   return `${base}${url}`;
 };
 
@@ -165,7 +167,7 @@ const AdminDashboard = () => {
     try {
       const res = await axios.get('/api/admin/stats/yesterday', { headers: h });
       setYesterdayStats(res.data);
-    } catch {}
+    } catch { }
   }, []); // eslint-disable-line
 
   const fetchCustomers = useCallback(async () => {
@@ -231,9 +233,9 @@ const AdminDashboard = () => {
       await fetchYesterdayStats();
       fetchCustomers(); // selalu refresh agar riwayat pengguna ikut update
       alert('Pesanan berhasil diselesaikan');
-    } catch (err) { 
+    } catch (err) {
       console.error('Complete error:', err.response?.data);
-      alert(err.response?.data?.message || err.response?.data?.error || 'Gagal menyelesaikan pesanan'); 
+      alert(err.response?.data?.message || err.response?.data?.error || 'Gagal menyelesaikan pesanan');
     }
   };
 
@@ -299,7 +301,7 @@ const AdminDashboard = () => {
       setOrders(prev => prev.map(o => o.id === orderId
         ? { ...o, estimated_days: days, estimated_hours: hours, estimated_start: res.data.estimated_start || null }
         : o));
-      setDetailModal(prev => prev && prev.id === orderId 
+      setDetailModal(prev => prev && prev.id === orderId
         ? { ...prev, estimated_days: days, estimated_hours: hours, estimated_start: res.data.estimated_start || null }
         : prev);
       alert('Estimasi diupdate');
@@ -376,10 +378,12 @@ const AdminDashboard = () => {
     if (pct === null || pct === undefined) return null;
     const up = pct >= 0;
     return (
-      <span className="pct-badge" style={{ display:'inline-flex', alignItems:'center', gap:2, fontSize:'0.7rem', fontWeight:700,
+      <span className="pct-badge" style={{
+        display: 'inline-flex', alignItems: 'center', gap: 2, fontSize: '0.7rem', fontWeight: 700,
         color: up ? '#16a34a' : '#dc2626', background: up ? '#dcfce7' : '#fee2e2',
-        borderRadius:20, padding:'2px 7px', marginTop:4 }}>
-        {up ? <FiArrowUp size={10}/> : <FiArrowDown size={10}/>}
+        borderRadius: 20, padding: '2px 7px', marginTop: 4
+      }}>
+        {up ? <FiArrowUp size={10} /> : <FiArrowDown size={10} />}
         {Math.abs(pct)}% vs kemarin
       </span>
     );
@@ -408,16 +412,16 @@ const AdminDashboard = () => {
       }
     }
     if (tab === 'riwayat' && o.status !== 'selesai' && o.status !== 'batal') return false;
-    
+
     // Filter search
     const term = searchTerm.toLowerCase();
     return (o.order_code?.toLowerCase().includes(term) || (o.customer_name || '').toLowerCase().includes(term));
   });
-  
+
   const visibleOrders = (!showAll && tab === 'riwayat')
     ? filteredOrders.slice(0, 10)
     : filteredOrders;
-  
+
   // Fungsi hitung jumlah per status
   const countByStatus = (s) => {
     if (s === 'all_active') return orders.filter(o => o.status !== 'selesai' && o.status !== 'batal').length;
@@ -530,11 +534,11 @@ const AdminDashboard = () => {
           {dynamicSubTabs.map(s => (
             <button key={s} className={`admin-subtab ${subTab === s ? 'active' : ''}`} onClick={() => setSubTab(s)}>
               {getSubTabLabel(s)}
-              <span style={{ 
-                marginLeft:5, 
-                background: (s === 'need_weight' || s === 'need_payment') ? (subTab===s ? 'white' : '#ef4444') : (subTab===s ? 'rgba(255,255,255,0.3)' : 'var(--sky-faint)'), 
-                color: (s === 'need_weight' || s === 'need_payment') ? (subTab===s ? '#ef4444' : 'white') : (subTab===s ? 'white' : 'var(--navy)'), 
-                borderRadius:20, padding:'1px 7px', fontSize:'0.72rem', fontWeight:700 
+              <span style={{
+                marginLeft: 5,
+                background: (s === 'need_weight' || s === 'need_payment') ? (subTab === s ? 'white' : '#ef4444') : (subTab === s ? 'rgba(255,255,255,0.3)' : 'var(--sky-faint)'),
+                color: (s === 'need_weight' || s === 'need_payment') ? (subTab === s ? '#ef4444' : 'white') : (subTab === s ? 'white' : 'var(--navy)'),
+                borderRadius: 20, padding: '1px 7px', fontSize: '0.72rem', fontWeight: 700
               }}>
                 {countByStatus(s)}
               </span>
@@ -563,7 +567,7 @@ const AdminDashboard = () => {
               </thead>
               <tbody>
                 {loading ? (
-                  <tr><td colSpan="10" className="empty-cell"><FiClock style={{marginRight: 4}} /> Memuat data…</td></tr>
+                  <tr><td colSpan="10" className="empty-cell"><FiClock style={{ marginRight: 4 }} /> Memuat data…</td></tr>
                 ) : visibleOrders.length === 0 ? (
                   <tr><td colSpan="10" className="empty-cell">Tidak ada order</td></tr>
                 ) : visibleOrders.map(order => (
@@ -677,11 +681,11 @@ const AdminDashboard = () => {
               {dynamicSubTabs.map(s => (
                 <button key={s} className={`admin-subtab ${subTab === s ? 'active' : ''}`} onClick={() => setSubTab(s)}>
                   {getSubTabLabel(s)}
-                  <span style={{ 
-                    marginLeft:5, 
-                    background: (s === 'need_weight' || s === 'need_payment') ? (subTab===s ? 'white' : '#ef4444') : (subTab===s ? 'rgba(255,255,255,0.3)' : 'var(--sky-faint)'), 
-                    color: (s === 'need_weight' || s === 'need_payment') ? (subTab===s ? '#ef4444' : 'white') : (subTab===s ? 'white' : 'var(--navy)'), 
-                    borderRadius:20, padding:'1px 7px', fontSize:'0.72rem', fontWeight:700 
+                  <span style={{
+                    marginLeft: 5,
+                    background: (s === 'need_weight' || s === 'need_payment') ? (subTab === s ? 'white' : '#ef4444') : (subTab === s ? 'rgba(255,255,255,0.3)' : 'var(--sky-faint)'),
+                    color: (s === 'need_weight' || s === 'need_payment') ? (subTab === s ? '#ef4444' : 'white') : (subTab === s ? 'white' : 'var(--navy)'),
+                    borderRadius: 20, padding: '1px 7px', fontSize: '0.72rem', fontWeight: 700
                   }}>
                     {countByStatus(s)}
                   </span>
@@ -690,95 +694,95 @@ const AdminDashboard = () => {
             </div>
           )}
           <div className="mobile-order-list">
-          {loading ? (
-            <div style={{ textAlign: 'center', padding: 32, color: 'var(--text-4)' }}><FiClock style={{marginRight: 4}} /> Memuat…</div>
-          ) : visibleOrders.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: 32, color: 'var(--text-4)' }}>Tidak ada order</div>
-          ) : visibleOrders.map(order => (
-            <div key={order.id} className="mobile-order-card" style={{ position: 'relative', overflow: 'hidden' }}>
-              {order.photo_url && (
-                <div style={{ position: 'absolute', top: 0, right: 0, width: 0, height: 0, borderTop: '36px solid #10b981', borderLeft: '36px solid transparent', zIndex: 1 }} title="Ada Foto Barang">
-                  <FiCamera style={{ position: 'absolute', top: -32, right: 2, color: 'white', fontSize: '0.8rem', zIndex: 2 }} />
+            {loading ? (
+              <div style={{ textAlign: 'center', padding: 32, color: 'var(--text-4)' }}><FiClock style={{ marginRight: 4 }} /> Memuat…</div>
+            ) : visibleOrders.length === 0 ? (
+              <div style={{ textAlign: 'center', padding: 32, color: 'var(--text-4)' }}>Tidak ada order</div>
+            ) : visibleOrders.map(order => (
+              <div key={order.id} className="mobile-order-card" style={{ position: 'relative', overflow: 'hidden' }}>
+                {order.photo_url && (
+                  <div style={{ position: 'absolute', top: 0, right: 0, width: 0, height: 0, borderTop: '36px solid #10b981', borderLeft: '36px solid transparent', zIndex: 1 }} title="Ada Foto Barang">
+                    <FiCamera style={{ position: 'absolute', top: -32, right: 2, color: 'white', fontSize: '0.8rem', zIndex: 2 }} />
+                  </div>
+                )}
+                {/* Header */}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10 }}>
+                  <div>
+                    <div className="order-code">{order.order_code}</div>
+                    <div className="customer-name">{order.customer_name}</div>
+                    {order.phone && <div className="customer-phone">{order.phone}</div>}
+                  </div>
+                  <select
+                    value={order.status}
+                    onChange={e => updateStatus(order.id, e.target.value)}
+                    className="status-select"
+                  >
+                    {statusOptions.map(s => <option key={s} value={s}>{statusLabels[s]}</option>)}
+                  </select>
                 </div>
-              )}
-              {/* Header */}
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10 }}>
-                <div>
-                  <div className="order-code">{order.order_code}</div>
-                  <div className="customer-name">{order.customer_name}</div>
-                  {order.phone && <div className="customer-phone">{order.phone}</div>}
+
+                {/* Meta badges */}
+                <div style={{ display: 'flex', gap: 6, marginBottom: 10, flexWrap: 'wrap' }}>
+                  <span className={`service-badge ${order.service_speed}`}>
+                    {order.service_speed === 'express' ? <FiZap /> : <FiPackage />}
+                    {formatServiceLabel(order)}
+                  </span>
+                  <span style={{ fontSize: '0.78rem', color: 'var(--text-3)', alignSelf: 'center' }}>
+                    {order.service_types || [...new Set(order.items?.map(i => i.service_type) || [])].join(', ') || 'Kiloan'}
+                  </span>
                 </div>
-                <select
-                  value={order.status}
-                  onChange={e => updateStatus(order.id, e.target.value)}
-                  className="status-select"
-                >
-                  {statusOptions.map(s => <option key={s} value={s}>{statusLabels[s]}</option>)}
-                </select>
-              </div>
 
-              {/* Meta badges */}
-              <div style={{ display: 'flex', gap: 6, marginBottom: 10, flexWrap: 'wrap' }}>
-                <span className={`service-badge ${order.service_speed}`}>
-                  {order.service_speed === 'express' ? <FiZap /> : <FiPackage />}
-                  {formatServiceLabel(order)}
-                </span>
-                <span style={{ fontSize: '0.78rem', color: 'var(--text-3)', alignSelf: 'center' }}>
-                  {order.service_types || [...new Set(order.items?.map(i => i.service_type) || [])].join(', ') || 'Kiloan'}
-                </span>
-              </div>
+                {/* Info rows */}
+                <div style={{ display: 'flex', justifyContent: 'space-between', padding: '7px 0', borderTop: '1px solid var(--border)', fontSize: '0.82rem' }}>
+                  <span style={{ color: 'var(--text-3)' }}>Tanggal</span>
+                  <span>{formatDateTime(order.created_at)}</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', padding: '7px 0', borderTop: '1px solid var(--border)', fontSize: '0.82rem', alignItems: 'center' }}>
+                  <span style={{ color: 'var(--text-3)' }}>Pembayaran</span>
+                  <span>
+                    {order.payment_status === 'paid' ? (
+                      <span className="badge-lunas"><FiCheckCircle /> Lunas</span>
+                    ) : order.payment_proof ? (
+                      <button className="btn-validasi" onClick={() => openPaymentModal(order.id)}>
+                        <FiAlertCircle /> Validasi
+                      </button>
+                    ) : (
+                      <span className="badge-belum-bayar">Belum Bayar</span>
+                    )}
+                  </span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', padding: '7px 0', borderTop: '1px solid var(--border)', fontSize: '0.82rem' }}>
+                  <span style={{ color: 'var(--text-3)' }}>Total</span>
+                  <span className="total-cell">{formatRupiah(order.total_price)}</span>
+                </div>
 
-              {/* Info rows */}
-              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '7px 0', borderTop: '1px solid var(--border)', fontSize: '0.82rem' }}>
-                <span style={{ color: 'var(--text-3)' }}>Tanggal</span>
-                <span>{formatDateTime(order.created_at)}</span>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '7px 0', borderTop: '1px solid var(--border)', fontSize: '0.82rem', alignItems: 'center' }}>
-                <span style={{ color: 'var(--text-3)' }}>Pembayaran</span>
-                <span>
-                  {order.payment_status === 'paid' ? (
-                    <span className="badge-lunas"><FiCheckCircle /> Lunas</span>
-                  ) : order.payment_proof ? (
-                    <button className="btn-validasi" onClick={() => openPaymentModal(order.id)}>
-                      <FiAlertCircle /> Validasi
+
+                {/* Actions */}
+                <div style={{ display: 'flex', gap: 8, marginTop: 12, flexWrap: 'wrap', borderTop: '1px solid var(--border)', paddingTop: 10 }}>
+                  <button
+                    className={`btn-validasi-berat ${order.total_price > 0 ? 'validated' : ''}`}
+                    onClick={() => openValidateModal(order.id)}
+                  >
+                    {order.total_price > 0 ? <FiCheckCircle /> : <GiWeight />} Validasi
+                  </button>
+
+                  {order.courier_name ? (
+                    <button className="btn-assign" onClick={() => { setAssignModal({ orderId: order.id }); setSelectedCourier(order.courier_id || ''); fetchCouriers(); }}>
+                      <FiTruck /> {order.courier_name}
                     </button>
                   ) : (
-                    <span className="badge-belum-bayar">Belum Bayar</span>
+                    <button className="btn-assign" onClick={() => { setAssignModal({ orderId: order.id }); setSelectedCourier(''); fetchCouriers(); }}>
+                      <FiUserPlus /> Assign Kurir
+                    </button>
                   )}
-                </span>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '7px 0', borderTop: '1px solid var(--border)', fontSize: '0.82rem' }}>
-                <span style={{ color: 'var(--text-3)' }}>Total</span>
-                <span className="total-cell">{formatRupiah(order.total_price)}</span>
-              </div>
 
-
-              {/* Actions */}
-              <div style={{ display: 'flex', gap: 8, marginTop: 12, flexWrap: 'wrap', borderTop: '1px solid var(--border)', paddingTop: 10 }}>
-                <button
-                  className={`btn-validasi-berat ${order.total_price > 0 ? 'validated' : ''}`}
-                  onClick={() => openValidateModal(order.id)}
-                >
-                  {order.total_price > 0 ? <FiCheckCircle /> : <GiWeight />} Validasi
-                </button>
-
-                {order.courier_name ? (
-                  <button className="btn-assign" onClick={() => { setAssignModal({ orderId: order.id }); setSelectedCourier(order.courier_id || ''); fetchCouriers(); }}>
-                    <FiTruck /> {order.courier_name}
+                  <button className="btn-detail" onClick={() => openDetail(order.id)}>
+                    <FiEye /> Detail
                   </button>
-                ) : (
-                  <button className="btn-assign" onClick={() => { setAssignModal({ orderId: order.id }); setSelectedCourier(''); fetchCouriers(); }}>
-                    <FiUserPlus /> Assign Kurir
-                  </button>
-                )}
-
-                <button className="btn-detail" onClick={() => openDetail(order.id)}>
-                  <FiEye /> Detail
-                </button>
+                </div>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
         </>
       )}
 
@@ -787,7 +791,7 @@ const AdminDashboard = () => {
         <div className="modal-overlay" onClick={() => setPaymentModal(null)}>
           <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: 480 }}>
             <div className="detail-header">
-              <h3><FiCreditCard style={{marginRight: 8}} /> Validasi Pembayaran</h3>
+              <h3><FiCreditCard style={{ marginRight: 8 }} /> Validasi Pembayaran</h3>
               <button className="btn-close" onClick={() => setPaymentModal(null)}><FiX /></button>
             </div>
             <div className="detail-section">
@@ -938,9 +942,23 @@ const AdminDashboard = () => {
                   <span>Menggunakan Voucher: <strong style={{ color: '#b45309' }}>{detailModal.voucher_code}</strong></span>
                 </div>
               )}
-              {/* Catatan Admin */}
+              {/* Catatan Pelanggan untuk Admin */}
+              {detailModal.notes && (
+                <div style={{ marginTop: 12, padding: '12px', background: '#eff6ff', borderRadius: 8, border: '1px solid #bfdbfe' }}>
+                  <div style={{ fontSize: '0.75rem', fontWeight: 700, color: '#2563eb', marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.05em' }}>📋 Catatan Pesanan (dari Pelanggan)</div>
+                  <div style={{ fontSize: '0.85rem', color: '#1e40af', whiteSpace: 'pre-wrap' }}>{detailModal.notes}</div>
+                </div>
+              )}
+              {/* Catatan untuk Kurir */}
+              {detailModal.courier_notes && (
+                <div style={{ marginTop: 8, padding: '12px', background: '#f0fdf4', borderRadius: 8, border: '1px solid #bbf7d0' }}>
+                  <div style={{ fontSize: '0.75rem', fontWeight: 700, color: '#16a34a', marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.05em' }}>🚚 Catatan untuk Kurir</div>
+                  <div style={{ fontSize: '0.85rem', color: '#166534', whiteSpace: 'pre-wrap' }}>{detailModal.courier_notes}</div>
+                </div>
+              )}
+              {/* Catatan Tambahan Admin */}
               {detailModal.admin_note && (
-                <div style={{ marginTop: 12, padding: '12px', background: '#f8fafc', borderRadius: 8, border: '1px solid #cbd5e1' }}>
+                <div style={{ marginTop: 8, padding: '12px', background: '#f8fafc', borderRadius: 8, border: '1px solid #cbd5e1' }}>
                   <div style={{ fontSize: '0.75rem', fontWeight: 700, color: '#64748b', marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Catatan Tambahan (Admin)</div>
                   <div style={{ fontSize: '0.85rem', color: '#334155', whiteSpace: 'pre-wrap' }}>{detailModal.admin_note}</div>
                 </div>
@@ -1076,20 +1094,20 @@ const AdminDashboard = () => {
                         )}
                       </td>
                       <td>
-                          <input
-                            type="number" min="0"
-                            value={item.manual_price}
-                            onFocus={e => e.target.select()}
-                            onChange={e => {
-                              let val = e.target.value;
-                              if (val.length > 1 && val.startsWith('0')) val = val.substring(1);
-                              setValidateModal(prev => ({
-                                ...prev,
-                                items: prev.items.map(i => i.id === item.id ? { ...i, manual_price: parseInt(val) || 0 } : i),
-                              }));
-                            }}
-                            style={{ width: 100 }}
-                          />
+                        <input
+                          type="number" min="0"
+                          value={item.manual_price}
+                          onFocus={e => e.target.select()}
+                          onChange={e => {
+                            let val = e.target.value;
+                            if (val.length > 1 && val.startsWith('0')) val = val.substring(1);
+                            setValidateModal(prev => ({
+                              ...prev,
+                              items: prev.items.map(i => i.id === item.id ? { ...i, manual_price: parseInt(val) || 0 } : i),
+                            }));
+                          }}
+                          style={{ width: 100 }}
+                        />
                       </td>
                     </tr>
                   ))}
@@ -1098,8 +1116,8 @@ const AdminDashboard = () => {
             </div>
             <div style={{ marginTop: 16 }}>
               <div style={{ fontSize: '0.83rem', fontWeight: 600, color: 'var(--text-3)', marginBottom: 6 }}>Catatan Tambahan (Opsional)</div>
-              <textarea 
-                value={validateModal.admin_note || ''} 
+              <textarea
+                value={validateModal.admin_note || ''}
                 onChange={e => setValidateModal(prev => ({ ...prev, admin_note: e.target.value }))}
                 placeholder="Misal: Baju luntur dipisah, atau berat timbangan beda..."
                 style={{ width: '100%', minHeight: 60, padding: '8px 12px', borderRadius: 8, border: '1px solid var(--border)', fontSize: '0.85rem', resize: 'vertical' }}
@@ -1234,8 +1252,8 @@ const AdminDashboard = () => {
                   <div className="detail-value" style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                     {customerModal.phone || '-'}
                     {customerModal.phone && (
-                      <a 
-                        href={`https://wa.me/${formatWA(customerModal.phone)}`} 
+                      <a
+                        href={`https://wa.me/${formatWA(customerModal.phone)}`}
                         target="_blank" rel="noreferrer"
                         className="btn btn-sm"
                         style={{ background: '#25D366', color: 'white', padding: '4px 8px', fontSize: '0.75rem', display: 'inline-flex', alignItems: 'center', gap: 4, textDecoration: 'none' }}
@@ -1247,7 +1265,7 @@ const AdminDashboard = () => {
                 </div>
                 <div className="detail-item"><div className="detail-label">Total Order</div><div className="detail-value" style={{ fontWeight: 700, color: 'var(--blue)' }}>{customerModal.total_orders} order</div></div>
               </div>
-              
+
               {(() => {
                 const addresses = [...new Set(customerOrders.filter(o => o.address).map(o => o.address))];
                 if (addresses.length > 0) {

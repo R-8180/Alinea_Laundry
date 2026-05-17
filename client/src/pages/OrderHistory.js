@@ -11,7 +11,10 @@ const categoryLabels = { cuci_setrika: 'Cuci Setrika', cuci_lipat: 'Cuci Lipat',
 const resolveFileUrl = (url) => {
   if (!url) return null;
   if (url.startsWith('http://') || url.startsWith('https://')) return url;
-  const base = process.env.REACT_APP_API_URL || '';
+  let base = process.env.REACT_APP_API_URL || '';
+  if (!base && typeof window !== 'undefined' && window.location.hostname === 'localhost') {
+    base = 'http://localhost:5000';
+  }
   return `${base}${url}`;
 };
 

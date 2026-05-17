@@ -34,7 +34,8 @@ const OrderForm = () => {
   const [addressNote, setAddressNote] = useState('');
   const [showAddAddress, setShowAddAddress] = useState(false);
   const [newAddress, setNewAddress] = useState({ label: '', address: '', is_primary: false });
-  const [notes, setNotes] = useState('');
+  const [courierNotes, setCourierNotes] = useState('');
+  const [adminNotes, setAdminNotes] = useState('');
   
   // NEW: Services state
   const [selectedService, setSelectedService] = useState(null);
@@ -142,7 +143,9 @@ const OrderForm = () => {
     setSubmitting(true);
     const formData = new FormData();
     formData.append('address_id', selectedAddressId);
-    formData.append('notes', addressNote ? `${addressNote}${notes ? ' | ' + notes : ''}` : notes);
+    formData.append('notes', adminNotes);
+    const fullCourierNotes = addressNote ? `[Ket. Alamat: ${addressNote}]${courierNotes ? ' ' + courierNotes : ''}` : courierNotes;
+    formData.append('courier_notes', fullCourierNotes);
     formData.append('service_speed', selectedService.type); // reguler or express
     formData.append('service_id', selectedService.id); // NEW
     
@@ -492,8 +495,10 @@ const OrderForm = () => {
       {/* 6. Catatan & Foto */}
       {selectedService && (
         <SectionCard icon={<FiFileText />} title="Catatan & Foto">
-          <label style={{ fontSize: '0.8rem', color: '#64748b', display: 'block', marginBottom: 4 }}>Catatan untuk Kurir</label>
-          <textarea className="form-input" placeholder="Misal: jemput jam 10 pagi, telepon dulu sebelum datang" value={notes} onChange={e => setNotes(e.target.value)} rows={2} style={{ marginBottom: 14 }} />
+          <label style={{ fontSize: '0.8rem', color: '#64748b', display: 'block', marginBottom: 4 }}>📋 Catatan Pesanan <span style={{ color: '#94a3b8' }}>(untuk Admin/Laundry)</span></label>
+          <textarea className="form-input" placeholder="Misal: baju putih jangan dicampur, ada noda di celana" value={adminNotes} onChange={e => setAdminNotes(e.target.value)} rows={2} style={{ marginBottom: 14 }} />
+          <label style={{ fontSize: '0.8rem', color: '#64748b', display: 'block', marginBottom: 4 }}>🚚 Catatan untuk Kurir <span style={{ color: '#94a3b8' }}>(penjemputan/pengantaran)</span></label>
+          <textarea className="form-input" placeholder="Misal: jemput jam 10 pagi, telepon dulu sebelum datang" value={courierNotes} onChange={e => setCourierNotes(e.target.value)} rows={2} style={{ marginBottom: 14 }} />
           <label style={{ fontSize: '0.8rem', color: '#64748b', display: 'block', marginBottom: 6 }}>
             <FiCamera style={{ marginRight: 4 }} />Foto Barang <span style={{ color: '#94a3b8' }}>(opsional)</span>
           </label>

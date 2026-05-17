@@ -20,6 +20,7 @@ const createOrderValidation = [
   body('items.*.name').trim().isLength({ min: 1, max: 100 }).escape().withMessage('Nama item tidak valid'),
   body('address_id').optional().isInt().toInt(),
   body('notes').optional().trim().isLength({ max: 500 }).escape(),
+  body('courier_notes').optional().trim().isLength({ max: 500 }).escape(),
   body('service_speed').optional().isIn(['reguler', 'express']),
 ];
 

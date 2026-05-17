@@ -139,7 +139,7 @@ router.post('/orders/create', async (req, res) => {
 
   const crypto = require('crypto');
   const d = new Date();
-  const yymmdd = `${String(d.getFullYear()).slice(-2)}${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}`;
+  const yymmdd = `${String(d.getFullYear()).slice(-2)}${String(d.getMonth() + 1).padStart(2, '0')}${String(d.getDate()).padStart(2, '0')}`;
   const rand = crypto.randomBytes(3).toString('hex').toUpperCase();
   const orderCode = `ORD-${yymmdd}-${rand}`;
 
@@ -258,15 +258,15 @@ router.put('/orders/:id/assign', async (req, res) => {
         const w = parseFloat(item.weight) || 0;
         const qty = parseInt(item.qty_items) || 0;
         const ppu = parseInt(item.price_per_unit) || 0;
-        subtotal += item.service_type === 'kiloan' 
-          ? w * (ppu || 7000) 
+        subtotal += item.service_type === 'kiloan'
+          ? w * (ppu || 7000)
           : qty * (ppu || 5000);
       });
       const total = subtotal + (express_fee || 0);
-      
+
       await client.query('UPDATE orders SET total_price = $1 WHERE id = $2', [total, orderId]);
       const r = await client.query('SELECT estimated_start FROM orders WHERE id = $1', [orderId]);
-      
+
       await client.query('COMMIT');
       res.json({ message: 'Data diperbarui', total, estimated_start: r.rows[0]?.estimated_start || null });
     } else {
@@ -303,7 +303,7 @@ router.put('/orders/:id/validate-items', async (req, res) => {
     await client.query('BEGIN');
 
     const validItems = items.filter(i => i.item_id);
-    
+
     for (const item of validItems) {
       if (item.manual_price !== undefined) {
         const isKiloan = item.weight !== undefined;
@@ -311,7 +311,7 @@ router.put('/orders/:id/validate-items', async (req, res) => {
         // Cast user inputs: price to integer, weight to float, qty to integer
         const priceInt = Math.round(parseFloat(item.manual_price)) || 0;
         const value = isKiloan ? (parseFloat(item.weight) || 0) : (parseInt(item.qty) || 1);
-        
+
         await client.query(
           `UPDATE order_items SET price_per_unit = $1, ${field} = $2 WHERE id = $3 AND order_id = $4`,
           [priceInt, value, item.item_id, orderId]
@@ -319,16 +319,16 @@ router.put('/orders/:id/validate-items', async (req, res) => {
       } else {
         const itemResult = await client.query('SELECT service_id FROM order_items WHERE id = $1', [item.item_id]);
         const serviceId = itemResult.rows[0]?.service_id;
-        
+
         if (serviceId) {
           const serviceResult = await client.query('SELECT price_per_unit FROM services WHERE id = $1', [serviceId]);
           // Cast DECIMAL price to INTEGER for order_items.price_per_unit column
-          const servicePrice = serviceResult.rows[0]?.price_per_unit 
+          const servicePrice = serviceResult.rows[0]?.price_per_unit
             ? Math.round(parseFloat(serviceResult.rows[0].price_per_unit))
             : (item.weight !== undefined ? 7000 : 5000);
           const field = item.weight !== undefined ? 'weight' : 'qty_items';
           const value = item.weight !== undefined ? (parseFloat(item.weight) || 0) : (parseInt(item.qty) || 0);
-          
+
           await client.query(
             `UPDATE order_items SET ${field} = $1, price_per_unit = $2 WHERE id = $3 AND order_id = $4`,
             [value, servicePrice, item.item_id, orderId]
@@ -362,7 +362,7 @@ router.put('/orders/:id/validate-items', async (req, res) => {
 
     const total = Math.round(subtotal + (parseFloat(express_fee) || 0));
     await client.query('UPDATE orders SET total_price = $1, admin_note = $2 WHERE id = $3', [total, admin_note || null, orderId]);
-    
+
     await client.query('COMMIT');
     res.json({ message: 'Item divalidasi', total });
   } catch (err) {

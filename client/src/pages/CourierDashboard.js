@@ -20,7 +20,10 @@ const categoryLabels = { cuci_setrika: 'Cuci Setrika', cuci_lipat: 'Cuci Lipat',
 const resolveFileUrl = (url) => {
   if (!url) return null;
   if (url.startsWith('http://') || url.startsWith('https://')) return url;
-  const base = process.env.REACT_APP_API_URL || '';
+  let base = process.env.REACT_APP_API_URL || '';
+  if (!base && typeof window !== 'undefined' && window.location.hostname === 'localhost') {
+    base = 'http://localhost:5000';
+  }
   return `${base}${url}`;
 };
 
@@ -398,7 +401,7 @@ const CourierDashboard = () => {
                 <div className="detail-item"><div className="detail-label">Nama</div><div className="detail-value">{detailModal.customer_name}</div></div>
                 <div className="detail-item"><div className="detail-label">Telepon</div><div className="detail-value">{detailModal.customer_phone || '-'}</div></div>
                 <div className="detail-item"><div className="detail-label">Alamat</div><div className="detail-value">{detailModal.customer_address}</div></div>
-                <div className="detail-item" style={{ gridColumn: '1 / -1' }}><div className="detail-label">Ket. Alamat / Catatan</div><div className="detail-value" style={{ color: 'var(--blue)', fontWeight: 600 }}>{detailModal.notes ? detailModal.notes.replace(/\[Ket\. Alamat: (.*?)\]/, '$1') : '-'}</div></div>
+                <div className="detail-item" style={{ gridColumn: '1 / -1' }}><div className="detail-label">Catatan untuk Kurir</div><div className="detail-value" style={{ color: 'var(--blue)', fontWeight: 600 }}>{detailModal.courier_notes || '-'}</div></div>
                 <div className="detail-item"><div className="detail-label">Layanan</div><div className="detail-value" style={{ display: 'flex', alignItems: 'center', gap: 4 }}>{detailModal.service_speed === 'express' ? <FiZap /> : <FiPackage />} {formatServiceLabel(detailModal)}</div></div>
               </div>
               {detailModal.customer_address && (

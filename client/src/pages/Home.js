@@ -276,19 +276,29 @@ const ParfumShop = () => {
     window.open(`https://wa.me/${waNumber}?text=${encodeURIComponent(msg)}`, '_blank');
   };
   return (
-    <section id="parfum" className="section reveal">
-      <h2 className="section-title">Parfum Favorit Pilihan</h2>
-      <p className="section-desc">Pilih aroma premium yang tahan lama hingga 7 hari dan membuat pakaian lebih segar setelah dicuci.</p>
-      <div className="parfum-grid-new">
-        {parfumList.map((p, idx) => (
-          <div key={idx} className="parfum-card-new">
-            <img src={p.img} alt={p.name} className="parfum-card-img" />
-            <h3>{p.name}</h3>
-            <p className="parfum-desc">{p.desc}</p>
-            <span className="parfum-tag">{p.tag}</span>
-            <button className="btn btn-sm" onClick={() => handleBuy(p)}>Beli via WA</button>
-          </div>
-        ))}
+    <section id="parfum" className="section reveal premium-parfum-section">
+      <div className="parfum-glow-1"></div>
+      <div className="parfum-glow-2"></div>
+      <div className="parfum-content-container">
+        <h2 className="section-title text-white">Parfum Favorit Pilihan</h2>
+        <p className="section-desc text-sky-light">Pilih aroma premium yang tahan lama hingga 7 hari dan membuat pakaian lebih segar setelah dicuci.</p>
+        <div className="parfum-grid-new">
+          {parfumList.map((p, idx) => (
+            <div key={idx} className="parfum-card-new">
+              <div className="parfum-img-wrapper">
+                <img src={p.img} alt={p.name} className="parfum-card-img" />
+              </div>
+              <h3>{p.name}</h3>
+              <p className="parfum-desc">{p.desc}</p>
+              <div className="parfum-footer-row">
+                <span className="parfum-tag">{p.tag}</span>
+                <button className="btn btn-sm btn-parfum-buy" onClick={() => handleBuy(p)}>
+                  <FaWhatsapp style={{ color: '#25D366', fontSize: '1rem' }} /> Beli
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
     </section>
   );

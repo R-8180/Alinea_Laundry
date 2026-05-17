@@ -34,6 +34,7 @@ router.post('/', auth, uploadImage.single('photo'), parseItems, createOrderValid
   const userId = req.user.id;
   const address_id = req.body.address_id || null;
   const notes = req.body.notes || '';
+  const courier_notes = req.body.courier_notes || '';
   const service_speed = req.body.service_speed || 'reguler';
   const service_id = req.body.service_id || null;
   const voucher_code = req.body.voucher_code || null;
@@ -66,9 +67,9 @@ router.post('/', auth, uploadImage.single('photo'), parseItems, createOrderValid
     }
 
     const orderRes = await client.query(
-      `INSERT INTO orders (user_id, order_code, address, address_id, notes, photo_url, service_speed, voucher_code, discount, estimated_days, estimated_hours, estimated_start) 
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, NOW()) RETURNING id`,
-      [userId, orderCode, addressText, address_id, notes, photo_url, service_speed, voucher_code, discount, estDays, estHours]
+      `INSERT INTO orders (user_id, order_code, address, address_id, notes, courier_notes, photo_url, service_speed, voucher_code, discount, estimated_days, estimated_hours, estimated_start) 
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, NOW()) RETURNING id`,
+      [userId, orderCode, addressText, address_id, notes, courier_notes, photo_url, service_speed, voucher_code, discount, estDays, estHours]
     );
     const orderId = orderRes.rows[0].id;
 

@@ -32,7 +32,7 @@ if (isVercel) {
   storage = multer.memoryStorage();
 } else {
   // Local: use disk storage
-  const uploadDir = process.env.UPLOAD_PATH || './uploads';
+  const uploadDir = path.join(__dirname, '../uploads');
   if (!fs.existsSync(uploadDir)) {
     try { fs.mkdirSync(uploadDir, { recursive: true }); }
     catch (err) { console.error('Failed to create upload directory:', err); }
@@ -86,10 +86,15 @@ const createUploadMiddleware = (multerInstance) => ({
         if (err) return next(err);
         if (req.file && isVercel) {
           try {
-            req.file.supabaseUrl = await uploadToSupabase(req.file);
+            if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_KEY) {
+              console.warn('⚠️ SUPABASE_URL atau SUPABASE_SERVICE_KEY belum diset. Foto dilewati.');
+              req.file = null; // skip photo, but let the request continue
+            } else {
+              req.file.supabaseUrl = await uploadToSupabase(req.file);
+            }
           } catch (uploadErr) {
-            console.error('Supabase upload error:', uploadErr);
-            return next(uploadErr);
+            console.error('Supabase upload error (non-fatal):', uploadErr.message);
+            req.file = null; // skip photo, but let the request continue
           }
         }
         next();

@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { FiUser, FiMail, FiLock, FiPhone, FiMapPin, FiEye, FiEyeOff, FiCheck, FiX } from 'react-icons/fi';
+import { FiUser, FiMail, FiLock, FiPhone, FiMapPin, FiEye, FiEyeOff, FiCheck, FiX, FiArrowLeft } from 'react-icons/fi';
 import GetMyLocation from '../components/GetMyLocation';
 
 const Register = () => {
@@ -73,6 +73,9 @@ const Register = () => {
   return (
     <div className="register-page">
       <div className="register-box">
+        <Link to="/" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: '#64748b', fontSize: '0.85rem', fontWeight: 600, textDecoration: 'none', marginBottom: 14 }}>
+          <FiArrowLeft /> Kembali ke Beranda
+        </Link>
         <h2>Buat Akun Baru</h2>
         <p style={{ color: 'var(--navy-30)', fontSize: '0.9rem', marginBottom: 20 }}>
           Daftar untuk mulai menggunakan layanan Alinea Laundry

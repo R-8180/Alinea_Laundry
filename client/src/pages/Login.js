@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { FiMail, FiLock, FiEye, FiEyeOff } from 'react-icons/fi';
+import { FiMail, FiLock, FiEye, FiEyeOff, FiArrowLeft } from 'react-icons/fi';
 import { FcGoogle } from 'react-icons/fc';
 
 const ADMIN_WA_NUMBER = '6281234567890'; // Ganti dengan nomor WA admin yang sebenarnya
@@ -42,6 +42,9 @@ const Login = ({ onLogin }) => {
       </div>
 
       <div className="login-box">
+        <Link to="/" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: '#64748b', fontSize: '0.85rem', fontWeight: 600, textDecoration: 'none', marginBottom: 14 }}>
+          <FiArrowLeft /> Kembali ke Beranda
+        </Link>
         <h2>Selamat Datang Kembali!</h2>
 
         <form onSubmit={handleSubmit}>

@@ -20,14 +20,14 @@ router.get('/', async (req, res) => {
 });
 
 router.post('/', addressValidation, validate, async (req, res) => {
-  const { label, address, lat, lng } = req.body;
+  const { label, address, note, lat, lng } = req.body;
   if (!address || address.trim() === '') {
     return res.status(400).json({ message: 'Alamat wajib diisi' });
   }
   try {
     const result = await pool.query(
-      'INSERT INTO addresses (user_id, label, address, lat, lng) VALUES ($1, $2, $3, $4, $5) RETURNING id',
-      [req.user.id, label || '', address, lat || null, lng || null]
+      'INSERT INTO addresses (user_id, label, address, note, lat, lng) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id',
+      [req.user.id, label || '', address, note || '', lat || null, lng || null]
     );
     res.json({ message: 'Alamat ditambahkan', id: result.rows[0].id });
   } catch (err) {
@@ -36,11 +36,11 @@ router.post('/', addressValidation, validate, async (req, res) => {
 });
 
 router.put('/:id', addressValidation, validate, async (req, res) => {
-  const { label, address, lat, lng } = req.body;
+  const { label, address, note, lat, lng } = req.body;
   try {
     await pool.query(
-      'UPDATE addresses SET label=$1, address=$2, lat=$3, lng=$4 WHERE id=$5 AND user_id=$6',
-      [label || '', address, lat || null, lng || null, req.params.id, req.user.id]
+      'UPDATE addresses SET label=$1, address=$2, note=$3, lat=$4, lng=$5 WHERE id=$6 AND user_id=$7',
+      [label || '', address, note || '', lat || null, lng || null, req.params.id, req.user.id]
     );
     res.json({ message: 'Alamat diperbarui' });
   } catch (err) {

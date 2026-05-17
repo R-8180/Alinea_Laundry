@@ -681,7 +681,7 @@ label { font-size: 0.85rem; font-weight: 600; color: var(--text-3); }
   padding: 60px 20px;
   border-radius: var(--r-xl);
   overflow: hidden;
-  box-shadow: var(--sh-lg);
+  box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.15), 0 10px 30px rgba(0, 0, 0, 0.15);
   margin: 60px 0;
 }
 
@@ -851,7 +851,10 @@ label { font-size: 0.85rem; font-weight: 600; color: var(--text-3); }
   }
   
   .premium-parfum-section {
-    padding: 30px 12px;
+    padding: 40px 12px;
+    margin: 40px -16px;
+    border-radius: 0;
+    box-shadow: 0 -10px 20px rgba(0, 0, 0, 0.1), 0 10px 20px rgba(0, 0, 0, 0.1);
   }
   
   .parfum-img-wrapper {

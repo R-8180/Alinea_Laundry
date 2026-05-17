@@ -31,11 +31,9 @@ const SectionCard = ({ icon, title, children }) => (
 const OrderForm = () => {
   const [addresses, setAddresses] = useState([]);
   const [selectedAddressId, setSelectedAddressId] = useState('');
-  const [addressNote, setAddressNote] = useState('');
   const [showAddAddress, setShowAddAddress] = useState(false);
-  const [newAddress, setNewAddress] = useState({ label: '', address: '', is_primary: false });
+  const [newAddress, setNewAddress] = useState({ label: '', address: '', note: '', is_primary: false });
   const [courierNotes, setCourierNotes] = useState('');
-  const [adminNotes, setAdminNotes] = useState('');
   
   // NEW: Services state
   const [selectedService, setSelectedService] = useState(null);
@@ -121,7 +119,7 @@ const OrderForm = () => {
     alert('Alamat disimpan');
     fetchAddresses();
     setShowAddAddress(false);
-    setNewAddress({ label: '', address: '', is_primary: false });
+    setNewAddress({ label: '', address: '', note: '', is_primary: false });
   };
 
   const handleSubmit = async (e) => {
@@ -143,9 +141,7 @@ const OrderForm = () => {
     setSubmitting(true);
     const formData = new FormData();
     formData.append('address_id', selectedAddressId);
-    formData.append('notes', adminNotes);
-    const fullCourierNotes = addressNote ? `[Ket. Alamat: ${addressNote}]${courierNotes ? ' ' + courierNotes : ''}` : courierNotes;
-    formData.append('courier_notes', fullCourierNotes);
+    formData.append('courier_notes', courierNotes);
     formData.append('service_speed', selectedService.type); // reguler or express
     formData.append('service_id', selectedService.id); // NEW
     
@@ -247,29 +243,22 @@ const OrderForm = () => {
           style={{ width: '100%', marginBottom: 12 }}
         >
           <option value="">-- Pilih Alamat --</option>
-          {addresses.map(a => <option key={a.id} value={a.id}>{a.is_primary ? '⭐ ' : ''}{a.label} — {a.address}</option>)}
+          {addresses.map(a => (
+            <option key={a.id} value={a.id}>
+              {a.is_primary ? '⭐ ' : ''}{a.label} — {a.address} {a.note ? `(${a.note})` : ''}
+            </option>
+          ))}
           <option value="new">+ Tambah Alamat Baru</option>
         </select>
 
-        {/* Keterangan Alamat */}
-        <div style={{ background: '#f8faff', border: '1.5px dashed #c7d2fe', borderRadius: 10, padding: 12 }}>
-          <label style={{ fontSize: '0.78rem', color: '#6366f1', fontWeight: 600, display: 'block', marginBottom: 4 }}>
-            <FiAlertCircle style={{ marginRight: 4 }} />Keterangan Alamat <span style={{ color: '#64748b', fontWeight: 400 }}>(opsional)</span>
-          </label>
-          <input
-            type="text"
-            placeholder="Contoh: Kos warna biru, lantai 2, pagar besi"
-            value={addressNote}
-            onChange={e => setAddressNote(e.target.value)}
-            style={{ width: '100%', border: 'none', background: 'transparent', outline: 'none', fontSize: '0.87rem', color: '#1e293b' }}
-          />
-        </div>
+
 
         {showAddAddress && (
           <div style={{ marginTop: 14, padding: 14, background: '#f8faff', borderRadius: 12, border: '1px solid #e0e7ff' }}>
             <strong style={{ fontSize: '0.85rem', color: '#1e293b' }}>Alamat Baru</strong>
-            <input className="form-input" placeholder="Label (Rumah / Kos / Kantor)" value={newAddress.label} onChange={e => setNewAddress({ ...newAddress, label: e.target.value })} style={{ marginTop: 8 }} />
+            <input className="form-input" placeholder="Label (Rumah / Kos / Kantor)" value={newAddress.label} onChange={e => setNewAddress({ ...newAddress, label: e.target.value })} style={{ marginTop: 8 }} required />
             <textarea className="form-input" placeholder="Alamat lengkap" value={newAddress.address} onChange={e => setNewAddress({ ...newAddress, address: e.target.value })} rows={2} style={{ marginTop: 8 }} required />
+            <input className="form-input" placeholder="Catatan Alamat (opsional)" value={newAddress.note} onChange={e => setNewAddress({ ...newAddress, note: e.target.value })} style={{ marginTop: 8 }} />
             <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.82rem', marginTop: 8, cursor: 'pointer' }}>
               <input type="checkbox" checked={newAddress.is_primary} onChange={e => setNewAddress({ ...newAddress, is_primary: e.target.checked })} /> Jadikan alamat utama
             </label>
@@ -495,8 +484,6 @@ const OrderForm = () => {
       {/* 6. Catatan & Foto */}
       {selectedService && (
         <SectionCard icon={<FiFileText />} title="Catatan & Foto">
-          <label style={{ fontSize: '0.8rem', color: '#64748b', display: 'block', marginBottom: 4 }}>📋 Catatan Pesanan <span style={{ color: '#94a3b8' }}>(untuk Admin/Laundry)</span></label>
-          <textarea className="form-input" placeholder="Misal: baju putih jangan dicampur, ada noda di celana" value={adminNotes} onChange={e => setAdminNotes(e.target.value)} rows={2} style={{ marginBottom: 14 }} />
           <label style={{ fontSize: '0.8rem', color: '#64748b', display: 'block', marginBottom: 4 }}>🚚 Catatan untuk Kurir <span style={{ color: '#94a3b8' }}>(penjemputan/pengantaran)</span></label>
           <textarea className="form-input" placeholder="Misal: jemput jam 10 pagi, telepon dulu sebelum datang" value={courierNotes} onChange={e => setCourierNotes(e.target.value)} rows={2} style={{ marginBottom: 14 }} />
           <label style={{ fontSize: '0.8rem', color: '#64748b', display: 'block', marginBottom: 6 }}>

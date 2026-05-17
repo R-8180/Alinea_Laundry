@@ -47,9 +47,10 @@ router.post('/', auth, uploadImage.single('photo'), parseItems, createOrderValid
     
     let addressText = req.body.address || '';
     if (address_id) {
-      const addrRes = await client.query('SELECT address FROM addresses WHERE id = $1 AND user_id = $2', [address_id, userId]);
+      const addrRes = await pool.query('SELECT address, note FROM addresses WHERE id = $1 AND user_id = $2', [address_id, userId]);
       if (addrRes.rows.length === 0) throw new Error('Alamat tidak ditemukan');
-      addressText = addrRes.rows[0].address;
+      const addr = addrRes.rows[0];
+      addressText = addr.note ? `${addr.address} (${addr.note})` : addr.address;
     }
 
     const sresults = await client.query('SELECT price_per_unit, time_days, time_hours FROM services WHERE id = $1', [service_id]);

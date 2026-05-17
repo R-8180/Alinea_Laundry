@@ -11,6 +11,7 @@ const Register = () => {
     password: '',
     phone: '',
     address: '',
+    address_note: '',
     lat: null,
     lng: null,
   });
@@ -166,7 +167,7 @@ const Register = () => {
           </div>
 
           <div className="input-group">
-            <label className="input-label">Alamat</label>
+            <label className="input-label">Alamat Lengkap</label>
             <div className="input-wrapper">
               <FiMapPin className="input-icon" />
               <textarea
@@ -180,6 +181,20 @@ const Register = () => {
             </div>
             {/* Location tracking button */}
             <GetMyLocation onLocationReady={handleLocationReady} />
+          </div>
+
+          <div className="input-group">
+            <label className="input-label">Catatan Alamat <span style={{ color: '#94a3b8', fontSize: '0.8rem', fontWeight: 400 }}>(opsional)</span></label>
+            <div className="input-wrapper">
+              <FiMapPin className="input-icon" style={{ opacity: 0.5 }} />
+              <input
+                name="address_note"
+                type="text"
+                placeholder="Contoh: Kos warna biru, lantai 2"
+                value={form.address_note}
+                onChange={handleChange}
+              />
+            </div>
           </div>
 
           <button

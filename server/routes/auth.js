@@ -15,7 +15,7 @@ const SECRET = process.env.JWT_SECRET;
 
 // Register
 router.post('/register', registerLimiter, registerValidation, validate, async (req, res) => {
-  const { name, email, password, address, phone, lat, lng, is_primary } = req.body;
+  const { name, email, password, address, address_note, phone, lat, lng, is_primary } = req.body;
   
   try {
     const checkEmail = await pool.query(
@@ -39,8 +39,8 @@ router.post('/register', registerLimiter, registerValidation, validate, async (r
     
     if (address && address.trim() !== '') {
       await pool.query(
-        'INSERT INTO addresses (user_id, label, address, lat, lng, is_primary) VALUES ($1, $2, $3, $4, $5, $6)',
-        [userId, 'Rumah', address, lat || null, lng || null, is_primary || false]
+        'INSERT INTO addresses (user_id, label, address, note, lat, lng, is_primary) VALUES ($1, $2, $3, $4, $5, $6, $7)',
+        [userId, 'Rumah', address, address_note || '', lat || null, lng || null, is_primary || false]
       );
     }
     

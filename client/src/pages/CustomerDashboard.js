@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import ProfileTab from '../components/ProfileTab';
 import FloatingWA from '../components/FloatingWA';
 import axios from 'axios';
 import { Link, useNavigate } from 'react-router-dom';
@@ -94,6 +95,7 @@ const CustomerDashboard = () => {
   const [paymentModal, setPaymentModal] = useState(null);
   const [detailModal, setDetailModal] = useState(null);
   const [voucherStatus, setVoucherStatus] = useState(null);
+  const [activeTab, setActiveTab] = useState('orders');
   const navigate = useNavigate();
   const token = localStorage.getItem('token');
   const user = JSON.parse(localStorage.getItem('user') || '{}');
@@ -332,47 +334,67 @@ const CustomerDashboard = () => {
       <div className="container">
         {/* Stats singkat */}
 
-        {/* Header */}
-        <div className="dashboard-header">
-          <h2 style={{ fontFamily: 'Outfit, sans-serif', fontSize: '1.4rem', color: 'var(--navy)' }}>
-            Pesanan Aktif
-          </h2>
-          <div className="header-actions">
-            <Link to="/history" className="btn btn-secondary"><FiList /> Riwayat</Link>
-            <button className="btn" onClick={() => navigate('/order')}><FiPlus /> Order Baru</button>
-          </div>
+        {/* Header Tabs */}
+        <div style={{ display: 'flex', gap: 16, marginBottom: 20, borderBottom: '1px solid var(--border)' }}>
+          <button 
+            onClick={() => setActiveTab('orders')}
+            style={{ padding: '12px 16px', background: 'none', border: 'none', borderBottom: activeTab === 'orders' ? '2px solid var(--blue)' : '2px solid transparent', color: activeTab === 'orders' ? 'var(--blue)' : 'var(--text-3)', fontWeight: activeTab === 'orders' ? 700 : 500, cursor: 'pointer', transition: 'all 0.2s' }}>
+            Pesanan Saya
+          </button>
+          <button 
+            onClick={() => setActiveTab('profile')}
+            style={{ padding: '12px 16px', background: 'none', border: 'none', borderBottom: activeTab === 'profile' ? '2px solid var(--blue)' : '2px solid transparent', color: activeTab === 'profile' ? 'var(--blue)' : 'var(--text-3)', fontWeight: activeTab === 'profile' ? 700 : 500, cursor: 'pointer', transition: 'all 0.2s' }}>
+            Profil & Alamat
+          </button>
         </div>
 
-        {/* Voucher Info */}
-        {voucherStatus && (
-          <div className="voucher-card">
-            <div className="voucher-info">
-              <FiGift className="voucher-icon" />
-              <div>
-                <h4>Klaim Voucher Gratis!</h4>
-                <p>Dapatkan voucher menarik untuk setiap pesananmu.</p>
+        {activeTab === 'orders' ? (
+          <>
+            {/* Header Pesanan */}
+            <div className="dashboard-header">
+              <h2 style={{ fontFamily: 'Outfit, sans-serif', fontSize: '1.4rem', color: 'var(--navy)' }}>
+                Pesanan Aktif
+              </h2>
+              <div className="header-actions">
+                <Link to="/history" className="btn btn-secondary"><FiList /> Riwayat</Link>
+                <button className="btn" onClick={() => navigate('/order')}><FiPlus /> Order Baru</button>
               </div>
             </div>
-            {voucherStatus.canClaim ? (
-              <button className="btn btn-sm" onClick={claimVoucher}>🎁 Klaim Sekarang</button>
-            ) : (
-              <span className="voucher-badge">{voucherStatus.need} order lagi</span>
+
+            {/* Voucher Info */}
+            {voucherStatus && (
+              <div className="voucher-card">
+                <div className="voucher-info">
+                  <FiGift className="voucher-icon" />
+                  <div>
+                    <h4>Klaim Voucher Gratis!</h4>
+                    <p>Dapatkan voucher menarik untuk setiap pesananmu.</p>
+                  </div>
+                </div>
+                {voucherStatus.canClaim ? (
+                  <button className="btn btn-sm" onClick={claimVoucher}>🎁 Klaim Sekarang</button>
+                ) : (
+                  <span className="voucher-badge">{voucherStatus.need} order lagi</span>
+                )}
+              </div>
             )}
-          </div>
-        )}
 
-        {/* Order List */}
-        {ongoing.length === 0 && (
-          <div className="card" style={{ textAlign: 'center', padding: '40px 20px' }}>
-            <FiPackage style={{ fontSize: '2.5rem', color: 'var(--text-4)', marginBottom: 12 }} />
-            <p style={{ color: 'var(--text-3)', marginBottom: 16 }}>Belum ada order aktif.</p>
-            <button className="btn" onClick={() => navigate('/order')}><FiPlus /> Buat Order Pertama</button>
-          </div>
-        )}
+            {/* Order List */}
+            {ongoing.length === 0 && (
+              <div className="card" style={{ textAlign: 'center', padding: '40px 20px' }}>
+                <FiPackage style={{ fontSize: '2.5rem', color: 'var(--text-4)', marginBottom: 12 }} />
+                <p style={{ color: 'var(--text-3)', marginBottom: 16 }}>Belum ada order aktif.</p>
+                <button className="btn" onClick={() => navigate('/order')}><FiPlus /> Buat Order Pertama</button>
+              </div>
+            )}
 
-        {ongoing.map(order => (
-          <OrderCard key={order.id} order={order} />
-        ))}
+            {ongoing.map(order => (
+              <OrderCard key={order.id} order={order} />
+            ))}
+          </>
+        ) : (
+          <ProfileTab user={user} />
+        )}
 
         {/* Modal Pembayaran */}
         {paymentModal && (

@@ -146,6 +146,7 @@ const AdminDashboard = () => {
   const [customers, setCustomers] = useState([]);
   const [customerModal, setCustomerModal] = useState(null);
   const [customerOrders, setCustomerOrders] = useState([]);
+  const [customerAddresses, setCustomerAddresses] = useState([]);
   const [addOrderModal, setAddOrderModal] = useState(null);
   const [newOrderForm, setNewOrderForm] = useState({ address: '', notes: '', service_speed: 'reguler', items: [{ service_type: 'kiloan', name: '' }] });
   const [couriers, setCouriers] = useState([]);
@@ -242,9 +243,16 @@ const AdminDashboard = () => {
   const openCustomerDetail = async (customer) => {
     setCustomerModal(customer);
     try {
-      const res = await axios.get(`/api/admin/customers/${customer.id}/orders`, { headers: h });
-      setCustomerOrders(res.data);
-    } catch { setCustomerOrders([]); }
+      const [resOrders, resAddresses] = await Promise.all([
+        axios.get(`/api/admin/customers/${customer.id}/orders`, { headers: h }),
+        axios.get(`/api/admin/customers/${customer.id}/addresses`, { headers: h })
+      ]);
+      setCustomerOrders(resOrders.data);
+      setCustomerAddresses(resAddresses.data);
+    } catch { 
+      setCustomerOrders([]); 
+      setCustomerAddresses([]);
+    }
   };
 
   const handleAddOrder = async () => {
@@ -1267,24 +1275,22 @@ const AdminDashboard = () => {
                 <div className="detail-item"><div className="detail-label">Total Order</div><div className="detail-value" style={{ fontWeight: 700, color: 'var(--blue)' }}>{customerModal.total_orders} order</div></div>
               </div>
 
-              {(() => {
-                const addresses = [...new Set(customerOrders.filter(o => o.address).map(o => o.address))];
-                if (addresses.length > 0) {
-                  return (
-                    <div className="detail-item" style={{ marginTop: 12, background: 'var(--sky-faint)', borderRadius: 'var(--r-md)', padding: '10px 12px' }}>
-                      <div className="detail-label">Alamat Disimpan ({addresses.length})</div>
-                      <div className="detail-value">
-                        <ul style={{ paddingLeft: 16, margin: '4px 0 0', fontSize: '0.85rem' }}>
-                          {addresses.map((addr, idx) => (
-                            <li key={idx} style={{ marginBottom: 4 }}>{addr}</li>
-                          ))}
-                        </ul>
-                      </div>
-                    </div>
-                  );
-                }
-                return null;
-              })()}
+              {customerAddresses && customerAddresses.length > 0 && (
+                <div className="detail-item" style={{ marginTop: 12, background: 'var(--sky-faint)', borderRadius: 'var(--r-md)', padding: '10px 12px' }}>
+                  <div className="detail-label">Alamat Tersimpan ({customerAddresses.length})</div>
+                  <div className="detail-value">
+                    <ul style={{ paddingLeft: 16, margin: '4px 0 0', fontSize: '0.85rem' }}>
+                      {customerAddresses.map((addr) => (
+                        <li key={addr.id} style={{ marginBottom: 4 }}>
+                          <strong>{addr.label || 'Rumah'}</strong> — {addr.address}
+                          {addr.note && <span style={{ color: 'var(--text-3)' }}> ({addr.note})</span>}
+                          {addr.is_primary && <span style={{ fontSize: '0.65rem', background: '#fef3c7', color: '#b45309', padding: '2px 4px', borderRadius: 4, marginLeft: 6, fontWeight: 700 }}>UTAMA</span>}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+              )}
 
               <button className="btn btn-sm" style={{ marginTop: 12 }} onClick={() => { setAddOrderModal(customerModal); setNewOrderForm({ address: '', notes: '', service_speed: 'reguler', items: [{ service_type: 'kiloan', name: '' }] }); }}>
                 <FiPlus /> Tambah Order

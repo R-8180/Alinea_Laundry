@@ -111,6 +111,20 @@ router.get('/customers', async (req, res) => {
   }
 });
 
+// GET alamat per customer
+router.get('/customers/:id/addresses', async (req, res) => {
+  try {
+    const result = await db.query(
+      'SELECT id, label, address, note, is_primary FROM addresses WHERE user_id = $1 ORDER BY created_at DESC',
+      [req.params.id]
+    );
+    res.json(result.rows);
+  } catch (err) {
+    console.error('Get customer addresses error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // GET riwayat order singkat per customer
 router.get('/customers/:id/orders', async (req, res) => {
   const { id } = req.params;

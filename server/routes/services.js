@@ -1,148 +1,113 @@
 const express = require('express');
 const router = express.Router();
-const db = require('../db');
+const pool = require('../db');
 const auth = require('../middleware/auth');
 
-// GET semua layanan (public - untuk customer order form)
-router.get('/', (req, res) => {
-  db.query(
-    `SELECT * FROM services WHERE is_active = 1 ORDER BY 
-     FIELD(category, 'cuci_setrika', 'cuci_lipat', 'satuan'), 
-     FIELD(type, 'reguler', 'express'),
-     time_days DESC, time_hours DESC`,
-    (err, results) => {
-      if (err) return res.status(500).json({ error: err.message });
-      res.json(results);
-    }
-  );
+router.get('/', async (req, res) => {
+  try {
+    const result = await pool.query(`SELECT * FROM services WHERE is_active = true ORDER BY time_days DESC, time_hours DESC`);
+    res.json(result.rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
-// GET layanan by category
-router.get('/category/:category', (req, res) => {
-  const { category } = req.params;
-  db.query(
-    'SELECT * FROM services WHERE category = ? AND is_active = 1 ORDER BY time_days DESC, time_hours DESC',
-    [category],
-    (err, results) => {
-      if (err) return res.status(500).json({ error: err.message });
-      res.json(results);
-    }
-  );
+router.get('/category/:category', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT * FROM services WHERE category = $1 AND is_active = true ORDER BY time_days DESC, time_hours DESC', [req.params.category]);
+    res.json(result.rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
-// GET single service
-router.get('/:id', (req, res) => {
-  db.query('SELECT * FROM services WHERE id = ?', [req.params.id], (err, results) => {
-    if (err) return res.status(500).json({ error: err.message });
-    if (!results.length) return res.status(404).json({ message: 'Layanan tidak ditemukan' });
-    res.json(results[0]);
-  });
+router.get('/:id', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT * FROM services WHERE id = $1', [req.params.id]);
+    if (!result.rows.length) return res.status(404).json({ message: 'Layanan tidak ditemukan' });
+    res.json(result.rows[0]);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
-// === ADMIN ROUTES (Protected) ===
 router.use(auth);
 router.use((req, res, next) => {
   if (req.user.role !== 'admin') return res.status(403).json({ message: 'Akses ditolak' });
   next();
 });
 
-// GET all services (including inactive) - Admin only
-router.get('/admin/all', (req, res) => {
-  db.query(
-    `SELECT * FROM services ORDER BY 
-     FIELD(category, 'cuci_setrika', 'cuci_lipat', 'satuan'),
-     is_active DESC,
-     FIELD(type, 'reguler', 'express'),
-     time_days DESC, time_hours DESC`,
-    (err, results) => {
-      if (err) return res.status(500).json({ error: err.message });
-      res.json(results);
-    }
-  );
-});
-
-// POST create new service
-router.post('/', (req, res) => {
-  const { category, name, price, unit, time_days, time_hours, type } = req.body;
-  
-  if (!category || !name || !price || !unit) {
-    return res.status(400).json({ message: 'Data tidak lengkap' });
+router.get('/admin/all', async (req, res) => {
+  try {
+    const result = await pool.query(`SELECT * FROM services ORDER BY is_active DESC, time_days DESC, time_hours DESC`);
+    res.json(result.rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
-
-  db.query(
-    `INSERT INTO services (category, name, price_per_unit, unit, time_days, time_hours, type) 
-     VALUES (?, ?, ?, ?, ?, ?, ?)`,
-    [category, name, price, unit, time_days || 0, time_hours || 0, type || 'reguler'],
-    (err, result) => {
-      if (err) return res.status(500).json({ error: err.message });
-      res.json({ 
-        message: 'Layanan berhasil ditambahkan', 
-        id: result.insertId 
-      });
-    }
-  );
 });
 
-// PUT update service
-router.put('/:id', (req, res) => {
-  const { name, price, unit, time_days, time_hours, type, is_active } = req.body;
-  const serviceId = req.params.id;
+router.post('/', async (req, res) => {
+  const { category, name, price, unit, time_days, time_hours, type } = req.body;
+  if (!category || !name || !price || !unit) return res.status(400).json({ message: 'Data tidak lengkap' });
 
+  try {
+    const result = await pool.query(
+      `INSERT INTO services (category, name, price_per_unit, unit_type, time_days, time_hours, type) 
+       VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id`,
+      [category, name, price, unit, time_days || 0, time_hours || 0, type || 'reguler']
+    );
+    res.json({ message: 'Layanan berhasil ditambahkan', id: result.rows[0].id });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.put('/:id', async (req, res) => {
+  const { name, price, unit, time_days, time_hours, type, is_active } = req.body;
   const updates = [];
   const values = [];
+  let index = 1;
 
-  if (name !== undefined) { updates.push('name = ?'); values.push(name); }
-  if (price !== undefined) { updates.push('price_per_unit = ?'); values.push(price); }
-  if (unit !== undefined) { updates.push('unit = ?'); values.push(unit); }
-  if (time_days !== undefined) { updates.push('time_days = ?'); values.push(time_days); }
-  if (time_hours !== undefined) { updates.push('time_hours = ?'); values.push(time_hours); }
-  if (type !== undefined) { updates.push('type = ?'); values.push(type); }
-  if (is_active !== undefined) { updates.push('is_active = ?'); values.push(is_active ? 1 : 0); }
+  if (name !== undefined) { updates.push(`name = $${index++}`); values.push(name); }
+  if (price !== undefined) { updates.push(`price_per_unit = $${index++}`); values.push(price); }
+  if (unit !== undefined) { updates.push(`unit_type = $${index++}`); values.push(unit); }
+  if (time_days !== undefined) { updates.push(`time_days = $${index++}`); values.push(time_days); }
+  if (time_hours !== undefined) { updates.push(`time_hours = $${index++}`); values.push(time_hours); }
+  if (type !== undefined) { updates.push(`type = $${index++}`); values.push(type); }
+  if (is_active !== undefined) { updates.push(`is_active = $${index++}`); values.push(is_active); }
 
-  if (updates.length === 0) {
-    return res.status(400).json({ message: 'Tidak ada data yang diupdate' });
-  }
+  if (updates.length === 0) return res.status(400).json({ message: 'Tidak ada data yang diupdate' });
 
-  values.push(serviceId);
-  const sql = `UPDATE services SET ${updates.join(', ')} WHERE id = ?`;
+  values.push(req.params.id);
+  const sql = `UPDATE services SET ${updates.join(', ')} WHERE id = $${index}`;
 
-  db.query(sql, values, (err, result) => {
-    if (err) return res.status(500).json({ error: err.message });
-    if (result.affectedRows === 0) {
-      return res.status(404).json({ message: 'Layanan tidak ditemukan' });
-    }
+  try {
+    const result = await pool.query(sql, values);
+    if (result.rowCount === 0) return res.status(404).json({ message: 'Layanan tidak ditemukan' });
     res.json({ message: 'Layanan berhasil diupdate' });
-  });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
-// DELETE soft delete service (set is_active = 0)
-router.delete('/:id', (req, res) => {
-  db.query(
-    'UPDATE services SET is_active = 0 WHERE id = ?',
-    [req.params.id],
-    (err, result) => {
-      if (err) return res.status(500).json({ error: err.message });
-      if (result.affectedRows === 0) {
-        return res.status(404).json({ message: 'Layanan tidak ditemukan' });
-      }
-      res.json({ message: 'Layanan berhasil dinonaktifkan' });
-    }
-  );
+router.delete('/:id', async (req, res) => {
+  try {
+    const result = await pool.query('UPDATE services SET is_active = false WHERE id = $1', [req.params.id]);
+    if (result.rowCount === 0) return res.status(404).json({ message: 'Layanan tidak ditemukan' });
+    res.json({ message: 'Layanan berhasil dinonaktifkan' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
-// PUT reactivate service
-router.put('/:id/activate', (req, res) => {
-  db.query(
-    'UPDATE services SET is_active = 1 WHERE id = ?',
-    [req.params.id],
-    (err, result) => {
-      if (err) return res.status(500).json({ error: err.message });
-      if (result.affectedRows === 0) {
-        return res.status(404).json({ message: 'Layanan tidak ditemukan' });
-      }
-      res.json({ message: 'Layanan berhasil diaktifkan kembali' });
-    }
-  );
+router.put('/:id/activate', async (req, res) => {
+  try {
+    const result = await pool.query('UPDATE services SET is_active = true WHERE id = $1', [req.params.id]);
+    if (result.rowCount === 0) return res.status(404).json({ message: 'Layanan tidak ditemukan' });
+    res.json({ message: 'Layanan diaktifkan kembali' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 module.exports = router;

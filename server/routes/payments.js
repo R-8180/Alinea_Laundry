@@ -1,34 +1,42 @@
 const express = require('express');
 const router = express.Router();
-const db = require('../db');
+const pool = require('../db');
 const auth = require('../middleware/auth');
-const multer = require('multer');
-const path = require('path');
-
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, 'uploads/'),
-  filename: (req, file, cb) => cb(null, 'pay-' + Date.now() + path.extname(file.originalname))
-});
-const upload = multer({ storage, limits: { fileSize: 10 * 1024 * 1024 } });
+const { uploadPayment } = require('../utils/upload');
+const { uploadLimiter } = require('../middleware/rateLimiter');
 
 // Customer upload bukti pembayaran
-router.post('/:orderId/upload', auth, upload.single('proof'), (req, res) => {
+router.post('/:orderId/upload', auth, uploadLimiter, uploadPayment.single('proof'), async (req, res) => {
   if (req.user.role !== 'customer') return res.status(403).json({ message: 'Hanya customer' });
   const orderId = req.params.orderId;
+  
+  if (!req.file) {
+    return res.status(400).json({ message: 'File bukti pembayaran tidak ditemukan' });
+  }
+  
   const fileUrl = `/uploads/${req.file.filename}`;
 
-  db.query(
-    'INSERT INTO payments (order_id, payment_proof) VALUES (?, ?) ON DUPLICATE KEY UPDATE payment_proof = ?',
-    [orderId, fileUrl, fileUrl],
-    (err) => {
-      if (err) return res.status(500).json({ error: err.message });
-      // Update payment_status di orders (tidak otomatis paid, hanya menandakan sudah upload)
-      db.query('UPDATE orders SET payment_status = "pending" WHERE id = ?', [orderId], (err) => {
-        if (err) return res.status(500).json({ error: err.message });
-        res.json({ message: 'Bukti pembayaran diupload' });
-      });
-    }
-  );
+  try {
+    // Start transaction if needed, but here simple queries are fine
+    // PostgreSQL UPSERT equivalent
+    await pool.query(
+      `INSERT INTO payments (order_id, payment_proof) 
+       VALUES ($1, $2) 
+       ON CONFLICT (order_id) 
+       DO UPDATE SET payment_proof = $3`,
+      [orderId, fileUrl, fileUrl]
+    );
+
+    await pool.query(
+      'UPDATE orders SET payment_status = $1 WHERE id = $2',
+      ['pending', orderId]
+    );
+
+    res.json({ message: 'Bukti pembayaran diupload' });
+  } catch (err) {
+    console.error('Payment upload error:', err);
+    res.status(500).json({ error: 'Server error' });
+  }
 });
 
 module.exports = router;

@@ -1,69 +1,107 @@
 const express = require('express');
 const router = express.Router();
-const db = require('../db');
+const pool = require('../db');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const SECRET = process.env.JWT_SECRET || 'alinea-secret-key';
+const { registerValidation, loginValidation, validate } = require('../utils/validators');
+const { loginLimiter, registerLimiter } = require('../middleware/rateLimiter');
+const authMiddleware = require('../middleware/auth');
+
+if (!process.env.JWT_SECRET) {
+  throw new Error('JWT_SECRET must be defined');
+}
+
+const SECRET = process.env.JWT_SECRET;
 
 // Register
-router.post('/register', async (req, res) => {
+router.post('/register', registerLimiter, registerValidation, validate, async (req, res) => {
   const { name, email, password, address, phone, lat, lng, is_primary } = req.body;
+  
   try {
-    const hash = await bcrypt.hash(password, 10);
-    db.query(
-      'INSERT INTO users (name, email, password, role, address, phone) VALUES (?,?,?,?,?,?)',
-      [name, email, hash, 'customer', address || '', phone],
-      (err, result) => {
-        if (err) return res.status(400).json({ error: err.message });
-        const userId = result.insertId;
-
-        // Jika user mengisi alamat, simpan ke tabel addresses
-        if (address && address.trim() !== '') {
-          db.query(
-            'INSERT INTO addresses (user_id, label, address, lat, lng, is_primary) VALUES (?, ?, ?, ?, ?, ?)',
-            [userId, 'Rumah', address, lat || null, lng || null, is_primary || false],
-            (err2) => {
-              if (err2) console.error('Gagal simpan alamat:', err2.message);
-              // tidak menghentikan registrasi
-            }
-          );
-        }
-        res.json({ message: 'Registrasi berhasil' });
-      }
+    const checkEmail = await pool.query(
+      'SELECT id FROM users WHERE email = $1',
+      [email]
     );
+    
+    if (checkEmail.rows.length > 0) {
+      return res.status(400).json({ message: 'Email sudah terdaftar' });
+    }
+    
+    // Hash password 12 rounds
+    const hash = await bcrypt.hash(password, 12);
+    
+    const result = await pool.query(
+      'INSERT INTO users (name, email, password, role, address, phone) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id',
+      [name, email, hash, 'customer', address || '', phone || '']
+    );
+    
+    const userId = result.rows[0].id;
+    
+    if (address && address.trim() !== '') {
+      await pool.query(
+        'INSERT INTO addresses (user_id, label, address, lat, lng, is_primary) VALUES ($1, $2, $3, $4, $5, $6)',
+        [userId, 'Rumah', address, lat || null, lng || null, is_primary || false]
+      );
+    }
+    
+    res.status(201).json({ message: 'Registrasi berhasil' });
   } catch (err) {
+    console.error('Registration error:', err);
     res.status(500).json({ error: 'Server error' });
   }
 });
 
 // Login
-router.post('/login', (req, res) => {
+router.post('/login', loginLimiter, loginValidation, validate, async (req, res) => {
   const { email, password } = req.body;
-  db.query('SELECT * FROM users WHERE email = ?', [email], async (err, results) => {
-    if (err) return res.status(500).json({ error: err.message });
-    if (results.length === 0) return res.status(401).json({ message: 'Email tidak ditemukan' });
-
-    const user = results[0];
+  
+  try {
+    const result = await pool.query(
+      'SELECT id, email, password, role, name FROM users WHERE email = $1',
+      [email]
+    );
+    
+    if (result.rows.length === 0) {
+      return res.status(401).json({ message: 'Email atau password salah' });
+    }
+    
+    const user = result.rows[0];
     const match = await bcrypt.compare(password, user.password);
-    if (!match) return res.status(401).json({ message: 'Password salah' });
-
+    
+    if (!match) {
+      return res.status(401).json({ message: 'Email atau password salah' });
+    }
+    
     const token = jwt.sign(
       { id: user.id, email: user.email, role: user.role },
       SECRET,
-      { expiresIn: '1d' }
+      { expiresIn: '6h' } // 6 hours
     );
+    
     res.json({ token, user: { id: user.id, name: user.name, role: user.role } });
-  });
+  } catch (err) {
+    console.error('Login error:', err);
+    res.status(500).json({ error: 'Server error' });
+  }
 });
 
-const authMiddleware = require('../middleware/auth');
-
-router.get('/me', authMiddleware, (req, res) => {
-  db.query('SELECT id, name, email, role, points, address, phone FROM users WHERE id = ?', [req.user.id], (err, results) => {
-    if (err) return res.status(500).json({ error: err.message });
-    if (results.length === 0) return res.status(404).json({ message: 'User tidak ditemukan' });
-    res.json(results[0]);
-  });
+// Get current user
+router.get('/me', authMiddleware, async (req, res) => {
+  try {
+    const result = await pool.query(
+      'SELECT id, name, email, role, points, address, phone FROM users WHERE id = $1',
+      [req.user.id]
+    );
+    
+    if (result.rows.length === 0) {
+      return res.status(404).json({ message: 'User tidak ditemukan' });
+    }
+    
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error('Get user error:', err);
+    res.status(500).json({ error: 'Server error' });
+  }
 });
 
 module.exports = router;

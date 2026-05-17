@@ -160,9 +160,9 @@ router.get('/stats', async (req, res) => {
   try {
     const result = await pool.query(
       `SELECT 
-         (SELECT COUNT(*) FROM orders WHERE courier_id = $1 AND status != 'selesai') AS active,
-         (SELECT COUNT(*) FROM orders WHERE courier_id = $2 AND DATE(created_at) = $3) AS today_total,
-         (SELECT COUNT(*) FROM orders WHERE courier_id = $4 AND status = 'selesai' AND DATE(created_at) = $5) AS today_delivered
+         (SELECT COUNT(*) FROM orders WHERE courier_id = $1 AND status != 'selesai')::integer AS active,
+         (SELECT COUNT(*) FROM orders WHERE courier_id = $2 AND created_at::date = $3::date)::integer AS today_total,
+         (SELECT COUNT(*) FROM orders WHERE courier_id = $4 AND status = 'selesai' AND created_at::date = $5::date)::integer AS today_delivered
       `,
       [req.user.id, req.user.id, today, req.user.id, today]
     );

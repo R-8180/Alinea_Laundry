@@ -52,9 +52,10 @@ router.post('/', auth, uploadImage.single('photo'), parseItems, createOrderValid
     }
 
     const sresults = await client.query('SELECT price_per_unit, time_days, time_hours FROM services WHERE id = $1', [service_id]);
-    const estDays = sresults.rows.length > 0 ? sresults.rows[0].time_days : 0;
-    const estHours = sresults.rows.length > 0 ? sresults.rows[0].time_hours : 0;
-    const realPrice = sresults.rows.length > 0 ? sresults.rows[0].price_per_unit : null;
+    const estDays = sresults.rows.length > 0 ? parseInt(sresults.rows[0].time_days) || 0 : 0;
+    const estHours = sresults.rows.length > 0 ? parseInt(sresults.rows[0].time_hours) || 0 : 0;
+    // Cast DECIMAL price from services to INTEGER (order_items.price_per_unit is INTEGER)
+    const realPrice = sresults.rows.length > 0 ? Math.round(parseFloat(sresults.rows[0].price_per_unit)) : null;
 
     let discount = 0;
     if (voucher_code) {
@@ -76,7 +77,7 @@ router.post('/', auth, uploadImage.single('photo'), parseItems, createOrderValid
       await client.query(
         `INSERT INTO order_items (order_id, service_id, service_type, name, notes, weight, qty_items, price_per_unit, parfum, parfum_price) 
          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
-        [orderId, service_id || null, item.service_type, item.name || '', item.notes || '', 0, 0, price, item.parfum || '', 0]
+        [orderId, service_id || null, item.service_type, item.name || '', item.notes || '', 0, 0, Math.round(price), item.parfum || '', 0]
       );
     }
 

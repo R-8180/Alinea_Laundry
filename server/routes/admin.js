@@ -2,14 +2,7 @@ const express = require('express');
 const router = express.Router();
 const db = require('../db'); // db is pg.Pool
 const auth = require('../middleware/auth');
-const multer = require('multer');
-const path = require('path');
-
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, 'uploads/'),
-  filename: (req, file, cb) => cb(null, 'complete-' + Date.now() + path.extname(file.originalname))
-});
-const upload = multer({ storage, limits: { fileSize: 5 * 1024 * 1024 } });
+const { uploadDelivery } = require('../utils/upload');
 
 router.use(auth);
 router.use((req, res, next) => {
@@ -310,7 +303,10 @@ router.put('/orders/:id/validate-items', async (req, res) => {
         
         if (serviceId) {
           const serviceResult = await client.query('SELECT price_per_unit FROM services WHERE id = $1', [serviceId]);
-          const servicePrice = serviceResult.rows[0]?.price_per_unit || (item.weight !== undefined ? 7000 : 5000);
+          // Cast DECIMAL price to INTEGER for order_items.price_per_unit column
+          const servicePrice = serviceResult.rows[0]?.price_per_unit 
+            ? Math.round(parseFloat(serviceResult.rows[0].price_per_unit))
+            : (item.weight !== undefined ? 7000 : 5000);
           const field = item.weight !== undefined ? 'weight' : 'qty_items';
           const value = item.weight !== undefined ? item.weight : item.qty;
           
@@ -375,7 +371,7 @@ router.put('/orders/:id/status', async (req, res) => {
 });
 
 // PUT admin selesaikan pesanan + upload foto (opsional)
-router.put('/orders/:id/complete', upload.single('photo'), async (req, res) => {
+router.put('/orders/:id/complete', uploadDelivery.single('photo'), async (req, res) => {
   const orderId = req.params.id;
   const photoUrl = req.file ? `/uploads/${req.file.filename}` : null;
 

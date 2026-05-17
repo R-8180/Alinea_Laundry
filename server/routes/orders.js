@@ -13,12 +13,22 @@ function generateOrderCode() {
   return `ORD-${yymmdd}-${rand}`;
 }
 
+const parseItems = (req, res, next) => {
+  if (req.body.items && typeof req.body.items === 'string') {
+    try {
+      req.body.items = JSON.parse(req.body.items);
+    } catch (err) {
+      // ignore and let express-validator catch it
+    }
+  }
+  next();
+};
+
 // POST – Buat order
-router.post('/', auth, uploadImage.single('photo'), createOrderValidation, validate, async (req, res) => {
+router.post('/', auth, uploadImage.single('photo'), parseItems, createOrderValidation, validate, async (req, res) => {
   if (req.user.role !== 'customer') return res.status(403).json({ message: 'Hanya customer' });
 
-  let items;
-  try { items = JSON.parse(req.body.items); } catch { items = req.body.items; }
+  const items = req.body.items;
   if (!Array.isArray(items) || items.length === 0) return res.status(400).json({ message: 'Minimal satu item' });
 
   const userId = req.user.id;

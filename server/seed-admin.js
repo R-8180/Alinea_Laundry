@@ -35,6 +35,19 @@ async function seed() {
     } else {
       console.log('ℹ️ Akun Admin sudah ada di database.');
     }
+
+    console.log('⏳ Memasukkan data Pelanggan/User (bagas@mail.com)...');
+    // Cek Pelanggan 1
+    const checkCustomer1 = await client.query('SELECT id FROM users WHERE email = $1', ['bagas@mail.com']);
+    if (checkCustomer1.rows.length === 0) {
+      await client.query(`
+        INSERT INTO users (name, email, password, role, address, phone, points)
+        VALUES ('Bagas Customer', 'bagas@mail.com', $1, 'customer', 'Jl. Taman Siswa No.50 Semarang', '081227884654', 100)
+      `, [hashedPassword]);
+      console.log('✅ Akun Pelanggan (bagas@mail.com) berhasil dibuat!');
+    } else {
+      console.log('ℹ️ Akun Pelanggan (bagas@mail.com) sudah ada di database.');
+    }
     
     console.log('⏳ Memasukkan data Kurir Uji Coba...');
     // Cek Kurir 1

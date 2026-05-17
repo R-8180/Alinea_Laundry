@@ -957,13 +957,6 @@ const AdminDashboard = () => {
                   <div style={{ fontSize: '0.85rem', color: '#1e40af', whiteSpace: 'pre-wrap' }}>{detailModal.notes}</div>
                 </div>
               )}
-              {/* Catatan untuk Kurir */}
-              {detailModal.courier_notes && (
-                <div style={{ marginTop: 8, padding: '12px', background: '#f0fdf4', borderRadius: 8, border: '1px solid #bbf7d0' }}>
-                  <div style={{ fontSize: '0.75rem', fontWeight: 700, color: '#16a34a', marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.05em' }}>🚚 Catatan untuk Kurir</div>
-                  <div style={{ fontSize: '0.85rem', color: '#166534', whiteSpace: 'pre-wrap' }}>{detailModal.courier_notes}</div>
-                </div>
-              )}
               {/* Catatan Tambahan Admin */}
               {detailModal.admin_note && (
                 <div style={{ marginTop: 8, padding: '12px', background: '#f8fafc', borderRadius: 8, border: '1px solid #cbd5e1' }}>

@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const db = require('../db'); // db is pg.Pool
 const auth = require('../middleware/auth');
-const { uploadDelivery } = require('../utils/upload');
+const { uploadDelivery, getFileUrl } = require('../utils/upload');
 
 router.use(auth);
 router.use((req, res, next) => {
@@ -383,7 +383,7 @@ router.put('/orders/:id/status', async (req, res) => {
 // PUT admin selesaikan pesanan + upload foto (opsional)
 router.put('/orders/:id/complete', uploadDelivery.single('photo'), async (req, res) => {
   const orderId = req.params.id;
-  const photoUrl = req.file ? `/uploads/${req.file.filename}` : null;
+  const photoUrl = getFileUrl(req.file);
 
   const updates = ['status = $1'];
   const values = ['selesai'];

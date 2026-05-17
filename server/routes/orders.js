@@ -3,7 +3,7 @@ const router = express.Router();
 const pool = require('../db');
 const auth = require('../middleware/auth');
 const crypto = require('crypto');
-const { uploadImage } = require('../utils/upload');
+const { uploadImage, getFileUrl } = require('../utils/upload');
 const { createOrderValidation, validate } = require('../utils/validators');
 
 function generateOrderCode() {
@@ -37,7 +37,7 @@ router.post('/', auth, uploadImage.single('photo'), parseItems, createOrderValid
   const service_speed = req.body.service_speed || 'reguler';
   const service_id = req.body.service_id || null;
   const voucher_code = req.body.voucher_code || null;
-  const photo_url = req.file ? `/uploads/${req.file.filename}` : null;
+  const photo_url = getFileUrl(req.file);
   const orderCode = generateOrderCode();
 
   const client = await pool.connect();

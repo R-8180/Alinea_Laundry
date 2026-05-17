@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const pool = require('../db');
 const auth = require('../middleware/auth');
-const { uploadPayment } = require('../utils/upload');
+const { uploadPayment, getFileUrl } = require('../utils/upload');
 const { uploadLimiter } = require('../middleware/rateLimiter');
 
 // Customer upload bukti pembayaran
@@ -10,11 +10,10 @@ router.post('/:orderId/upload', auth, uploadLimiter, uploadPayment.single('proof
   if (req.user.role !== 'customer') return res.status(403).json({ message: 'Hanya customer' });
   const orderId = req.params.orderId;
   
-  if (!req.file) {
+  const fileUrl = getFileUrl(req.file);
+  if (!fileUrl) {
     return res.status(400).json({ message: 'File bukti pembayaran tidak ditemukan' });
   }
-  
-  const fileUrl = `/uploads/${req.file.filename}`;
 
   try {
     // Start transaction if needed, but here simple queries are fine

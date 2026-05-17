@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const pool = require('../db');
 const auth = require('../middleware/auth');
-const { uploadDelivery } = require('../utils/upload');
+const { uploadDelivery, getFileUrl } = require('../utils/upload');
 
 router.use(auth);
 router.use((req, res, next) => {
@@ -119,11 +119,10 @@ router.put('/orders/:id/status', async (req, res) => {
 router.post('/orders/:id/deliver', uploadDelivery.single('photo'), async (req, res) => {
   const orderId = req.params.id;
 
-  if (!req.file) {
+  const fileUrl = getFileUrl(req.file);
+  if (!fileUrl) {
     return res.status(400).json({ message: 'Foto bukti pengantaran wajib diupload' });
   }
-
-  const fileUrl = `/uploads/${req.file.filename}`;
 
   try {
     const result = await pool.query(
@@ -143,7 +142,8 @@ router.post('/orders/:id/pickup-photo', uploadDelivery.single('photo'), async (r
   const orderId = req.params.id;
   if (!req.file) return res.status(400).json({ message: 'Foto wajib diupload' });
   
-  const fileUrl = `/uploads/${req.file.filename}`;
+  const fileUrl = getFileUrl(req.file);
+  if (!fileUrl) return res.status(400).json({ message: 'Foto gagal diproses' });
   try {
     await pool.query(
       'UPDATE orders SET photo_url = $1 WHERE id = $2 AND courier_id = $3',

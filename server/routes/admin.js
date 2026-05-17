@@ -473,7 +473,16 @@ router.get('/financial', async (req, res) => {
 // Data grafik harian
 router.get('/chart', async (req, res) => {
   const { start, end, year, month } = req.query;
-  let query = `SELECT created_at::date AS date, SUM(total_price) AS total
+  
+  let dateSelect = "created_at::date AS date";
+  let groupBy = "created_at::date";
+  
+  if (year && !month) {
+    dateSelect = "DATE_TRUNC('month', created_at)::date AS date";
+    groupBy = "DATE_TRUNC('month', created_at)";
+  }
+
+  let query = `SELECT ${dateSelect}, SUM(total_price) AS total
     FROM orders WHERE payment_status = 'paid'`;
   const params = [];
   let paramIndex = 1;
@@ -491,7 +500,7 @@ router.get('/chart', async (req, res) => {
     query += ` AND created_at >= CURRENT_DATE - INTERVAL '30 days'`;
   }
 
-  query += ' GROUP BY created_at::date ORDER BY date ASC';
+  query += ` GROUP BY ${groupBy} ORDER BY date ASC`;
 
   try {
     const result = await db.query(query, params);

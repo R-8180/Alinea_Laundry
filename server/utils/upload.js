@@ -87,14 +87,16 @@ const createUploadMiddleware = (multerInstance) => ({
         if (req.file && isVercel) {
           try {
             if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_KEY) {
-              console.warn('⚠️ SUPABASE_URL atau SUPABASE_SERVICE_KEY belum diset. Foto dilewati.');
-              req.file = null; // skip photo, but let the request continue
+              console.warn('⚠️ SUPABASE_URL atau SUPABASE_SERVICE_KEY belum diset.');
+              req.fileUploadError = 'SUPABASE_URL atau SUPABASE_SERVICE_KEY belum diset di server.';
+              req.file = null; // skip photo
             } else {
               req.file.supabaseUrl = await uploadToSupabase(req.file);
             }
           } catch (uploadErr) {
-            console.error('Supabase upload error (non-fatal):', uploadErr.message);
-            req.file = null; // skip photo, but let the request continue
+            console.error('Supabase upload error:', uploadErr.message);
+            req.fileUploadError = uploadErr.message;
+            req.file = null; // skip photo
           }
         }
         next();

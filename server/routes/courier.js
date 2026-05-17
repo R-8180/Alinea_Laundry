@@ -121,7 +121,10 @@ router.post('/orders/:id/deliver', uploadDelivery.single('photo'), async (req, r
 
   const fileUrl = getFileUrl(req.file);
   if (!fileUrl) {
-    return res.status(400).json({ message: 'Foto bukti pengantaran wajib diupload' });
+    const errorMsg = req.fileUploadError 
+      ? `Gagal mengunggah foto ke Supabase: ${req.fileUploadError}`
+      : 'Foto bukti pengantaran wajib diupload';
+    return res.status(400).json({ message: errorMsg });
   }
 
   try {
@@ -140,10 +143,20 @@ router.post('/orders/:id/deliver', uploadDelivery.single('photo'), async (req, r
 
 router.post('/orders/:id/pickup-photo', uploadDelivery.single('photo'), async (req, res) => {
   const orderId = req.params.id;
-  if (!req.file) return res.status(400).json({ message: 'Foto wajib diupload' });
+  if (!req.file) {
+    const errorMsg = req.fileUploadError 
+      ? `Gagal mengunggah foto ke Supabase: ${req.fileUploadError}`
+      : 'Foto wajib diupload';
+    return res.status(400).json({ message: errorMsg });
+  }
   
   const fileUrl = getFileUrl(req.file);
-  if (!fileUrl) return res.status(400).json({ message: 'Foto gagal diproses' });
+  if (!fileUrl) {
+    const errorMsg = req.fileUploadError 
+      ? `Gagal mengunggah foto ke Supabase: ${req.fileUploadError}`
+      : 'Foto gagal diproses';
+    return res.status(400).json({ message: errorMsg });
+  }
   try {
     await pool.query(
       'UPDATE orders SET photo_url = $1 WHERE id = $2 AND courier_id = $3',

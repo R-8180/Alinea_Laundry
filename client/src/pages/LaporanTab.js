@@ -24,8 +24,13 @@ const LaporanTab = () => {
   const [loading, setLoading] = useState(false);
   const [financial, setFinancial] = useState(null);
   const [chartData, setChartData] = useState([]);
+  const [activeIdx, setActiveIdx] = useState(null);
   const [toast, setToast] = useState(null);
   const canvasRef = useRef(null);
+
+  useEffect(() => {
+    setActiveIdx(null);
+  }, [chartData]);
 
   const showToast = (msg, type = 'success') => {
     setToast({ msg, type });
@@ -64,7 +69,7 @@ const LaporanTab = () => {
   /* ---------- Grafik Canvas ---------- */
   useEffect(() => {
     const canvas = canvasRef.current;
-    if (!canvas || !chartData.length) return;
+    if (!canvas) return;
     const ctx = canvas.getContext('2d');
     const dpr = window.devicePixelRatio || 1;
     const W = canvas.parentElement.clientWidth || 700;
@@ -74,12 +79,21 @@ const LaporanTab = () => {
     ctx.scale(dpr, dpr);
     ctx.clearRect(0, 0, W, H);
 
-    const pad = { top: 20, right: 20, bottom: 40, left: 70 };
+    if (!chartData.length) {
+      ctx.fillStyle = '#64748b';
+      ctx.font = '14px Inter, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('Tidak ada data transaksi untuk periode ini', W / 2, H / 2);
+      return;
+    }
+
+    const pad = { top: 30, right: 30, bottom: 40, left: 80 };
     const cW = W - pad.left - pad.right;
     const cH = H - pad.top - pad.bottom;
     const maxVal = Math.max(...chartData.map(d => d.total), 1);
 
-    // Grid
+    // Grid & Y labels
     ctx.strokeStyle = '#f1f5f9';
     ctx.lineWidth = 1;
     for (let i = 0; i <= 4; i++) {
@@ -91,14 +105,24 @@ const LaporanTab = () => {
       ctx.fillStyle = '#94a3b8';
       ctx.font = '11px Inter, sans-serif';
       ctx.textAlign = 'right';
-      ctx.fillText(fmtRp((i / 4) * maxVal).replace('Rp ',''), pad.left - 6, y + 4);
+      ctx.textBaseline = 'middle';
+      ctx.fillText(fmtRp((i / 4) * maxVal).replace('Rp ',''), pad.left - 8, y);
     }
 
-    // Line & area
-    const gradient = ctx.createLinearGradient(0, pad.top, 0, H - pad.bottom);
-    gradient.addColorStop(0, 'rgba(59,130,246,0.25)');
-    gradient.addColorStop(1, 'rgba(255,255,255,0)');
+    // X axis line
+    ctx.strokeStyle = '#e2e8f0';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(pad.left, pad.top + cH);
+    ctx.lineTo(W - pad.right, pad.top + cH);
+    ctx.stroke();
+
     const stepX = cW / (chartData.length - 1 || 1);
+
+    // Line and Area Gradient
+    const gradient = ctx.createLinearGradient(0, pad.top, 0, H - pad.bottom);
+    gradient.addColorStop(0, 'rgba(59,130,246,0.22)');
+    gradient.addColorStop(1, 'rgba(255,255,255,0)');
 
     ctx.beginPath();
     chartData.forEach((d, i) => {
@@ -112,10 +136,12 @@ const LaporanTab = () => {
     ctx.fillStyle = gradient;
     ctx.fill();
 
+    // Main line path
     ctx.beginPath();
     ctx.strokeStyle = '#3B82F6';
     ctx.lineWidth = 2.5;
     ctx.lineJoin = 'round';
+    ctx.lineCap = 'round';
     chartData.forEach((d, i) => {
       const x = pad.left + i * stepX;
       const y = pad.top + cH - (d.total / maxVal) * cH;
@@ -123,33 +149,150 @@ const LaporanTab = () => {
     });
     ctx.stroke();
 
-    // Dots
+    // Draw active vertical dashed line
+    if (activeIdx !== null && activeIdx < chartData.length) {
+      const dActive = chartData[activeIdx];
+      const xActive = pad.left + activeIdx * stepX;
+
+      ctx.save();
+      ctx.beginPath();
+      ctx.setLineDash([4, 4]);
+      ctx.strokeStyle = '#64748b';
+      ctx.lineWidth = 1.2;
+      ctx.moveTo(xActive, pad.top);
+      ctx.lineTo(xActive, pad.top + cH);
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    // Dots drawing
     chartData.forEach((d, i) => {
       const x = pad.left + i * stepX;
       const y = pad.top + cH - (d.total / maxVal) * cH;
+      
+      const isActive = i === activeIdx;
+      const dotRadius = isActive ? 6.5 : 4;
+      
       ctx.beginPath();
-      ctx.arc(x, y, 4, 0, Math.PI * 2);
-      ctx.fillStyle = '#3B82F6';
+      ctx.arc(x, y, dotRadius, 0, Math.PI * 2);
+      ctx.fillStyle = isActive ? '#1d4ed8' : '#3B82F6';
       ctx.fill();
-      ctx.strokeStyle = '#fff';
-      ctx.lineWidth = 2;
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = isActive ? 2.5 : 2;
       ctx.stroke();
     });
 
-    // X labels
+    // Draw active premium tooltip bubble
+    if (activeIdx !== null && activeIdx < chartData.length) {
+      const dActive = chartData[activeIdx];
+      const xActive = pad.left + activeIdx * stepX;
+      const yActive = pad.top + cH - (dActive.total / maxVal) * cH;
+
+      const text = fmtRp(dActive.total);
+      ctx.font = 'bold 11px Inter, sans-serif';
+      const textWidth = ctx.measureText(text).width;
+      const tooltipW = Math.max(textWidth + 20, 110);
+      const tooltipH = 34;
+      const tx = xActive - tooltipW / 2;
+      const ty = yActive - tooltipH - 12;
+
+      ctx.save();
+      // Drop shadow for tooltip
+      ctx.shadowColor = 'rgba(0, 0, 0, 0.25)';
+      ctx.shadowBlur = 10;
+      ctx.shadowOffsetY = 4;
+
+      // Dark slate box
+      ctx.fillStyle = 'rgba(15, 23, 42, 0.95)';
+      ctx.beginPath();
+      if (ctx.roundRect) {
+        ctx.roundRect(tx, ty, tooltipW, tooltipH, 8);
+      } else {
+        ctx.rect(tx, ty, tooltipW, tooltipH);
+      }
+      ctx.fill();
+      ctx.restore();
+
+      // Tooltip arrow pointing down
+      ctx.fillStyle = 'rgba(15, 23, 42, 0.95)';
+      ctx.beginPath();
+      ctx.moveTo(xActive - 6, ty + tooltipH);
+      ctx.lineTo(xActive + 6, ty + tooltipH);
+      ctx.lineTo(xActive, ty + tooltipH + 6);
+      ctx.closePath();
+      ctx.fill();
+
+      // Tooltip inner text
+      ctx.fillStyle = '#ffffff';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(text, xActive, ty + tooltipH / 2);
+    }
+
+    // X labels (Tanggal / Bulan)
     ctx.fillStyle = '#94a3b8';
     ctx.font = '10px Inter, sans-serif';
     ctx.textAlign = 'center';
-    const skip = Math.ceil(chartData.length / 8);
+    ctx.textBaseline = 'top';
+
+    const skip = Math.ceil(chartData.length / 7);
+
     chartData.forEach((d, i) => {
-      if (i % skip === 0 || i === chartData.length - 1) {
+      const isFirst = i === 0;
+      const isLast = i === chartData.length - 1;
+      const isDivisible = i % skip === 0;
+      const closeToEnd = (chartData.length - 1 - i) < (skip * 0.75);
+
+      if (isFirst || isLast || (isDivisible && !closeToEnd)) {
         const x = pad.left + i * stepX;
-        const label = new Date(d.date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' });
-        ctx.fillText(label, x, H - 8);
+        let label = '';
+        if (filterMode === 'year') {
+          const monthIndex = new Date(d.date).getMonth();
+          label = MONTHS_ID[monthIndex];
+        } else {
+          label = new Date(d.date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' });
+        }
+        ctx.fillText(label, x, H - pad.bottom + 12);
       }
     });
 
-  }, [chartData]);
+  }, [chartData, activeIdx, filterMode]);
+
+  const handleCanvasClick = (e) => {
+    const canvas = canvasRef.current;
+    if (!canvas || !chartData.length) return;
+
+    const rect = canvas.getBoundingClientRect();
+    const mouseX = e.clientX - rect.left;
+    const mouseY = e.clientY - rect.top;
+
+    const pad = { top: 30, right: 30, bottom: 40, left: 80 };
+    const W = rect.width;
+    const cW = W - pad.left - pad.right;
+    const stepX = cW / (chartData.length - 1 || 1);
+    const maxVal = Math.max(...chartData.map(d => d.total), 1);
+    const H = 260;
+    const cH = H - pad.top - pad.bottom;
+
+    let closestIdx = null;
+    let minDist = 30; // 30px click radius
+
+    chartData.forEach((d, i) => {
+      const x = pad.left + i * stepX;
+      const y = pad.top + cH - (d.total / maxVal) * cH;
+      const dist = Math.sqrt((mouseX - x) ** 2 + (mouseY - y) ** 2);
+      if (dist < minDist) {
+        minDist = dist;
+        closestIdx = i;
+      }
+    });
+
+    if (closestIdx !== null) {
+      setActiveIdx(closestIdx);
+    } else {
+      setActiveIdx(null);
+    }
+  };
 
   // CSV export
   const exportCSV = () => {
@@ -266,21 +409,40 @@ const LaporanTab = () => {
         <h3 style={{ fontSize: '1rem', fontWeight: 700, marginBottom: 16 }}>Grafik Pendapatan</h3>
         <div style={{ position: 'relative' }}>
           {loading && <div style={{ position: 'absolute', inset: 0, background: 'rgba(255,255,255,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 12 }}>Memuat...</div>}
-          <canvas ref={canvasRef} style={{ width: '100%', height: 260 }} />
+          <canvas 
+            ref={canvasRef} 
+            onClick={handleCanvasClick}
+            style={{ width: '100%', height: 260, cursor: 'pointer' }} 
+          />
         </div>
       </div>
 
       {/* Tables */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 16 }}>
         <div className="card">
-          <h3 style={{ fontSize: '1rem', fontWeight: 700, marginBottom: 12 }}>Laporan Harian</h3>
+          <h3 style={{ fontSize: '1rem', fontWeight: 700, marginBottom: 12 }}>
+            {filterMode === 'year' ? 'Laporan Bulanan' : 'Laporan Harian'}
+          </h3>
           <div style={{ maxHeight: 300, overflowY: 'auto' }}>
             <table className="invoice-table">
-              <thead><tr><th>Tanggal</th><th style={{ textAlign: 'right' }}>Pendapatan</th></tr></thead>
+              <thead>
+                <tr>
+                  <th>{filterMode === 'year' ? 'Bulan' : 'Tanggal'}</th>
+                  <th style={{ textAlign: 'right' }}>Pendapatan</th>
+                </tr>
+              </thead>
               <tbody>
-                {chartData.length > 0 ? [...chartData].reverse().map((d, i) => (
-                  <tr key={i}><td>{fmtDate(d.date)}</td><td style={{ textAlign: 'right', fontWeight: 600 }}>{fmtRp(d.total)}</td></tr>
-                )) : <tr><td colSpan={2} style={{ textAlign: 'center', color: '#94a3b8', padding: 20 }}>Tidak ada data</td></tr>}
+                {chartData.length > 0 ? [...chartData].reverse().map((d, i) => {
+                  const label = filterMode === 'year' 
+                    ? `${MONTHS_ID[new Date(d.date).getMonth()]} ${new Date(d.date).getFullYear()}`
+                    : fmtDate(d.date);
+                  return (
+                    <tr key={i}>
+                      <td>{label}</td>
+                      <td style={{ textAlign: 'right', fontWeight: 600 }}>{fmtRp(d.total)}</td>
+                    </tr>
+                  );
+                }) : <tr><td colSpan={2} style={{ textAlign: 'center', color: '#94a3b8', padding: 20 }}>Tidak ada data</td></tr>}
               </tbody>
             </table>
           </div>

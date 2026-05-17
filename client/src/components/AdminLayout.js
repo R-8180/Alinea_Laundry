@@ -91,7 +91,11 @@ const AdminLayout = ({ user, onLogout, children }) => {
           <div className="sidebar-logo-icon">✦</div>
           <div>
             <div className="sidebar-logo-name">Alinea Laundry</div>
-              {isCourier ? <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>Portal Kurir <FiTruck /></span> : <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>Kelola bisnis lebih mudah <FiStar /></span>}
+            {isCourier ? (
+              <span className="sidebar-logo-sub" style={{ display: 'flex', alignItems: 'center', gap: 4 }}>Portal Kurir <FiTruck /></span>
+            ) : (
+              <span className="sidebar-logo-sub" style={{ display: 'flex', alignItems: 'center', gap: 4 }}>Kelola bisnis lebih mudah <FiStar /></span>
+            )}
           </div>
         </div>
 

@@ -28,6 +28,10 @@ const parseItems = (req, res, next) => {
 router.post('/', auth, uploadImage.single('photo'), parseItems, createOrderValidation, validate, async (req, res) => {
   if (req.user.role !== 'customer') return res.status(403).json({ message: 'Hanya customer' });
 
+  if (req.fileUploadError) {
+    return res.status(400).json({ message: `Gagal mengunggah foto: ${req.fileUploadError}` });
+  }
+
   const items = req.body.items;
   if (!Array.isArray(items) || items.length === 0) return res.status(400).json({ message: 'Minimal satu item' });
 
@@ -47,13 +51,14 @@ router.post('/', auth, uploadImage.single('photo'), parseItems, createOrderValid
     
     let addressText = req.body.address || '';
     if (address_id) {
-      const addrRes = await pool.query('SELECT address, note FROM addresses WHERE id = $1 AND user_id = $2', [address_id, userId]);
+      const addrRes = await client.query('SELECT address, note FROM addresses WHERE id = $1 AND user_id = $2', [address_id, userId]);
       if (addrRes.rows.length === 0) throw new Error('Alamat tidak ditemukan');
       const addr = addrRes.rows[0];
       addressText = addr.note ? `${addr.address} (${addr.note})` : addr.address;
     }
 
     const sresults = await client.query('SELECT price_per_unit, time_days, time_hours FROM services WHERE id = $1', [service_id]);
+    if (service_id && sresults.rows.length === 0) throw new Error('Layanan tidak ditemukan');
     const estDays = sresults.rows.length > 0 ? parseInt(sresults.rows[0].time_days) || 0 : 0;
     const estHours = sresults.rows.length > 0 ? parseInt(sresults.rows[0].time_hours) || 0 : 0;
     // Cast DECIMAL price from services to INTEGER (order_items.price_per_unit is INTEGER)
@@ -89,7 +94,8 @@ router.post('/', auth, uploadImage.single('photo'), parseItems, createOrderValid
   } catch (err) {
     await client.query('ROLLBACK');
     console.error('Order error:', err);
-    res.status(err.message === 'Alamat tidak ditemukan' || err.message === 'Voucher tidak valid' ? 400 : 500).json({ error: err.message || 'Server error' });
+    const badRequestErrors = ['Alamat tidak ditemukan', 'Voucher tidak valid', 'Layanan tidak ditemukan'];
+    res.status(badRequestErrors.includes(err.message) ? 400 : 500).json({ error: err.message || 'Server error' });
   } finally {
     client.release();
   }

@@ -57,7 +57,11 @@ const ProfileTab = ({ user }) => {
       setShowModal(false);
       fetchAddresses();
     } catch (err) {
-      alert(err.response?.data?.message || 'Gagal menyimpan alamat');
+      const data = err.response?.data;
+      const validationMessage = Array.isArray(data?.errors)
+        ? data.errors.map(e => e.msg).join('\n')
+        : null;
+      alert(validationMessage || data?.message || data?.error || 'Gagal menyimpan alamat');
     }
   };
 

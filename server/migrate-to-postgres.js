@@ -1,15 +1,17 @@
 const { Pool } = require('pg');
 require('dotenv').config();
 
+const dbHost = process.env.DB_HOST || 'localhost';
+
 console.log('⏳ Menghubungkan ke PostgreSQL...');
 
 const pool = new Pool({
-  host: process.env.DB_HOST,
+  host: dbHost,
   port: process.env.DB_PORT || 5432,
   user: process.env.DB_USER,
   password: process.env.DB_PASSWORD,
   database: process.env.DB_NAME,
-  ssl: process.env.NODE_ENV === 'production' || process.env.DB_HOST.includes('supabase') ? { rejectUnauthorized: false } : false,
+  ssl: process.env.NODE_ENV === 'production' || dbHost.includes('supabase') ? { rejectUnauthorized: false } : false,
   connectionTimeoutMillis: 10000
 });
 
@@ -41,6 +43,7 @@ async function migrate() {
         user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
         label VARCHAR(100),
         address TEXT NOT NULL,
+        note TEXT DEFAULT '',
         lat DECIMAL(10,8),
         lng DECIMAL(11,8),
         is_primary BOOLEAN DEFAULT FALSE,
@@ -70,6 +73,7 @@ async function migrate() {
         address VARCHAR(255),
         address_id INTEGER,
         notes TEXT,
+        courier_notes TEXT DEFAULT '',
         photo_url VARCHAR(255),
         service_speed VARCHAR(20) DEFAULT 'reguler',
         estimated_days INTEGER DEFAULT 0,

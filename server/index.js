@@ -1,46 +1,4 @@
-require('dotenv').config();
-const express = require('express');
-const cors = require('cors');
-const helmet = require('helmet');
-const path = require('path');
-const morgan = require('morgan');
-const logger = require('./utils/logger');
-const { apiLimiter, speedLimiter } = require('./middleware/rateLimiter');
-const app = express();
-
-// Trust Vercel's reverse proxy to get correct client IP for rate limiting
-app.set('trust proxy', 1);
-
-// Security Headers
-app.use(helmet({
-  contentSecurityPolicy: {
-    directives: {
-      defaultSrc: ["'self'"],
-      styleSrc: ["'self'", "'unsafe-inline'"],
-      scriptSrc: ["'self'"],
-      imgSrc: ["'self'", "data:", "https:"],
-    },
-  },
-  hsts: {
-    maxAge: 31536000,
-    includeSubDomains: true,
-    preload: true
-  }
-}));
-
-// CORS
-const allowedOrigins = process.env.CORS_ORIGIN 
-  ? process.env.CORS_ORIGIN.split(',') 
-  : ['http://localhost:3000'];
-
-app.use(cors({
-  origin: function (origin, callback) {
-    if (!origin) return callback(null, true);
-    
-    // Auto-allow Vercel subdomains (e.g., preview and main deployment links)
-    const isVercelOrigin = origin.endsWith('.vercel.app');
-    const isLocalhost = origin.startsWith('http://localhost:') || origin.startsWith('http://127.0.0.1:');
-    const isLocalIP = origin.startsWith('http://192.168.') || origin.startsWith('http://10.') || origin.startsWith('http://172.');
+    const isLocalIP = hostname.startsWith('192.168.') || hostname.startsWith('10.') || isPrivate172;
     
     if (allowedOrigins.indexOf(origin) !== -1 || isVercelOrigin || isLocalhost || isLocalIP) {
       return callback(null, true);
@@ -77,6 +35,24 @@ if (isVercel) {
 // Global Rate Limiters
 app.use('/api/', apiLimiter);
 app.use('/api/', speedLimiter);
+
+const schemaReady = ensureDatabaseSchema().catch((err) => {
+  logger.error({
+    message: 'Database schema check failed',
+    error: err.message,
+    stack: err.stack
+  });
+  throw err;
+});
+
+app.use('/api', async (req, res, next) => {
+  try {
+    await schemaReady;
+    next();
+  } catch (err) {
+    next(err);
+  }
+});
 
 // HTTPS Redirect
 app.use((req, res, next) => {
@@ -158,9 +134,16 @@ app.use((err, req, res, next) => {
 
 if (process.env.NODE_ENV !== 'production' || !isVercel) {
   const PORT = process.env.PORT || 5000;
-  app.listen(PORT, '0.0.0.0', () => {
-    console.log(`Server berjalan di port ${PORT}`);
-  });
+  schemaReady
+    .then(() => {
+      app.listen(PORT, '0.0.0.0', () => {
+        console.log(`Server berjalan di port ${PORT}`);
+      });
+    })
+    .catch((err) => {
+      console.error('Gagal menjalankan server karena database tidak siap:', err.message);
+      process.exit(1);
+    });
 }
 
 module.exports = app;

@@ -32,6 +32,7 @@ CREATE TABLE `addresses` (
   `user_id` int(11) DEFAULT NULL,
   `label` varchar(100) DEFAULT NULL,
   `address` text NOT NULL,
+  `note` text DEFAULT '',
   `lat` decimal(10,8) DEFAULT NULL,
   `lng` decimal(11,8) DEFAULT NULL,
   `is_primary` tinyint(1) DEFAULT 0,
@@ -42,15 +43,15 @@ CREATE TABLE `addresses` (
 -- Dumping data for table `addresses`
 --
 
-INSERT INTO `addresses` (`id`, `user_id`, `label`, `address`, `lat`, `lng`, `is_primary`, `created_at`) VALUES
-(1, 1, 'rumah ', 'Kos Khinanti 1A, Taman Siswa, Banaran', NULL, NULL, 0, '2026-05-07 22:18:08'),
-(2, 4, 'Rumah', 'kos khinanti 1A, Taman Siswa, Banaran, Gunungpati', NULL, NULL, 0, '2026-05-08 16:03:43'),
-(3, 5, 'Rumah', 'Kos Mawaddah 1, Jl. Wideng Sari, CempakaSari, Sekaran', NULL, NULL, 0, '2026-05-08 20:00:22'),
-(4, 6, 'Rumah', 'kos putri mawadah 1, cempaka sari, Gunungpati, Semarang', -6.98623239, 110.41958627, 0, '2026-05-09 16:10:47'),
-(5, 7, 'Rumah', 'caman raya', NULL, NULL, 0, '2026-05-13 12:32:52'),
-(6, 9, 'Rumah', 'Kos Kinanthi 1A, Taman Siswa, Banaran', NULL, NULL, 0, '2026-05-15 01:40:31'),
-(7, 9, 'kos', 'Kos Mawaddah 1, Jl. Wideng Sari, CempakaSari, Sekaran', NULL, NULL, 0, '2026-05-15 01:41:33'),
-(8, 4, 'kos', 'Perum PIR 5 Blok F26', NULL, NULL, 0, '2026-05-15 08:26:41');
+INSERT INTO `addresses` (`id`, `user_id`, `label`, `address`, `note`, `lat`, `lng`, `is_primary`, `created_at`) VALUES
+(1, 1, 'rumah ', 'Kos Khinanti 1A, Taman Siswa, Banaran', '', NULL, NULL, 0, '2026-05-07 22:18:08'),
+(2, 4, 'Rumah', 'kos khinanti 1A, Taman Siswa, Banaran, Gunungpati', '', NULL, NULL, 0, '2026-05-08 16:03:43'),
+(3, 5, 'Rumah', 'Kos Mawaddah 1, Jl. Wideng Sari, CempakaSari, Sekaran', '', NULL, NULL, 0, '2026-05-08 20:00:22'),
+(4, 6, 'Rumah', 'kos putri mawadah 1, cempaka sari, Gunungpati, Semarang', '', -6.98623239, 110.41958627, 0, '2026-05-09 16:10:47'),
+(5, 7, 'Rumah', 'caman raya', '', NULL, NULL, 0, '2026-05-13 12:32:52'),
+(6, 9, 'Rumah', 'Kos Kinanthi 1A, Taman Siswa, Banaran', '', NULL, NULL, 0, '2026-05-15 01:40:31'),
+(7, 9, 'kos', 'Kos Mawaddah 1, Jl. Wideng Sari, CempakaSari, Sekaran', '', NULL, NULL, 0, '2026-05-15 01:41:33'),
+(8, 4, 'kos', 'Perum PIR 5 Blok F26', '', NULL, NULL, 0, '2026-05-15 08:26:41');
 
 -- --------------------------------------------------------
 
@@ -88,6 +89,7 @@ CREATE TABLE `orders` (
   `address` varchar(255) DEFAULT NULL,
   `address_id` int(11) DEFAULT NULL,
   `notes` text DEFAULT NULL,
+  `courier_notes` text DEFAULT '',
   `photo_url` varchar(255) DEFAULT NULL,
   `service_speed` enum('reguler','express') DEFAULT 'reguler',
   `estimated_days` int(11) DEFAULT 0,
@@ -106,9 +108,9 @@ CREATE TABLE `orders` (
 -- Dumping data for table `orders`
 --
 
-INSERT INTO `orders` (`id`, `user_id`, `courier_id`, `order_code`, `status`, `total_price`, `payment_status`, `address`, `address_id`, `notes`, `photo_url`, `service_speed`, `estimated_days`, `estimated_hours`, `estimated_start`, `express_fee`, `voucher_code`, `discount`, `delivery_proof`, `created_at`, `updated_at`, `admin_note`) VALUES
-(1, 1, 3, 'ORD-260517-B50E11', 'selesai', 22000, 'paid', 'Kos Khinanti 1A, Taman Siswa, Banaran', 1, '', '/uploads/order-1778958757018.jpg', 'reguler', 1, 0, '2026-05-17 02:12:37', 0, NULL, 0, '/uploads/delivery-1778960423467.jpg', '2026-05-16 19:12:37', '2026-05-16 19:40:23', 'aman'),
-(2, 1, 3, 'ORD-260517-75528B', 'antar', 14000, 'paid', 'Kos Khinanti 1A, Taman Siswa, Banaran', 1, '', NULL, 'reguler', 4, 0, '2026-05-17 02:49:14', 0, NULL, 0, NULL, '2026-05-16 19:49:14', '2026-05-16 22:18:21', 'baju bermasalah');
+INSERT INTO `orders` (`id`, `user_id`, `courier_id`, `order_code`, `status`, `total_price`, `payment_status`, `address`, `address_id`, `notes`, `courier_notes`, `photo_url`, `service_speed`, `estimated_days`, `estimated_hours`, `estimated_start`, `express_fee`, `voucher_code`, `discount`, `delivery_proof`, `created_at`, `updated_at`, `admin_note`) VALUES
+(1, 1, 3, 'ORD-260517-B50E11', 'selesai', 22000, 'paid', 'Kos Khinanti 1A, Taman Siswa, Banaran', 1, '', '', '/uploads/order-1778958757018.jpg', 'reguler', 1, 0, '2026-05-17 02:12:37', 0, NULL, 0, '/uploads/delivery-1778960423467.jpg', '2026-05-16 19:12:37', '2026-05-16 19:40:23', 'aman'),
+(2, 1, 3, 'ORD-260517-75528B', 'antar', 14000, 'paid', 'Kos Khinanti 1A, Taman Siswa, Banaran', 1, '', '', NULL, 'reguler', 4, 0, '2026-05-17 02:49:14', 0, NULL, 0, NULL, '2026-05-16 19:49:14', '2026-05-16 22:18:21', 'baju bermasalah');
 
 -- --------------------------------------------------------
 

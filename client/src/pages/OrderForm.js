@@ -115,11 +115,19 @@ const OrderForm = () => {
 
   const handleAddAddress = async () => {
     if (!newAddress.address.trim()) return alert('Isi alamat');
-    await axios.post('/api/addresses', newAddress, { headers: { Authorization: `Bearer ${token}` } });
-    alert('Alamat disimpan');
-    fetchAddresses();
-    setShowAddAddress(false);
-    setNewAddress({ label: '', address: '', note: '', is_primary: false });
+    try {
+      await axios.post('/api/addresses', newAddress, { headers: { Authorization: `Bearer ${token}` } });
+      alert('Alamat disimpan');
+      fetchAddresses();
+      setShowAddAddress(false);
+      setNewAddress({ label: '', address: '', note: '', is_primary: false });
+    } catch (err) {
+      const data = err.response?.data;
+      const validationMessage = Array.isArray(data?.errors)
+        ? data.errors.map(e => e.msg).join('\n')
+        : null;
+      alert(validationMessage || data?.message || data?.error || 'Gagal menyimpan alamat');
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -165,8 +173,12 @@ const OrderForm = () => {
       });
       alert('Order berhasil dikirim!');
       navigate('/dashboard');
-    } catch (err) { 
-      alert(err.response?.data?.message || 'Gagal membuat order'); 
+    } catch (err) {
+      const data = err.response?.data;
+      const validationMessage = Array.isArray(data?.errors)
+        ? data.errors.map(e => e.msg).join('\n')
+        : null;
+      alert(validationMessage || data?.message || data?.error || 'Gagal membuat order');
     }
     finally { setSubmitting(false); }
   };

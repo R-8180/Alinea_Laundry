@@ -410,6 +410,11 @@ router.put('/orders/:id/status', async (req, res) => {
 // PUT admin selesaikan pesanan + upload foto (opsional)
 router.put('/orders/:id/complete', uploadDelivery.single('photo'), async (req, res) => {
   const orderId = req.params.id;
+
+  if (req.fileUploadError) {
+    return res.status(400).json({ message: `Gagal mengunggah foto: ${req.fileUploadError}` });
+  }
+
   const photoUrl = getFileUrl(req.file);
 
   const updates = ['status = $1'];

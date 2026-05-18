@@ -1,16 +1,16 @@
+require('dotenv').config();
 const { Pool } = require('pg');
 const bcrypt = require('bcryptjs');
 
-console.log('⏳ Menghubungkan ke Supabase Production...');
+console.log('⏳ Menghubungkan ke Supabase...');
 
-// Kredensial Supabase Production (menggunakan Pooler IPv4)
 const pool = new Pool({
-  host: 'aws-1-ap-southeast-1.pooler.supabase.com',
-  port: 6543,
-  user: 'postgres.nmuxiduvphjfdmtpztzc',
-  password: 's8ZURDnpX0coSfcu',
-  database: 'postgres',
-  ssl: { rejectUnauthorized: false },
+  host: process.env.DB_HOST,
+  port: process.env.DB_PORT || 5432,
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  database: process.env.DB_NAME,
+  ssl: process.env.NODE_ENV === 'production' || process.env.DB_HOST.includes('supabase') ? { rejectUnauthorized: false } : false,
   connectionTimeoutMillis: 10000
 });
 

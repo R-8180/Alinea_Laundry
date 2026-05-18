@@ -40,8 +40,9 @@ app.use(cors({
     // Auto-allow Vercel subdomains (e.g., preview and main deployment links)
     const isVercelOrigin = origin.endsWith('.vercel.app');
     const isLocalhost = origin.startsWith('http://localhost:') || origin.startsWith('http://127.0.0.1:');
+    const isLocalIP = origin.startsWith('http://192.168.') || origin.startsWith('http://10.') || origin.startsWith('http://172.');
     
-    if (allowedOrigins.indexOf(origin) !== -1 || isVercelOrigin || isLocalhost) {
+    if (allowedOrigins.indexOf(origin) !== -1 || isVercelOrigin || isLocalhost || isLocalIP) {
       return callback(null, true);
     } else {
       return callback(new Error('The CORS policy for this site does not allow access from the specified Origin.'), false);

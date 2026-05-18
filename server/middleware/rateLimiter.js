@@ -4,7 +4,7 @@ const slowDown = require('express-slow-down');
 // General API rate limiter
 const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // max 100 requests per 15 min
+  max: process.env.NODE_ENV === 'development' ? 1000 : 100, // max 1000 requests in dev, 100 in prod
   message: 'Terlalu banyak request dari IP ini, coba lagi nanti.',
   standardHeaders: true,
   legacyHeaders: false,

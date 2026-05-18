@@ -20,7 +20,23 @@ const Login = ({ onLogin }) => {
       onLogin(res.data.user, res.data.token);
       navigate('/dashboard');
     } catch (err) {
-      const msg = err.response?.data?.message || err.response?.data?.error || err.message || 'Login gagal';
+      console.error('Login error', err);
+      const data = err.response?.data;
+      let msg = data?.message || data?.error || err.message || 'Login gagal';
+
+      // Jika server mengembalikan objek error, ubah ke string yang readable
+      if (typeof msg === 'object') {
+        if (msg && msg.message) {
+          msg = msg.message;
+        } else {
+          try {
+            msg = JSON.stringify(msg);
+          } catch (e) {
+            msg = 'Login gagal';
+          }
+        }
+      }
+
       alert(msg);
     }
   };

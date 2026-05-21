@@ -455,11 +455,11 @@ const OfflineOrderForm = () => {
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: 16 }}>
               <div>
                 <label style={{ fontSize: '0.85rem', color: '#64748b', display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8 }}><FiCamera /> Foto Tas Cucian</label>
-                <PhotoUploader onPhotoSelected={setPhoto} />
+                <PhotoUploader onPhoto={setPhoto} photo={photo} />
               </div>
               <div>
                 <label style={{ fontSize: '0.85rem', color: '#64748b', display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8 }}><FiCreditCard /> Foto Bukti Transfer</label>
-                <PhotoUploader onPhotoSelected={setPaymentProof} />
+                <PhotoUploader onPhoto={setPaymentProof} photo={paymentProof} />
               </div>
             </div>
             

@@ -157,7 +157,7 @@ router.get('/orders/:id', idParamValidation, validate, async (req, res) => {
              COALESCE(u.name, o.guest_name) AS customer_name, 
              COALESCE(u.address, 'Offline (Di Tempat)') AS customer_address, 
              COALESCE(u.phone, o.guest_phone) AS phone,
-             p.payment_proof, p.created_at AS payment_date, p.validated AS payment_validated,
+             COALESCE(p.payment_proof, o.payment_proof) AS payment_proof, p.created_at AS payment_date, p.validated AS payment_validated,
              b.name AS branch_name,
              (SELECT s.name FROM order_items oi JOIN services s ON oi.service_id = s.id WHERE oi.order_id = o.id LIMIT 1) AS service_name,
              (SELECT s.category FROM order_items oi JOIN services s ON oi.service_id = s.id WHERE oi.order_id = o.id LIMIT 1) AS service_category,
@@ -629,6 +629,24 @@ router.put('/orders/:id/status', updateStatusValidation, validate, async (req, r
     res.json({ message: 'Status diupdate' });
   } catch (err) {
     console.error('Update status error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// PUT quick update payment status
+router.put('/orders/:id/payment', idParamValidation, validate, async (req, res) => {
+  const orderId = req.params.id;
+  const { payment_status } = req.body;
+  
+  if (!['paid', 'pending'].includes(payment_status)) {
+    return res.status(400).json({ message: 'Status pembayaran tidak valid' });
+  }
+
+  try {
+    await db.query('UPDATE orders SET payment_status = $1 WHERE id = $2', [payment_status, orderId]);
+    res.json({ message: 'Status pembayaran diupdate' });
+  } catch (err) {
+    console.error('Update payment error:', err);
     res.status(500).json({ error: err.message });
   }
 });

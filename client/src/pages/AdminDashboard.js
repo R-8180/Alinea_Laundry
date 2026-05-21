@@ -354,6 +354,19 @@ const AdminDashboard = () => {
     } catch (err) { showError('Gagal Tambah Order', err.response?.data?.message || err.response?.data?.error || 'Gagal menambahkan order baru.'); }
   };
 
+  const handleQuickPaymentUpdate = async (orderId, newStatus) => {
+    try {
+      const token = localStorage.getItem('token');
+      await axios.put(`/api/admin/orders/${orderId}/payment`, { payment_status: newStatus }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      fetchOrders();
+      showSuccess('Update Pembayaran', 'Status pembayaran berhasil diupdate');
+    } catch (err) {
+      showError('Gagal Update', err.response?.data?.message || 'Terjadi kesalahan saat mengupdate pembayaran');
+    }
+  };
+
   const validatePayment = async (oid) => {
     await axios.put(`/api/admin/payments/validate/${oid}`, {}, { headers: h });
     setOrders(prev => prev.map(o => o.id === oid ? { ...o, payment_status: 'paid' } : o));
@@ -990,14 +1003,30 @@ const AdminDashboard = () => {
 
                       {/* Kolom Pembayaran */}
                       <td>
-                        {order.payment_status === 'paid' ? (
-                          <span className="badge-lunas"><FiCheckCircle /> Lunas</span>
-                        ) : order.payment_proof ? (
-                          <button className="btn-validasi" onClick={() => openPaymentModal(order.id)}>
-                            <FiAlertCircle /> Validasi
-                          </button>
-                        ) : (
-                          <span className="badge-belum-bayar">Belum Bayar</span>
+                        <select
+                          className="form-input"
+                          style={{
+                            padding: '4px 8px',
+                            fontSize: '0.8rem',
+                            width: '120px',
+                            backgroundColor: order.payment_status === 'paid' ? '#dcfce7' : '#fee2e2',
+                            color: order.payment_status === 'paid' ? '#166534' : '#991b1b',
+                            border: 'none',
+                            fontWeight: 600,
+                            borderRadius: '6px'
+                          }}
+                          value={order.payment_status === 'paid' ? 'paid' : 'pending'}
+                          onChange={(e) => handleQuickPaymentUpdate(order.id, e.target.value)}
+                        >
+                          <option value="pending">Belum Lunas</option>
+                          <option value="paid">Lunas</option>
+                        </select>
+                        {order.payment_proof && order.payment_status !== 'paid' && (
+                          <div style={{ marginTop: 6 }}>
+                            <button className="btn-validasi" style={{ padding: '2px 6px', fontSize: '0.7rem' }} onClick={() => openPaymentModal(order.id)}>
+                              <FiAlertCircle /> Bukti
+                            </button>
+                          </div>
                         )}
                       </td>
 
@@ -1021,7 +1050,9 @@ const AdminDashboard = () => {
                       {/* Kolom Kurir */}
                       <td>
                         <div className="assign-action">
-                          {order.courier_name ? (
+                          {order.is_offline ? (
+                            <span style={{ fontSize: '0.8rem', color: 'var(--text-3)' }}>- (Offline)</span>
+                          ) : order.courier_name ? (
                             <>
                               <span className="courier-name-label"><FiTruck /> {order.courier_name}</span>
                               <button className="btn-assign btn-sm" onClick={() => { setAssignModal({ orderId: order.id }); setSelectedCourier(order.courier_id || ''); fetchCouriers(); }}>
@@ -1289,17 +1320,30 @@ const AdminDashboard = () => {
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', padding: '7px 0', borderTop: '1px solid var(--border)', fontSize: '0.82rem', alignItems: 'center' }}>
                     <span style={{ color: 'var(--text-3)' }}>Pembayaran</span>
-                    <span>
-                      {order.payment_status === 'paid' ? (
-                        <span className="badge-lunas"><FiCheckCircle /> Lunas</span>
-                      ) : order.payment_proof ? (
-                        <button className="btn-validasi" onClick={() => openPaymentModal(order.id)}>
-                          <FiAlertCircle /> Validasi
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '4px' }}>
+                      <select
+                        className="form-input"
+                        style={{
+                          padding: '2px 6px',
+                          fontSize: '0.75rem',
+                          backgroundColor: order.payment_status === 'paid' ? '#dcfce7' : '#fee2e2',
+                          color: order.payment_status === 'paid' ? '#166534' : '#991b1b',
+                          border: 'none',
+                          fontWeight: 600,
+                          borderRadius: '4px'
+                        }}
+                        value={order.payment_status === 'paid' ? 'paid' : 'pending'}
+                        onChange={(e) => handleQuickPaymentUpdate(order.id, e.target.value)}
+                      >
+                        <option value="pending">Belum Lunas</option>
+                        <option value="paid">Lunas</option>
+                      </select>
+                      {order.payment_proof && order.payment_status !== 'paid' && (
+                        <button className="btn-validasi" style={{ padding: '2px 6px', fontSize: '0.7rem' }} onClick={() => openPaymentModal(order.id)}>
+                          <FiAlertCircle /> Bukti
                         </button>
-                      ) : (
-                        <span className="badge-belum-bayar">Belum Bayar</span>
                       )}
-                    </span>
+                    </div>
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', padding: '7px 0', borderTop: '1px solid var(--border)', fontSize: '0.82rem' }}>
                     <span style={{ color: 'var(--text-3)' }}>Total</span>
@@ -1316,7 +1360,7 @@ const AdminDashboard = () => {
                       {order.total_price > 0 ? <FiCheckCircle /> : <GiWeight />} Validasi
                     </button>
 
-                    {order.courier_name ? (
+                    {order.is_offline ? null : order.courier_name ? (
                       <button className="btn-assign" onClick={() => { setAssignModal({ orderId: order.id }); setSelectedCourier(order.courier_id || ''); fetchCouriers(); }}>
                         <FiTruck /> {order.courier_name}
                       </button>

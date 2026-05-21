@@ -66,7 +66,7 @@ router.get('/orders', async (req, res) => {
 });
 
 const crypto = require('crypto');
-const { uploadImage } = require('../utils/upload');
+
 function generateOrderCode() {
   const d = new Date();
   const yymmdd = `${String(d.getFullYear()).slice(-2)}${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}`;

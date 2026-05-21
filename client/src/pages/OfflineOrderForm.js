@@ -2,16 +2,40 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { showSuccess, showError, showLoading } from '../utils/swal';
-import { FiUser, FiPackage, FiFileText, FiCamera, FiDollarSign, FiPlus, FiTrash2, FiSave, FiMapPin, FiCreditCard, FiList } from 'react-icons/fi';
+import { FiUser, FiPackage, FiFileText, FiCamera, FiDollarSign, FiPlus, FiTrash2, FiSave, FiMapPin, FiCreditCard, FiCheckCircle, FiZap, FiChevronDown, FiEdit3 } from 'react-icons/fi';
 import PhotoUploader from '../components/PhotoUploader';
+
+// Komponen Card UI mirip OrderForm
+const SectionCard = ({ icon, title, children, action }) => (
+  <div style={{
+    background: 'white',
+    borderRadius: '16px',
+    padding: '24px',
+    marginBottom: '20px',
+    boxShadow: '0 4px 20px rgba(0, 0, 0, 0.03)',
+    border: '1px solid rgba(0,0,0,0.05)',
+  }}>
+    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+      <h3 style={{ fontSize: '1.15rem', color: '#1e293b', margin: 0, display: 'flex', alignItems: 'center', gap: '10px', fontWeight: 700 }}>
+        {icon} {title}
+      </h3>
+      {action && <div>{action}</div>}
+    </div>
+    {children}
+  </div>
+);
 
 const OfflineOrderForm = () => {
   const [guestName, setGuestName] = useState('');
   const [guestPhone, setGuestPhone] = useState('');
   const [branchId, setBranchId] = useState('');
   const [branches, setBranches] = useState([]);
+  
   const [services, setServices] = useState([]);
-  const [items, setItems] = useState([{ category: 'kiloan', service_id: '', item_name: '', price_per_unit: 0, quantity: 1, unit: 'kg' }]);
+  const [selectedService, setSelectedService] = useState(null);
+  
+  const [items, setItems] = useState([{ service_type: 'kiloan', name: '', qty: 1, price_per_unit: 0 }]);
+  
   const [additionalFee, setAdditionalFee] = useState(0);
   const [totalPrice, setTotalPrice] = useState(0);
   const [paymentStatus, setPaymentStatus] = useState('lunas');
@@ -19,6 +43,10 @@ const OfflineOrderForm = () => {
   const [photo, setPhoto] = useState(null);
   const [paymentProof, setPaymentProof] = useState(null);
   const [submitting, setSubmitting] = useState(false);
+  
+  const [activeTypeDropdownIndex, setActiveTypeDropdownIndex] = useState(null);
+  const [activeSatuanDropdownIndex, setActiveSatuanDropdownIndex] = useState(null);
+
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -45,44 +73,45 @@ const OfflineOrderForm = () => {
     }
   };
 
+  // Recalculate Kiloan item prices when selected service changes
   useEffect(() => {
-    const totalItems = items.reduce((sum, item) => sum + (item.price_per_unit * item.quantity), 0);
-    setTotalPrice(totalItems + (additionalFee || 0));
+    if (selectedService) {
+      setItems(prevItems => prevItems.map(item => {
+        if (item.service_type === 'kiloan') {
+          return { ...item, price_per_unit: selectedService.price_per_unit };
+        }
+        return item;
+      }));
+    }
+  }, [selectedService]);
+
+  // Recalculate total price
+  useEffect(() => {
+    const itemsTotal = items.reduce((sum, item) => sum + ((item.price_per_unit || 0) * (item.qty || 0)), 0);
+    setTotalPrice(itemsTotal + (additionalFee || 0));
   }, [items, additionalFee]);
 
   const handleItemChange = (index, field, value) => {
     const newItems = [...items];
-    
-    if (field === 'category') {
-      newItems[index].category = value;
-      newItems[index].service_id = '';
-      newItems[index].item_name = '';
-      newItems[index].price_per_unit = 0;
-      newItems[index].unit = value === 'satuan' ? 'pcs' : 'kg';
-      newItems[index].quantity = 1;
-    } else if (field === 'service_id') {
-      const srv = services.find(s => s.id.toString() === value.toString());
-      if (srv) {
-        newItems[index].service_id = srv.id;
-        newItems[index].price_per_unit = srv.price_per_unit || 0;
-        
-        // If it's a satuan category, the service name is the item name
-        if (newItems[index].category === 'satuan') {
-          newItems[index].item_name = srv.name;
-          newItems[index].unit = 'pcs';
-        } else {
-          newItems[index].unit = 'kg';
-        }
-      }
-    } else {
-      newItems[index][field] = value;
-    }
-    
+    newItems[index][field] = value;
     setItems(newItems);
   };
 
+  const handleSatuanSelect = (index, serviceItem) => {
+    const newItems = [...items];
+    newItems[index].name = serviceItem.name;
+    newItems[index].price_per_unit = serviceItem.price_per_unit || 0;
+    setItems(newItems);
+    setActiveSatuanDropdownIndex(null);
+  };
+
   const addItem = () => {
-    setItems([...items, { category: 'kiloan', service_id: '', item_name: '', price_per_unit: 0, quantity: 1, unit: 'kg' }]);
+    setItems([...items, { 
+      service_type: 'kiloan', 
+      name: '', 
+      qty: 1, 
+      price_per_unit: selectedService ? selectedService.price_per_unit : 0 
+    }]);
   };
 
   const removeItem = (index) => {
@@ -92,33 +121,35 @@ const OfflineOrderForm = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!guestName) return showError('Nama Pelanggan wajib diisi');
-    if (items.some(i => !i.service_id)) return showError('Semua item harus memilih layanan');
-    if (items.some(i => !i.item_name)) return showError('Nama item/keterangan tidak boleh kosong');
+    if (!selectedService) return showError('Layanan Utama Belum Dipilih', 'Pilih paket layanan utama (misal: Cuci Setrika) terlebih dahulu');
+    if (items.some(i => !i.name)) return showError('Nama Item Kosong', 'Pastikan semua item cucian memiliki nama atau keterangan');
     
     setSubmitting(true);
-    showLoading('Membuat pesanan offline...');
+    showLoading('Membuat Pesanan...', 'Menyimpan data order offline');
+    
     try {
       const formData = new FormData();
       formData.append('guest_name', guestName);
       formData.append('guest_phone', guestPhone);
       formData.append('branch_id', branchId);
+      formData.append('service_id', selectedService.id);
       
       let finalNotes = notes;
       if (additionalFee > 0) {
         finalNotes = finalNotes ? `${finalNotes}\n(Biaya Tambahan Admin: Rp${additionalFee.toLocaleString()})` : `(Biaya Tambahan Admin: Rp${additionalFee.toLocaleString()})`;
       }
       formData.append('notes', finalNotes);
-      
       formData.append('total_price', totalPrice);
       formData.append('payment_status', paymentStatus);
       
+      // Formatting items array for backend parsing
       const formattedItems = items.map(item => ({
-        service_id: item.service_id,
-        type: item.item_name,
+        service_type: item.service_type, // 'kiloan' or 'satuan'
+        name: item.name,
         price_per_unit: item.price_per_unit,
-        quantity: item.quantity,
-        unit: item.unit
+        qty: item.qty
       }));
+      
       formData.append('items', JSON.stringify(formattedItems));
       
       if (photo) formData.append('photo', photo);
@@ -129,153 +160,339 @@ const OfflineOrderForm = () => {
         headers: { Authorization: `Bearer ${token}` }
       });
       
-      showSuccess('Pesanan Berhasil', `Pesanan Offline berhasil dibuat. Kode: ${res.data.order_code}`);
+      showSuccess('Order Berhasil', `Order Offline berhasil dibuat. Kode: ${res.data.order_code}`);
       navigate('/admin');
     } catch (err) {
-      showError(err.response?.data?.message || 'Gagal membuat pesanan');
+      showError('Gagal Menyimpan', err.response?.data?.message || err.message);
     } finally {
       setSubmitting(false);
     }
   };
 
-  const kiloanServices = services.filter(s => s.category !== 'satuan');
+  const getCategoryLabel = (cat) => {
+    const labels = { cuci_setrika: 'Cuci Setrika', cuci_lipat: 'Cuci Lipat', satuan: 'Layanan Satuan' };
+    return labels[cat] || cat;
+  };
+
+  const groupedServices = Object.entries(
+    services.reduce((acc, s) => {
+      if (!acc[s.category]) acc[s.category] = [];
+      acc[s.category].push(s);
+      return acc;
+    }, {})
+  )
+    .filter(([key, items]) => items.length > 0 && (key === 'cuci_setrika' || key === 'cuci_lipat'))
+    .map(([key, items]) => ({
+      key,
+      label: getCategoryLabel(key),
+      items,
+    }));
+
   const satuanServices = services.filter(s => s.category === 'satuan');
 
   return (
-    <div style={{ padding: '24px 20px', maxWidth: 800, margin: '0 auto' }}>
+    <div style={{ maxWidth: 750, margin: '0 auto', padding: '24px 16px 40px' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 24 }}>
         <div style={{ width: 48, height: 48, background: 'linear-gradient(135deg, #10b981, #059669)', borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontSize: '1.5rem', boxShadow: '0 4px 12px rgba(16,185,129,0.3)' }}>
           <FiUser />
         </div>
         <div>
-          <h2 style={{ margin: 0, fontSize: '1.4rem', color: '#1e293b', fontWeight: 700 }}>Pesanan Offline (Walk-in)</h2>
-          <p style={{ margin: 0, fontSize: '0.9rem', color: '#64748b' }}>Buat pesanan untuk pelanggan yang datang langsung</p>
+          <h2 style={{ margin: 0, fontSize: '1.4rem', color: '#1e293b', fontWeight: 700 }}>Pesanan Offline Baru</h2>
+          <p style={{ margin: 0, fontSize: '0.9rem', color: '#64748b' }}>Sistem Kasir untuk Walk-in Customer</p>
         </div>
       </div>
 
-      <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+      <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
         
-        {/* Info Pelanggan */}
-        <div className="card" style={{ padding: 24, borderRadius: 16 }}>
-          <h3 style={{ fontSize: '1.1rem', marginBottom: 16, display: 'flex', alignItems: 'center', gap: 8 }}><FiUser /> Info Pelanggan</h3>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16 }}>
-            <div style={{ flex: '1 1 250px' }}>
-              <label className="form-label">Nama Pelanggan (Wajib)</label>
-              <input type="text" className="form-control" value={guestName} onChange={e => setGuestName(e.target.value)} placeholder="Misal: Bapak Budi" required />
+        {/* 1. Info Pelanggan */}
+        <SectionCard icon={<FiEdit3 style={{ color: '#10b981' }} />} title="Info Pelanggan">
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16 }}>
+            <div>
+              <label style={{ fontSize: '0.85rem', color: '#64748b', display: 'block', marginBottom: 6 }}>Nama Pelanggan (Wajib)</label>
+              <input type="text" style={{ width: '100%', padding: '10px 14px', borderRadius: 8, border: '1px solid #e2e8f0' }} value={guestName} onChange={e => setGuestName(e.target.value)} placeholder="Misal: Budi" required />
             </div>
-            <div style={{ flex: '1 1 250px' }}>
-              <label className="form-label">No. HP (Opsional)</label>
-              <input type="text" className="form-control" value={guestPhone} onChange={e => setGuestPhone(e.target.value)} placeholder="0812xxxx" />
+            <div>
+              <label style={{ fontSize: '0.85rem', color: '#64748b', display: 'block', marginBottom: 6 }}>No. HP (Opsional)</label>
+              <input type="text" style={{ width: '100%', padding: '10px 14px', borderRadius: 8, border: '1px solid #e2e8f0' }} value={guestPhone} onChange={e => setGuestPhone(e.target.value)} placeholder="0812xxxx" />
             </div>
           </div>
           <div style={{ marginTop: 16 }}>
-            <label className="form-label"><FiMapPin /> Cabang Penjemputan</label>
-            <select className="form-control" value={branchId} onChange={e => setBranchId(e.target.value)}>
+            <label style={{ fontSize: '0.85rem', color: '#64748b', display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}>
+              <FiMapPin /> Cabang Penjemputan
+            </label>
+            <select style={{ width: '100%', padding: '10px 14px', borderRadius: 8, border: '1px solid #e2e8f0' }} value={branchId} onChange={e => setBranchId(e.target.value)}>
               <option value="">-- Pilih Cabang --</option>
-              {branches.map(b => (
-                <option key={b.id} value={b.id}>{b.name}</option>
-              ))}
+              {branches.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
             </select>
           </div>
-        </div>
+        </SectionCard>
 
-        {/* Layanan & Item */}
-        <div className="card" style={{ padding: 24, borderRadius: 16 }}>
-          <h3 style={{ fontSize: '1.1rem', marginBottom: 16, display: 'flex', alignItems: 'center', gap: 8 }}><FiPackage /> Detail Item & Layanan</h3>
-          {items.map((item, idx) => (
-            <div key={idx} style={{ background: '#f8fafc', padding: 16, borderRadius: 12, marginBottom: 16, border: '1px solid #e2e8f0' }}>
-              
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16, marginBottom: 16 }}>
-                <div style={{ flex: '1 1 150px' }}>
-                  <label className="form-label">Kategori</label>
-                  <select className="form-control" value={item.category} onChange={e => handleItemChange(idx, 'category', e.target.value)}>
-                    <option value="kiloan">Kiloan</option>
-                    <option value="satuan">Satuan</option>
-                  </select>
-                </div>
-                
-                <div style={{ flex: '2 1 250px' }}>
-                  <label className="form-label">{item.category === 'satuan' ? 'Pilih Layanan Satuan' : 'Pilih Layanan Kiloan'}</label>
-                  <select className="form-control" value={item.service_id} onChange={e => handleItemChange(idx, 'service_id', e.target.value)} required>
-                    <option value="">-- Pilih Layanan --</option>
-                    {(item.category === 'satuan' ? satuanServices : kiloanServices).map(s => (
-                      <option key={s.id} value={s.id}>{s.name} - Rp{s.price_per_unit.toLocaleString()}</option>
-                    ))}
-                  </select>
-                </div>
+        {/* 2. Pilih Layanan Utama */}
+        <SectionCard icon={<FiPackage style={{ color: '#6366f1' }} />} title="Layanan Utama">
+          {groupedServices.map(group => (
+            <div key={group.key} style={{ marginBottom: 20 }}>
+              <div style={{ fontSize: '0.9rem', fontWeight: 700, color: '#475569', marginBottom: 10, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                {group.label}
               </div>
-              
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16, alignItems: 'flex-end' }}>
-                <div style={{ flex: '2 1 200px' }}>
-                  <label className="form-label"><FiList /> Nama Item / Catatan</label>
-                  {item.category === 'satuan' ? (
-                     <input type="text" className="form-control" value={item.item_name} disabled style={{ background: '#e2e8f0', cursor: 'not-allowed' }} placeholder="Otomatis dari layanan" required />
-                  ) : (
-                    <input type="text" className="form-control" value={item.item_name} onChange={e => handleItemChange(idx, 'item_name', e.target.value)} placeholder="Misal: Pakaian Sehari-hari campur" required />
-                  )}
-                </div>
-                <div style={{ flex: '1 1 120px' }}>
-                  <label className="form-label">Harga/Unit</label>
-                  <input type="number" className="form-control" value={item.price_per_unit} onChange={e => handleItemChange(idx, 'price_per_unit', Number(e.target.value))} />
-                </div>
-                <div style={{ flex: '1 1 120px', position: 'relative' }}>
-                  <label className="form-label">Qty ({item.unit})</label>
-                  <input type="number" step="0.1" className="form-control" value={item.quantity} onChange={e => handleItemChange(idx, 'quantity', Number(e.target.value))} required />
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 12 }}>
+                {group.items.map(service => {
+                  const isSelected = selectedService?.id === service.id;
+                  let timeText = '';
+                  if (service.time_days > 0) timeText = `${service.time_days} Hari`;
+                  else if (service.time_hours > 0) timeText = `${service.time_hours} Jam`;
                   
-                  {items.length > 1 && (
-                    <button type="button" onClick={() => removeItem(idx)} style={{ position: 'absolute', top: 0, right: -8, background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', padding: 4, display: 'flex', alignItems: 'center', height: 42 }}>
-                      <FiTrash2 size={18} />
-                    </button>
-                  )}
-                </div>
+                  return (
+                    <div
+                      key={service.id}
+                      onClick={() => setSelectedService(service)}
+                      style={{
+                        padding: '12px 16px',
+                        borderRadius: 12,
+                        cursor: 'pointer',
+                        transition: 'all 0.2s',
+                        border: isSelected ? '2px solid #6366f1' : '1px solid #e2e8f0',
+                        background: isSelected ? 'rgba(99, 102, 241, 0.05)' : 'white',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 12
+                      }}
+                    >
+                      <div style={{ fontSize: '1.2rem', color: isSelected ? '#6366f1' : '#94a3b8', display: 'flex', alignItems: 'center' }}>
+                        {service.type === 'express' ? <FiZap /> : <FiPackage />}
+                      </div>
+                      <div style={{ flex: 1 }}>
+                        <div style={{ fontWeight: 700, color: isSelected ? '#1e293b' : '#334155', fontSize: '0.9rem' }}>
+                          {service.type === 'express' ? 'Express' : 'Reguler'} {timeText}
+                        </div>
+                        <div style={{ fontSize: '0.8rem', color: isSelected ? '#6366f1' : '#64748b', marginTop: 2 }}>
+                          Rp {Math.floor(service.price_per_unit || 0).toLocaleString('id-ID')}/{service.unit_type}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             </div>
           ))}
-          <button type="button" className="btn btn-sm" style={{ background: '#e0e7ff', color: '#4f46e5' }} onClick={addItem}><FiPlus /> Tambah Item</button>
-        </div>
-
-        {/* Pembayaran & Foto */}
-        <div className="card" style={{ padding: 24, borderRadius: 16 }}>
-          <h3 style={{ fontSize: '1.1rem', marginBottom: 16, display: 'flex', alignItems: 'center', gap: 8 }}><FiDollarSign /> Pembayaran & Tambahan</h3>
-          
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16, marginBottom: 16 }}>
-            <div style={{ flex: '1 1 200px' }}>
-              <label className="form-label">Biaya Tambahan Admin (Rp)</label>
-              <input type="number" className="form-control" value={additionalFee} onChange={e => setAdditionalFee(Number(e.target.value))} placeholder="Misal: 15000" />
+          {selectedService && (
+            <div style={{ marginTop: 12, padding: 10, background: '#f0fdf4', border: '1px solid #86efac', borderRadius: 8, fontSize: '0.85rem', color: '#166534', fontWeight: 600 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <FiCheckCircle /> Layanan Terpilih: {getCategoryLabel(selectedService.category)} · {selectedService.type === 'express' ? 'Express' : 'Reguler'}
+              </div>
             </div>
-            <div style={{ flex: '1 1 200px' }}>
-              <label className="form-label">Status Pembayaran</label>
-              <select className="form-control" value={paymentStatus} onChange={e => setPaymentStatus(e.target.value)}>
-                <option value="lunas">Lunas</option>
-                <option value="belum_lunas">Belum Lunas</option>
-              </select>
-            </div>
-          </div>
+          )}
+        </SectionCard>
 
-          <div style={{ background: '#f8fafc', padding: 16, borderRadius: 8, marginBottom: 20, display: 'flex', justifyContent: 'space-between', alignItems: 'center', border: '1px solid #10b981' }}>
-            <span style={{ fontWeight: 600, color: '#059669', fontSize: '1.1rem' }}>Total Harga Akhir:</span>
-            <span style={{ fontSize: '1.4rem', fontWeight: 800, color: '#10b981' }}>Rp {totalPrice.toLocaleString()}</span>
-          </div>
+        {/* 3. Item Cucian */}
+        {selectedService && (
+          <SectionCard icon={<FiFileText style={{ color: '#f59e0b' }} />} title="Item Cucian">
+            {items.map((item, idx) => (
+              <div key={idx} style={{ background: '#f8fafc', borderRadius: 12, padding: 16, marginBottom: 12, border: '1px solid #e2e8f0' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                  <span style={{ fontWeight: 700, color: '#6366f1', fontSize: '0.9rem' }}>Item #{idx + 1}</span>
+                  {items.length > 1 && (
+                    <button type="button" onClick={() => removeItem(idx)} style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4, fontSize: '0.85rem' }}>
+                      <FiTrash2 /> Hapus
+                    </button>
+                  )}
+                </div>
+                
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 12, marginBottom: 12 }}>
+                  <div>
+                    <label style={{ fontSize: '0.8rem', color: '#64748b', display: 'block', marginBottom: 4 }}>Tipe</label>
+                    <div style={{ position: 'relative' }}>
+                      <div
+                        onClick={() => {
+                          setActiveTypeDropdownIndex(activeTypeDropdownIndex === idx ? null : idx);
+                          setActiveSatuanDropdownIndex(null);
+                        }}
+                        style={{ padding: '10px 14px', borderRadius: 8, border: '1px solid #e2e8f0', background: 'white', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.9rem' }}
+                      >
+                        <span style={{ textTransform: 'capitalize', fontWeight: 600, color: '#334155' }}>{item.service_type}</span>
+                        <FiChevronDown style={{ color: '#94a3b8' }} />
+                      </div>
+                      
+                      {activeTypeDropdownIndex === idx && (
+                        <>
+                          <div onClick={() => setActiveTypeDropdownIndex(null)} style={{ position: 'fixed', inset: 0, zIndex: 998 }} />
+                          <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, background: 'white', border: '1px solid #e2e8f0', borderRadius: 8, zIndex: 999, padding: 4, marginTop: 4, boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}>
+                            {['kiloan', 'satuan'].map(type => (
+                              <div
+                                key={type}
+                                onClick={() => {
+                                  handleItemChange(idx, 'service_type', type);
+                                  handleItemChange(idx, 'name', '');
+                                  if (type === 'kiloan') {
+                                    handleItemChange(idx, 'price_per_unit', selectedService.price_per_unit);
+                                  } else {
+                                    handleItemChange(idx, 'price_per_unit', 0);
+                                  }
+                                  setActiveTypeDropdownIndex(null);
+                                }}
+                                style={{ padding: '8px 12px', borderRadius: 6, cursor: 'pointer', fontSize: '0.9rem', textTransform: 'capitalize', background: item.service_type === type ? '#f1f5f9' : 'transparent', fontWeight: item.service_type === type ? 600 : 400 }}
+                              >
+                                {type}
+                              </div>
+                            ))}
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                  
+                  <div style={{ flex: '2 1 200px' }}>
+                    <label style={{ fontSize: '0.8rem', color: '#64748b', display: 'block', marginBottom: 4 }}>Nama Barang</label>
+                    {item.service_type === 'kiloan' ? (
+                      <input
+                        type="text"
+                        value={item.name}
+                        onChange={(e) => handleItemChange(idx, 'name', e.target.value)}
+                        placeholder="Misal: Pakaian Campur"
+                        style={{ width: '100%', padding: '10px 14px', borderRadius: 8, border: '1px solid #e2e8f0', fontSize: '0.9rem' }}
+                        required
+                      />
+                    ) : (
+                      <div style={{ position: 'relative' }}>
+                        <div
+                          onClick={() => {
+                            setActiveSatuanDropdownIndex(activeSatuanDropdownIndex === idx ? null : idx);
+                            setActiveTypeDropdownIndex(null);
+                          }}
+                          style={{ padding: '10px 14px', borderRadius: 8, border: '1px solid #e2e8f0', background: 'white', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.9rem' }}
+                        >
+                          <span style={{ color: item.name ? '#334155' : '#94a3b8' }}>
+                            {item.name || 'Pilih layanan satuan...'}
+                          </span>
+                          <FiChevronDown style={{ color: '#94a3b8' }} />
+                        </div>
+                        
+                        {activeSatuanDropdownIndex === idx && (
+                          <>
+                            <div onClick={() => setActiveSatuanDropdownIndex(null)} style={{ position: 'fixed', inset: 0, zIndex: 998 }} />
+                            <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, background: 'white', border: '1px solid #e2e8f0', borderRadius: 8, zIndex: 999, padding: 4, marginTop: 4, boxShadow: '0 4px 12px rgba(0,0,0,0.1)', maxHeight: 200, overflowY: 'auto' }}>
+                              {satuanServices.length === 0 && <div style={{ padding: '8px', fontSize: '0.85rem', color: '#94a3b8', textAlign: 'center' }}>Tidak ada layanan satuan</div>}
+                              {satuanServices.map(s => (
+                                <div
+                                  key={s.id}
+                                  onClick={() => handleSatuanSelect(idx, s)}
+                                  style={{ padding: '8px 12px', borderRadius: 6, cursor: 'pointer', fontSize: '0.85rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
+                                >
+                                  <span>{s.name}</span>
+                                  <span style={{ color: '#10b981', fontWeight: 600 }}>Rp {s.price_per_unit.toLocaleString()}</span>
+                                </div>
+                              ))}
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </div>
+                
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                  <div>
+                    <label style={{ fontSize: '0.8rem', color: '#64748b', display: 'block', marginBottom: 4 }}>
+                      {item.service_type === 'kiloan' ? 'Berat (Kg)' : 'Jumlah (Pcs)'}
+                    </label>
+                    <input
+                      type="number"
+                      step={item.service_type === 'kiloan' ? "0.1" : "1"}
+                      min={item.service_type === 'kiloan' ? "0.1" : "1"}
+                      value={item.qty}
+                      onChange={(e) => handleItemChange(idx, 'qty', Number(e.target.value))}
+                      style={{ width: '100%', padding: '10px 14px', borderRadius: 8, border: '1px solid #e2e8f0', fontSize: '0.9rem' }}
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label style={{ fontSize: '0.8rem', color: '#64748b', display: 'block', marginBottom: 4 }}>
+                      Harga per {item.service_type === 'kiloan' ? 'Kg' : 'Pcs'}
+                    </label>
+                    <input
+                      type="number"
+                      value={item.price_per_unit}
+                      onChange={(e) => handleItemChange(idx, 'price_per_unit', Number(e.target.value))}
+                      style={{ width: '100%', padding: '10px 14px', borderRadius: 8, border: '1px solid #e2e8f0', fontSize: '0.9rem', background: item.service_type === 'kiloan' ? '#f8fafc' : 'white' }}
+                      required
+                    />
+                  </div>
+                </div>
+              </div>
+            ))}
+            
+            <button
+              type="button"
+              onClick={addItem}
+              style={{ width: '100%', padding: '12px', borderRadius: 8, border: '1px dashed #c7d2fe', background: '#f5f3ff', color: '#6366f1', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, fontSize: '0.9rem' }}
+            >
+              <FiPlus /> Tambah Item Lainnya
+            </button>
+          </SectionCard>
+        )}
 
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16 }}>
-            <div style={{ flex: '1 1 250px' }}>
-              <label className="form-label"><FiCamera /> Foto Barang/Tas Cucian</label>
-              <PhotoUploader onPhotoSelected={setPhoto} />
+        {/* 4. Pembayaran */}
+        {selectedService && (
+          <SectionCard icon={<FiDollarSign style={{ color: '#10b981' }} />} title="Pembayaran & Media">
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16, marginBottom: 16 }}>
+              <div>
+                <label style={{ fontSize: '0.85rem', color: '#64748b', display: 'block', marginBottom: 6 }}>Biaya Tambahan Admin (Rp)</label>
+                <input type="number" style={{ width: '100%', padding: '10px 14px', borderRadius: 8, border: '1px solid #e2e8f0' }} value={additionalFee} onChange={e => setAdditionalFee(Number(e.target.value))} placeholder="Misal: 15000" />
+              </div>
+              <div>
+                <label style={{ fontSize: '0.85rem', color: '#64748b', display: 'block', marginBottom: 6 }}>Status Pembayaran</label>
+                <select style={{ width: '100%', padding: '10px 14px', borderRadius: 8, border: '1px solid #e2e8f0' }} value={paymentStatus} onChange={e => setPaymentStatus(e.target.value)}>
+                  <option value="lunas">Lunas</option>
+                  <option value="belum_lunas">Belum Lunas</option>
+                </select>
+              </div>
             </div>
-            <div style={{ flex: '1 1 250px' }}>
-              <label className="form-label"><FiCreditCard /> Foto Bukti Transfer (opsional)</label>
-              <PhotoUploader onPhotoSelected={setPaymentProof} />
-            </div>
-          </div>
-          
-          <div style={{ marginTop: 20 }}>
-            <label className="form-label"><FiFileText /> Catatan Admin</label>
-            <textarea className="form-control" rows="3" value={notes} onChange={e => setNotes(e.target.value)} placeholder="Ketik keterangan tambahan di sini..." />
-          </div>
-        </div>
 
-        <button type="submit" className="btn" style={{ background: 'var(--blue)', color: 'white', padding: '16px', fontSize: '1.1rem', borderRadius: 12, fontWeight: 700 }} disabled={submitting}>
-          <FiSave style={{ marginRight: 8 }} /> {submitting ? 'Menyimpan...' : 'Buat Pesanan Offline'}
+            <div style={{ background: '#f0fdf4', padding: '16px 20px', borderRadius: 12, marginBottom: 20, display: 'flex', justifyContent: 'space-between', alignItems: 'center', border: '1px solid #86efac' }}>
+              <span style={{ fontWeight: 600, color: '#166534', fontSize: '1rem' }}>Total Harga Akhir:</span>
+              <span style={{ fontSize: '1.4rem', fontWeight: 800, color: '#10b981' }}>Rp {totalPrice.toLocaleString()}</span>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: 16 }}>
+              <div>
+                <label style={{ fontSize: '0.85rem', color: '#64748b', display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8 }}><FiCamera /> Foto Tas Cucian</label>
+                <PhotoUploader onPhotoSelected={setPhoto} />
+              </div>
+              <div>
+                <label style={{ fontSize: '0.85rem', color: '#64748b', display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8 }}><FiCreditCard /> Foto Bukti Transfer</label>
+                <PhotoUploader onPhotoSelected={setPaymentProof} />
+              </div>
+            </div>
+            
+            <div style={{ marginTop: 20 }}>
+              <label style={{ fontSize: '0.85rem', color: '#64748b', display: 'block', marginBottom: 6 }}>Catatan Admin (Opsional)</label>
+              <textarea style={{ width: '100%', padding: '10px 14px', borderRadius: 8, border: '1px solid #e2e8f0', minHeight: 80, fontFamily: 'inherit' }} value={notes} onChange={e => setNotes(e.target.value)} placeholder="Ketik keterangan tambahan di sini..." />
+            </div>
+          </SectionCard>
+        )}
+
+        <button
+          type="submit"
+          disabled={submitting || !selectedService}
+          style={{ 
+            width: '100%', 
+            padding: '16px', 
+            borderRadius: 12, 
+            background: (!selectedService || submitting) ? '#cbd5e1' : '#10b981', 
+            color: 'white', 
+            fontSize: '1.1rem', 
+            fontWeight: 700, 
+            border: 'none', 
+            cursor: (!selectedService || submitting) ? 'not-allowed' : 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 10,
+            boxShadow: (!selectedService || submitting) ? 'none' : '0 4px 14px rgba(16,185,129,0.4)',
+            transition: 'all 0.2s',
+            marginTop: 10
+          }}
+        >
+          <FiSave size={20} /> {submitting ? 'Memproses Order...' : 'Selesaikan Order Offline'}
         </button>
 
       </form>

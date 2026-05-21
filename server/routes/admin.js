@@ -30,6 +30,11 @@ router.get('/couriers', async (req, res) => {
 // GET semua order dengan badge perlu_validasi
 router.get('/orders', async (req, res) => {
   try {
+    // ⚠️ SAFETY: Auto-migrate to prevent "column does not exist" on Vercel
+    try {
+      await db.query(`ALTER TABLE orders ADD COLUMN IF NOT EXISTS is_offline BOOLEAN DEFAULT FALSE, ADD COLUMN IF NOT EXISTS guest_name VARCHAR(255), ADD COLUMN IF NOT EXISTS guest_phone VARCHAR(50), ADD COLUMN IF NOT EXISTS payment_proof VARCHAR(255)`);
+    } catch (e) { console.error('Migration error in GET /orders:', e); }
+
     const activeBranchId = req.user.branch_id || (req.query.branch_id ? parseInt(req.query.branch_id) : null);
     const queryParams = [];
     let queryStr = `
@@ -81,22 +86,20 @@ const parseItems = (req, res, next) => {
   next();
 };
 
-// POST /offline-order
-router.post('/offline-order', uploadImage.fields([{ name: 'photo', maxCount: 1 }, { name: 'payment_proof', maxCount: 1 }]), parseItems, async (req, res) => {
-  const { guest_name, guest_phone, notes, items, total_price, payment_status } = req.body;
-  const branch_id = req.user.branch_id || req.body.branch_id || null;
-  const photo_url = req.files && req.files['photo'] ? getFileUrl(req.files['photo'][0]) : null;
-  const payment_proof = req.files && req.files['payment_proof'] ? getFileUrl(req.files['payment_proof'][0]) : null;
-  const orderCode = generateOrderCode();
-
-  if (!items || !Array.isArray(items) || items.length === 0) {
-    return res.status(400).json({ message: 'Item layanan tidak valid' });
-  }
-
+router.post('/offline-order', uploadImage.fields([{name: 'photo'}, {name: 'payment_proof'}]), parseItems, async (req, res) => {
   const client = await db.connect();
   try {
     await client.query('BEGIN');
+    const { guest_name, guest_phone, notes, total_price, payment_status, items, service_id } = req.body;
     
+    // Fallback if branch_id is empty string, make it null or use req.user.branch_id
+    const branch_id = req.user.branch_id || (req.body.branch_id ? req.body.branch_id : null);
+    
+    const photo_url = req.files && req.files['photo'] ? getFileUrl(req.files['photo'][0]) : null;
+    const payment_proof = req.files && req.files['payment_proof'] ? getFileUrl(req.files['payment_proof'][0]) : null;
+    
+    const orderCode = generateOrderCode();
+
     // Status langsung cuci
     const orderRes = await client.query(
       `INSERT INTO orders 
@@ -107,10 +110,12 @@ router.post('/offline-order', uploadImage.fields([{ name: 'photo', maxCount: 1 }
     const orderId = orderRes.rows[0].id;
 
     for (const item of items) {
+      const weight = item.service_type === 'kiloan' ? item.qty : 0;
+      const qty_items = item.service_type === 'satuan' ? item.qty : 0;
       await client.query(
-        `INSERT INTO order_items (order_id, service_id, service_type, price_per_unit, quantity, unit)
-         VALUES ($1, $2, $3, $4, $5, $6)`,
-        [orderId, item.service_id, item.type, item.price_per_unit, item.quantity, item.unit]
+        `INSERT INTO order_items (order_id, service_id, service_type, name, weight, qty_items, price_per_unit)
+         VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+        [orderId, service_id, item.service_type, item.name, weight, qty_items, item.price_per_unit]
       );
     }
     

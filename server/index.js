@@ -45,6 +45,19 @@ pool.query(`
   console.error('❌ Error verifying notifications table:', err);
 });
 
+// Auto-migrate orders table for offline orders
+pool.query(`
+  ALTER TABLE orders 
+  ADD COLUMN IF NOT EXISTS is_offline BOOLEAN DEFAULT FALSE,
+  ADD COLUMN IF NOT EXISTS guest_name VARCHAR(255),
+  ADD COLUMN IF NOT EXISTS guest_phone VARCHAR(50),
+  ADD COLUMN IF NOT EXISTS payment_proof VARCHAR(255);
+`).then(() => {
+  console.log('✅ Orders table verified/migrated for offline orders');
+}).catch(err => {
+  console.error('❌ Error migrating orders table:', err);
+});
+
 // ==========================================
 // 3. MIDDLEWARE KEAMANAN & PENGATURAN PROXY
 // ==========================================

@@ -112,22 +112,28 @@ router.post('/offline-order', uploadImage.fields([{name: 'photo'}, {name: 'payme
     
     const orderCode = generateOrderCode();
 
+    const parsedTotalPrice = Math.round(Number(total_price) || 0);
+    const parsedBranchId = branch_id ? parseInt(branch_id, 10) : null;
+    const parsedServiceId = service_id ? parseInt(service_id, 10) : null;
+
     // Status langsung cuci
     const orderRes = await client.query(
       `INSERT INTO orders 
       (user_id, order_code, status, total_price, payment_status, notes, photo_url, is_offline, guest_name, guest_phone, branch_id, payment_proof)
       VALUES (NULL, $1, 'cuci', $2, $3, $4, $5, true, $6, $7, $8, $9) RETURNING id`,
-      [orderCode, total_price, payment_status || 'lunas', notes, photo_url, guest_name, guest_phone, branch_id, payment_proof]
+      [orderCode, parsedTotalPrice, payment_status || 'lunas', notes, photo_url, guest_name, guest_phone, parsedBranchId, payment_proof]
     );
     const orderId = orderRes.rows[0].id;
 
     for (const item of items) {
-      const weight = item.service_type === 'kiloan' ? item.qty : 0;
-      const qty_items = item.service_type === 'satuan' ? item.qty : 0;
+      const weight = item.service_type === 'kiloan' ? parseFloat(item.qty) || 0 : 0;
+      const qty_items = item.service_type === 'satuan' ? Math.round(Number(item.qty) || 0) : 0;
+      const price_per_unit = Math.round(Number(item.price_per_unit) || 0);
+      
       await client.query(
         `INSERT INTO order_items (order_id, service_id, service_type, name, weight, qty_items, price_per_unit)
          VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-        [orderId, service_id, item.service_type, item.name, weight, qty_items, item.price_per_unit]
+        [orderId, parsedServiceId, item.service_type, item.name, weight, qty_items, price_per_unit]
       );
     }
     

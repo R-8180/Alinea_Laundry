@@ -13,6 +13,7 @@ import {
 } from 'react-icons/fi';
 import { GiWeight } from 'react-icons/gi';
 import LaporanTab from './LaporanTab';
+import ReceiptDownloader from '../components/ReceiptDownloader';
 
 /* ---------- KONSTANTA ---------- */
 const statusLabels = { menunggu: 'Menunggu', pickup: 'Dijemput', proses: 'Diproses', antar: 'Diantar', selesai: 'Selesai', batal: 'Dibatalkan' };
@@ -1750,7 +1751,9 @@ const AdminDashboard = () => {
               </div>
             </div>
 
-            <button className="btn" style={{ width: '100%' }} onClick={() => setDetailModal(null)}>Tutup</button>
+            <ReceiptDownloader order={detailModal} />
+
+            <button className="btn" style={{ width: '100%', marginTop: '16px' }} onClick={() => setDetailModal(null)}>Tutup</button>
           </div>
         </div>
       )}

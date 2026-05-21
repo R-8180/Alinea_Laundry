@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import ProfileTab from '../components/ProfileTab';
 import FloatingWA from '../components/FloatingWA';
+import ReceiptDownloader from '../components/ReceiptDownloader';
 import axios from 'axios';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { showSuccess, showError, showLoading } from '../utils/swal';
@@ -682,6 +683,8 @@ const CustomerDashboard = () => {
                   </div>
                 )}
               </div>
+
+              <ReceiptDownloader order={detailModal} />
 
               <div className="modal-footer">
                 <button className="btn btn-secondary" onClick={() => setDetailModal(null)}>Tutup</button>

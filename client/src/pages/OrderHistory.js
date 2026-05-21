@@ -6,6 +6,7 @@ import {
   FiTruck, FiChevronDown, FiArrowLeft, FiInfo, FiMessageCircle, FiZap, FiMapPin
 } from 'react-icons/fi';
 import { Link } from 'react-router-dom';
+import ReceiptDownloader from '../components/ReceiptDownloader';
 
 const categoryLabels = { cuci_setrika: 'Cuci Setrika', cuci_lipat: 'Cuci Lipat', satuan: 'Satuan' };
 
@@ -327,6 +328,8 @@ const OrderHistory = () => {
                   </AccordionItem>
                 ))}
               </div>
+
+              <ReceiptDownloader order={detailModal} />
 
               <button className="btn" onClick={() => setDetailModal(null)} style={{ width: '100%', marginTop: 20 }}>Tutup</button>
             </div>

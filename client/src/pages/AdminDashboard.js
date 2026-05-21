@@ -1314,7 +1314,16 @@ const AdminDashboard = () => {
                   <div style={{ display: 'flex', justifyContent: 'space-between', padding: '7px 0', borderTop: '1px solid var(--border)', fontSize: '0.82rem', alignItems: 'center' }}>
                     <span style={{ color: 'var(--text-3)' }}>Pembayaran</span>
                     <span>
-                      {order.payment_status === 'paid' ? (
+                      {order.is_offline ? (
+                        <select 
+                          value={order.payment_status}
+                          onChange={(e) => updatePaymentStatus(order.id, e.target.value)}
+                          style={{ padding: '4px 8px', borderRadius: '4px', border: '1px solid #cbd5e1', fontSize: '0.8rem', background: order.payment_status === 'paid' ? '#dcfce7' : '#fee2e2', color: order.payment_status === 'paid' ? '#166534' : '#991b1b', fontWeight: 600, outline: 'none', cursor: 'pointer' }}
+                        >
+                          <option value="paid">Lunas</option>
+                          <option value="pending">Belum Lunas</option>
+                        </select>
+                      ) : order.payment_status === 'paid' ? (
                         <span className="badge-lunas"><FiCheckCircle /> Lunas</span>
                       ) : order.payment_proof ? (
                         <button className="btn-validasi" onClick={() => openPaymentModal(order.id)}>
@@ -1340,7 +1349,9 @@ const AdminDashboard = () => {
                       {order.total_price > 0 ? <FiCheckCircle /> : <GiWeight />} Validasi
                     </button>
 
-                    {order.courier_name ? (
+                    {order.is_offline ? (
+                      <span style={{ fontSize: '0.75rem', color: '#64748b', fontStyle: 'italic', fontWeight: 600, background: '#f8fafc', padding: '6px 12px', borderRadius: 6, border: '1px solid #e2e8f0', display: 'flex', alignItems: 'center' }}>Tidak Tersedia</span>
+                    ) : order.courier_name ? (
                       <button className="btn-assign" onClick={() => { setAssignModal({ orderId: order.id }); setSelectedCourier(order.courier_id || ''); fetchCouriers(); }}>
                         <FiTruck /> {order.courier_name}
                       </button>

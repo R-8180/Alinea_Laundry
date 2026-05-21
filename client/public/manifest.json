@@ -1,0 +1,22 @@
+{
+  "short_name": "Alinea Laundry",
+  "name": "Alinea Laundry - Layanan Cuci Bersih & Wangi",
+  "icons": [
+    {
+      "src": "images/logoalinea.png",
+      "sizes": "any",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "images/logoalinea.png",
+      "sizes": "any",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#0b1d3a",
+  "background_color": "#f0f6ff"
+}

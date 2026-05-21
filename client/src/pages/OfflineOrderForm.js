@@ -161,7 +161,7 @@ const OfflineOrderForm = () => {
       });
       
       showSuccess('Order Berhasil', `Order Offline berhasil dibuat. Kode: ${res.data.order_code}`);
-      navigate('/admin');
+      navigate('/dashboard');
     } catch (err) {
       showError('Gagal Menyimpan', err.response?.data?.message || err.message);
     } finally {

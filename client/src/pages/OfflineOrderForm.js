@@ -5,15 +5,13 @@ import { showSuccess, showError, showLoading } from '../utils/swal';
 import { FiUser, FiPackage, FiFileText, FiCamera, FiDollarSign, FiPlus, FiTrash2, FiSave, FiMapPin, FiCreditCard, FiList } from 'react-icons/fi';
 import PhotoUploader from '../components/PhotoUploader';
 
-const satuanItemsList = ['Kemeja', 'Kaos', 'Celana Panjang', 'Celana Pendek', 'Jaket', 'Sweater', 'Jas', 'Gaun/Dress', 'Selimut', 'Sprei', 'Bedcover', 'Karpet', 'Sepatu', 'Tas', 'Boneka', 'Lainnya'];
-
 const OfflineOrderForm = () => {
   const [guestName, setGuestName] = useState('');
   const [guestPhone, setGuestPhone] = useState('');
   const [branchId, setBranchId] = useState('');
   const [branches, setBranches] = useState([]);
   const [services, setServices] = useState([]);
-  const [items, setItems] = useState([{ service_id: '', category: 'kiloan', item_name: '', price_per_unit: 0, quantity: 1, unit: 'kg' }]);
+  const [items, setItems] = useState([{ category: 'kiloan', service_id: '', item_name: '', price_per_unit: 0, quantity: 1, unit: 'kg' }]);
   const [additionalFee, setAdditionalFee] = useState(0);
   const [totalPrice, setTotalPrice] = useState(0);
   const [paymentStatus, setPaymentStatus] = useState('lunas');
@@ -49,30 +47,42 @@ const OfflineOrderForm = () => {
 
   useEffect(() => {
     const totalItems = items.reduce((sum, item) => sum + (item.price_per_unit * item.quantity), 0);
-    setTotalPrice(totalItems + additionalFee);
+    setTotalPrice(totalItems + (additionalFee || 0));
   }, [items, additionalFee]);
 
   const handleItemChange = (index, field, value) => {
     const newItems = [...items];
-    if (field === 'service_id') {
+    
+    if (field === 'category') {
+      newItems[index].category = value;
+      newItems[index].service_id = '';
+      newItems[index].item_name = '';
+      newItems[index].price_per_unit = 0;
+      newItems[index].unit = value === 'satuan' ? 'pcs' : 'kg';
+      newItems[index].quantity = 1;
+    } else if (field === 'service_id') {
       const srv = services.find(s => s.id.toString() === value.toString());
       if (srv) {
         newItems[index].service_id = srv.id;
         newItems[index].price_per_unit = srv.price_per_unit || 0;
-        newItems[index].unit = newItems[index].category === 'satuan' ? 'pcs' : 'kg';
+        
+        // If it's a satuan category, the service name is the item name
+        if (newItems[index].category === 'satuan') {
+          newItems[index].item_name = srv.name;
+          newItems[index].unit = 'pcs';
+        } else {
+          newItems[index].unit = 'kg';
+        }
       }
-    } else if (field === 'category') {
-      newItems[index].category = value;
-      newItems[index].unit = value === 'satuan' ? 'pcs' : 'kg';
-      newItems[index].item_name = '';
     } else {
       newItems[index][field] = value;
     }
+    
     setItems(newItems);
   };
 
   const addItem = () => {
-    setItems([...items, { service_id: '', category: 'kiloan', item_name: '', price_per_unit: 0, quantity: 1, unit: 'kg' }]);
+    setItems([...items, { category: 'kiloan', service_id: '', item_name: '', price_per_unit: 0, quantity: 1, unit: 'kg' }]);
   };
 
   const removeItem = (index) => {
@@ -83,7 +93,7 @@ const OfflineOrderForm = () => {
     e.preventDefault();
     if (!guestName) return showError('Nama Pelanggan wajib diisi');
     if (items.some(i => !i.service_id)) return showError('Semua item harus memilih layanan');
-    if (items.some(i => !i.item_name)) return showError('Nama item tidak boleh kosong');
+    if (items.some(i => !i.item_name)) return showError('Nama item/keterangan tidak boleh kosong');
     
     setSubmitting(true);
     showLoading('Membuat pesanan offline...');
@@ -95,7 +105,7 @@ const OfflineOrderForm = () => {
       
       let finalNotes = notes;
       if (additionalFee > 0) {
-        finalNotes = finalNotes ? `${finalNotes}\n(Biaya Tambahan: Rp${additionalFee.toLocaleString()})` : `(Biaya Tambahan: Rp${additionalFee.toLocaleString()})`;
+        finalNotes = finalNotes ? `${finalNotes}\n(Biaya Tambahan Admin: Rp${additionalFee.toLocaleString()})` : `(Biaya Tambahan Admin: Rp${additionalFee.toLocaleString()})`;
       }
       formData.append('notes', finalNotes);
       
@@ -128,6 +138,9 @@ const OfflineOrderForm = () => {
     }
   };
 
+  const kiloanServices = services.filter(s => s.category !== 'satuan');
+  const satuanServices = services.filter(s => s.category === 'satuan');
+
   return (
     <div style={{ padding: '24px 20px', maxWidth: 800, margin: '0 auto' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 24 }}>
@@ -145,12 +158,12 @@ const OfflineOrderForm = () => {
         {/* Info Pelanggan */}
         <div className="card" style={{ padding: 24, borderRadius: 16 }}>
           <h3 style={{ fontSize: '1.1rem', marginBottom: 16, display: 'flex', alignItems: 'center', gap: 8 }}><FiUser /> Info Pelanggan</h3>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-            <div>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16 }}>
+            <div style={{ flex: '1 1 250px' }}>
               <label className="form-label">Nama Pelanggan (Wajib)</label>
               <input type="text" className="form-control" value={guestName} onChange={e => setGuestName(e.target.value)} placeholder="Misal: Bapak Budi" required />
             </div>
-            <div>
+            <div style={{ flex: '1 1 250px' }}>
               <label className="form-label">No. HP (Opsional)</label>
               <input type="text" className="form-control" value={guestPhone} onChange={e => setGuestPhone(e.target.value)} placeholder="0812xxxx" />
             </div>
@@ -171,50 +184,47 @@ const OfflineOrderForm = () => {
           <h3 style={{ fontSize: '1.1rem', marginBottom: 16, display: 'flex', alignItems: 'center', gap: 8 }}><FiPackage /> Detail Item & Layanan</h3>
           {items.map((item, idx) => (
             <div key={idx} style={{ background: '#f8fafc', padding: 16, borderRadius: 12, marginBottom: 16, border: '1px solid #e2e8f0' }}>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 12 }}>
-                <div>
-                  <label className="form-label">Pilih Layanan</label>
-                  <select className="form-control" value={item.service_id} onChange={e => handleItemChange(idx, 'service_id', e.target.value)} required>
-                    <option value="">-- Pilih Layanan --</option>
-                    {services.map(s => (
-                      <option key={s.id} value={s.id}>{s.name} - Rp{s.price_per_unit.toLocaleString()}</option>
-                    ))}
-                  </select>
-                </div>
-                <div>
+              
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16, marginBottom: 16 }}>
+                <div style={{ flex: '1 1 150px' }}>
                   <label className="form-label">Kategori</label>
                   <select className="form-control" value={item.category} onChange={e => handleItemChange(idx, 'category', e.target.value)}>
                     <option value="kiloan">Kiloan</option>
                     <option value="satuan">Satuan</option>
                   </select>
                 </div>
+                
+                <div style={{ flex: '2 1 250px' }}>
+                  <label className="form-label">{item.category === 'satuan' ? 'Pilih Layanan Satuan' : 'Pilih Layanan Kiloan'}</label>
+                  <select className="form-control" value={item.service_id} onChange={e => handleItemChange(idx, 'service_id', e.target.value)} required>
+                    <option value="">-- Pilih Layanan --</option>
+                    {(item.category === 'satuan' ? satuanServices : kiloanServices).map(s => (
+                      <option key={s.id} value={s.id}>{s.name} - Rp{s.price_per_unit.toLocaleString()}</option>
+                    ))}
+                  </select>
+                </div>
               </div>
               
-              <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr', gap: 16, alignItems: 'flex-end' }}>
-                <div>
-                  <label className="form-label"><FiList /> Nama Item</label>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16, alignItems: 'flex-end' }}>
+                <div style={{ flex: '2 1 200px' }}>
+                  <label className="form-label"><FiList /> Nama Item / Catatan</label>
                   {item.category === 'satuan' ? (
-                    <select className="form-control" value={item.item_name} onChange={e => handleItemChange(idx, 'item_name', e.target.value)} required>
-                      <option value="">-- Pilih Item Satuan --</option>
-                      {satuanItemsList.map(name => (
-                        <option key={name} value={name}>{name}</option>
-                      ))}
-                    </select>
+                     <input type="text" className="form-control" value={item.item_name} disabled style={{ background: '#e2e8f0', cursor: 'not-allowed' }} placeholder="Otomatis dari layanan" required />
                   ) : (
-                    <input type="text" className="form-control" value={item.item_name} onChange={e => handleItemChange(idx, 'item_name', e.target.value)} placeholder="Misal: Pakaian Sehari-hari" required />
+                    <input type="text" className="form-control" value={item.item_name} onChange={e => handleItemChange(idx, 'item_name', e.target.value)} placeholder="Misal: Pakaian Sehari-hari campur" required />
                   )}
                 </div>
-                <div>
+                <div style={{ flex: '1 1 120px' }}>
                   <label className="form-label">Harga/Unit</label>
                   <input type="number" className="form-control" value={item.price_per_unit} onChange={e => handleItemChange(idx, 'price_per_unit', Number(e.target.value))} />
                 </div>
-                <div style={{ position: 'relative' }}>
+                <div style={{ flex: '1 1 120px', position: 'relative' }}>
                   <label className="form-label">Qty ({item.unit})</label>
                   <input type="number" step="0.1" className="form-control" value={item.quantity} onChange={e => handleItemChange(idx, 'quantity', Number(e.target.value))} required />
                   
                   {items.length > 1 && (
-                    <button type="button" onClick={() => removeItem(idx)} style={{ position: 'absolute', top: 0, right: 0, background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', padding: 4 }}>
-                      <FiTrash2 />
+                    <button type="button" onClick={() => removeItem(idx)} style={{ position: 'absolute', top: 0, right: -8, background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', padding: 4, display: 'flex', alignItems: 'center', height: 42 }}>
+                      <FiTrash2 size={18} />
                     </button>
                   )}
                 </div>
@@ -228,12 +238,12 @@ const OfflineOrderForm = () => {
         <div className="card" style={{ padding: 24, borderRadius: 16 }}>
           <h3 style={{ fontSize: '1.1rem', marginBottom: 16, display: 'flex', alignItems: 'center', gap: 8 }}><FiDollarSign /> Pembayaran & Tambahan</h3>
           
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
-            <div>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16, marginBottom: 16 }}>
+            <div style={{ flex: '1 1 200px' }}>
               <label className="form-label">Biaya Tambahan Admin (Rp)</label>
-              <input type="number" className="form-control" value={additionalFee} onChange={e => setAdditionalFee(Number(e.target.value))} placeholder="Opsional (misal: 15000)" />
+              <input type="number" className="form-control" value={additionalFee} onChange={e => setAdditionalFee(Number(e.target.value))} placeholder="Misal: 15000" />
             </div>
-            <div>
+            <div style={{ flex: '1 1 200px' }}>
               <label className="form-label">Status Pembayaran</label>
               <select className="form-control" value={paymentStatus} onChange={e => setPaymentStatus(e.target.value)}>
                 <option value="lunas">Lunas</option>
@@ -242,29 +252,29 @@ const OfflineOrderForm = () => {
             </div>
           </div>
 
-          <div style={{ background: '#f8fafc', padding: 16, borderRadius: 8, marginBottom: 20, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span style={{ fontWeight: 600, color: '#475569' }}>Total Harga Otomatis:</span>
-            <span style={{ fontSize: '1.25rem', fontWeight: 700, color: '#10b981' }}>Rp {totalPrice.toLocaleString()}</span>
+          <div style={{ background: '#f8fafc', padding: 16, borderRadius: 8, marginBottom: 20, display: 'flex', justifyContent: 'space-between', alignItems: 'center', border: '1px solid #10b981' }}>
+            <span style={{ fontWeight: 600, color: '#059669', fontSize: '1.1rem' }}>Total Harga Akhir:</span>
+            <span style={{ fontSize: '1.4rem', fontWeight: 800, color: '#10b981' }}>Rp {totalPrice.toLocaleString()}</span>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-            <div>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16 }}>
+            <div style={{ flex: '1 1 250px' }}>
               <label className="form-label"><FiCamera /> Foto Barang/Tas Cucian</label>
               <PhotoUploader onPhotoSelected={setPhoto} />
             </div>
-            <div>
-              <label className="form-label"><FiCreditCard /> Foto Bukti Pembayaran (opsional)</label>
+            <div style={{ flex: '1 1 250px' }}>
+              <label className="form-label"><FiCreditCard /> Foto Bukti Transfer (opsional)</label>
               <PhotoUploader onPhotoSelected={setPaymentProof} />
             </div>
           </div>
           
           <div style={{ marginTop: 20 }}>
             <label className="form-label"><FiFileText /> Catatan Admin</label>
-            <textarea className="form-control" rows="3" value={notes} onChange={e => setNotes(e.target.value)} placeholder="Catatan tambahan (opsional)..." />
+            <textarea className="form-control" rows="3" value={notes} onChange={e => setNotes(e.target.value)} placeholder="Ketik keterangan tambahan di sini..." />
           </div>
         </div>
 
-        <button type="submit" className="btn" style={{ background: 'var(--blue)', color: 'white', padding: '14px', fontSize: '1.1rem', borderRadius: 12 }} disabled={submitting}>
+        <button type="submit" className="btn" style={{ background: 'var(--blue)', color: 'white', padding: '16px', fontSize: '1.1rem', borderRadius: 12, fontWeight: 700 }} disabled={submitting}>
           <FiSave style={{ marginRight: 8 }} /> {submitting ? 'Menyimpan...' : 'Buat Pesanan Offline'}
         </button>
 

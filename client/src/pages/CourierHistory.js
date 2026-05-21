@@ -29,7 +29,7 @@ const formatServiceLabel = (order) => {
 const statusLabels = {
   menunggu: 'Menunggu',
   pickup: 'Dijemput',
-  cuci: 'Dicuci',
+  proses: 'Diproses',
   antar: 'Diantar',
   selesai: 'Selesai'
 };

@@ -58,6 +58,14 @@ pool.query(`
   console.error('❌ Error migrating orders table:', err);
 });
 
+// Auto-migrate to change status 'cuci' to 'proses' globally
+pool.query(`UPDATE orders SET status = 'proses' WHERE status = 'cuci'`)
+  .then(() => {
+    console.log('✅ Updated status cuci -> proses in orders table');
+  }).catch(err => {
+    console.error('❌ Error updating status cuci -> proses:', err);
+  });
+
 // ==========================================
 // 3. MIDDLEWARE KEAMANAN & PENGATURAN PROXY
 // ==========================================

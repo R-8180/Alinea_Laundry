@@ -65,13 +65,13 @@ const formatRupiah = (n) => 'Rp ' + Math.floor(Number(n) || 0).toLocaleString('i
 const statusLabels = {
   menunggu: 'Menunggu',
   pickup: 'Dijemput',
-  cuci: 'Dicuci',
+  proses: 'Diproses',
   antar: 'Diantar',
   selesai: 'Selesai',
   batal: 'Dibatalkan',
 };
 
-const statusOrder = ['menunggu', 'pickup', 'cuci', 'antar', 'selesai'];
+const statusOrder = ['menunggu', 'pickup', 'proses', 'antar', 'selesai'];
 
 const stepIcons = {
   menunggu: <FiClock />,

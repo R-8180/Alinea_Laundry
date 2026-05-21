@@ -15,7 +15,7 @@ import { GiWeight } from 'react-icons/gi';
 import LaporanTab from './LaporanTab';
 
 /* ---------- KONSTANTA ---------- */
-const statusLabels = { menunggu: 'Menunggu', pickup: 'Dijemput', cuci: 'Dicuci', antar: 'Diantar', selesai: 'Selesai', batal: 'Dibatalkan' };
+const statusLabels = { menunggu: 'Menunggu', pickup: 'Dijemput', proses: 'Diproses', antar: 'Diantar', selesai: 'Selesai', batal: 'Dibatalkan' };
 
 // Helper: resolve file URL for both old local paths and new Supabase URLs
 const resolveFileUrl = (url) => {
@@ -28,7 +28,7 @@ const resolveFileUrl = (url) => {
   return `${base}${url}`;
 };
 
-const statusOptions = ['menunggu', 'pickup', 'cuci', 'antar', 'selesai', 'batal'];
+const statusOptions = ['menunggu', 'pickup', 'proses', 'antar', 'selesai', 'batal'];
 // Tambah 'all_active' di paling depan
 
 const formatWA = (phone) => {
@@ -54,7 +54,7 @@ const getDynamicWAMessage = (order) => {
       return `Halo Kak ${name}, pesanan laundry Anda dengan kode *${code}* saat ini berstatus *Menunggu Penjemputan*. Kurir kami akan segera meluncur ke lokasi Kakak untuk mengambil pakaian kotor. Mohon ditunggu ya Kak. Terima kasih!`;
     case 'pickup':
       return `Halo Kak ${name}, kurir kami saat ini *sedang dalam perjalanan* menjemput atau *sudah berada di lokasi* untuk pesanan laundry *${code}* Anda. Mohon siapkan pakaian kotor yang akan diserahkan ya Kak. Terima kasih banyak!`;
-    case 'cuci':
+    case 'proses':
       return `Halo Kak ${name}, kami menginformasikan bahwa pesanan laundry Anda dengan kode *${code}* saat ini sudah berada di cabang laundry dan sedang dalam *proses pencucian/pengerjaan* higienis oleh tim kami. Kami akan memberi kabar kembali jika sudah selesai. Terima kasih ya Kak!`;
     case 'antar':
       return `Halo Kak ${name}, kabar baik! Pakaian bersih Anda untuk pesanan *${code}* saat ini *sedang dalam proses pengantaran* oleh kurir kembali ke alamat Anda. Mohon bersiap untuk menerima pakaian bersih Anda ya Kak. Terima kasih!`;

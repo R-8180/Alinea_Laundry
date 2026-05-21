@@ -114,7 +114,7 @@ const HeroWithTrack = () => {
   const statusMap = {
     menunggu: <><FiClock /> Menunggu dipickup</>,
     pickup: <><FiTruck /> Sedang dipickup</>,
-    cuci: <><FiSettings /> Sedang dicuci</>,
+    proses: <><FiSettings /> Sedang diproses</>,
     antar: <><FiPackage /> Sedang diantar</>,
     selesai: <><FiCheckCircle /> Selesai</>,
   };
@@ -362,7 +362,7 @@ const testimoniList = [
   { name: 'Dian Saputra', text: '“Sering kecewa sama laundry lain karena baju putih malah jadi kusam. Tapi di sini beda, baju kerjaku yang tadinya ada noda kopi bisa ilang bersih tanpa ngerusak warna bajunya. Parfum yang dipake juga enak, gak bikin pusing kayak parfum laundry pada umumnya.”', stars: 5, img: 'https://ui-avatars.com/api/?name=Dian+Saputra&background=eab308&color=fff' },
   { name: 'Rama Aditya', text: '“Harganya terjangkau untuk kualitas yang super premium. Sempat cobain nyuci sprei dan bedcover, pas balik bener-bener kayak baru beli. Wanginya fresh dan teksturnya tetep lembut. Proses pickup dan delivery juga cepat tanpa drama kurir nyasar.”', stars: 5, img: 'https://ui-avatars.com/api/?name=Rama+Aditya&background=10b981&color=fff' },
   { name: 'Anisa Fitri', text: '“Salut sama pelayanannya yang super ramah dan responsif. Waktu itu pernah kelupaan uang di kantong celana, eh pas bajunya diantar, admin ngasih tahu kalau ada barang tertinggal dan dikembaliin utuh. Jujur dan amanah banget, mantap Alinea Laundry!”', stars: 5, img: 'https://ui-avatars.com/api/?name=Anisa+Fitri&background=8b5cf6&color=fff' },
-  { name: 'Budi Santoso', text: '“Fitur tracking order di web-nya keren abis! Jadi aku tau pasti status bajuku udah sampai mana, apakah lagi dicuci, dijemur, atau udah mau diantar. Jadi tenang gak perlu repot-repot nanya admin terus. Canggih, praktis, dan cucian bersih maksimal.”', stars: 5, img: 'https://ui-avatars.com/api/?name=Budi+Santoso&background=f97316&color=fff' },
+  { name: 'Budi Santoso', text: '“Fitur tracking order di web-nya keren abis! Jadi aku tau pasti status bajuku udah sampai mana, apakah lagi diproses, dijemur, atau udah mau diantar. Jadi tenang gak perlu repot-repot nanya admin terus. Canggih, praktis, dan cucian bersih maksimal.”', stars: 5, img: 'https://ui-avatars.com/api/?name=Budi+Santoso&background=f97316&color=fff' },
   { name: 'Citra Kirana', text: '“Pertama kali order langsung puas. Wangi ocean fresh-nya beneran kayak bau hotel bintang 5. Cucian numpuk sebulan beres semua dalam waktu 3 hari. Gak nyangka di Semarang ada layanan secanggih dan seprofesional ini. Bakalan nyaranin ke temen-temen sih.”', stars: 5, img: 'https://ui-avatars.com/api/?name=Citra+Kirana&background=14b8a6&color=fff' },
   { name: 'Dimas Anggara', text: '“Tadinya cari-cari laundry sepatu yang bagus, eh ternyata Alinea juga nyediain. Sepatu sneakers putihku yang udah dekil kena lumpur jadi kinclong lagi. Solnya bersih dan bagian dalamnya wangi banget, gak bau apek sama sekali. The best deh pokoknya.”', stars: 5, img: 'https://ui-avatars.com/api/?name=Dimas+Anggara&background=6366f1&color=fff' }
 ];

@@ -33,7 +33,7 @@ const getDynamicWAMessage = (order) => {
       return `Halo Kak ${name}, pesanan laundry Anda dengan kode *${code}* saat ini berstatus *Menunggu Penjemputan*. Kurir kami akan segera meluncur ke lokasi Kakak untuk mengambil pakaian kotor. Mohon ditunggu ya Kak. Terima kasih!`;
     case 'pickup':
       return `Halo Kak ${name}, kurir kami saat ini *sedang dalam perjalanan* menjemput atau *sudah berada di lokasi* untuk pesanan laundry *${code}* Anda. Mohon siapkan pakaian kotor yang akan diserahkan ya Kak. Terima kasih banyak!`;
-    case 'cuci':
+    case 'proses':
       return `Halo Kak ${name}, kami menginformasikan bahwa pesanan laundry Anda dengan kode *${code}* saat ini sudah berada di cabang laundry dan sedang dalam *proses pencucian/pengerjaan* higienis oleh tim kami. Kami akan memberi kabar kembali jika sudah selesai. Terima kasih ya Kak!`;
     case 'antar':
       return `Halo Kak ${name}, kabar baik! Pakaian bersih Anda untuk pesanan *${code}* saat ini *sedang dalam proses pengantaran* oleh kurir kembali ke alamat Anda. Mohon bersiap untuk menerima pakaian bersih Anda ya Kak. Terima kasih!`;
@@ -281,7 +281,7 @@ const CourierDashboard = () => {
                               style={{ background: '#10b981', color: 'white', padding: '4px 10px', fontSize: '0.75rem' }}
                               onClick={async () => {
                                 const confirmRes = await showConfirm('Konfirmasi Jemput', 'Apakah Anda yakin pesanan laundry ini sudah dijemput?');
-                                if (confirmRes.isConfirmed) updateStatus(order.id, 'cuci');
+                                if (confirmRes.isConfirmed) updateStatus(order.id, 'proses');
                               }}
                             >
                               <FiCheckCircle /> Sudah Dijemput
@@ -316,7 +316,7 @@ const CourierDashboard = () => {
                 <div style={{ fontSize: '0.82rem', color: 'var(--text-3)', marginBottom: 12 }}><FiMapPin /> {order.address}</div>
                 <div style={{ display: 'flex', gap: 10 }}>
                   <button className="btn btn-detail" onClick={() => openDetail(order)} style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}><FiInfo /> Detail</button>
-                  <button className="btn" style={{ flex: 1.5, background: '#10b981', color: 'white', justifyContent: 'center', alignItems: 'center' }} onClick={async () => { const confirmRes = await showConfirm('Konfirmasi Jemput', 'Apakah Anda yakin pesanan laundry ini sudah dijemput?'); if (confirmRes.isConfirmed) updateStatus(order.id, 'cuci'); }}><FiCheckCircle /> Dijemput</button>
+                  <button className="btn" style={{ flex: 1.5, background: '#10b981', color: 'white', justifyContent: 'center', alignItems: 'center' }} onClick={async () => { const confirmRes = await showConfirm('Konfirmasi Jemput', 'Apakah Anda yakin pesanan laundry ini sudah dijemput?'); if (confirmRes.isConfirmed) updateStatus(order.id, 'proses'); }}><FiCheckCircle /> Dijemput</button>
                 </div>
               </div>
             ))}
@@ -331,7 +331,7 @@ const CourierDashboard = () => {
             </div>
             <h3 style={{ fontSize: '1.2rem', fontWeight: 700, color: 'var(--navy)' }}>Pengiriman Laundry</h3>
             <span style={{ marginLeft: 'auto', background: '#065F46', color: 'white', padding: '2px 10px', borderRadius: 20, fontSize: '0.8rem', fontWeight: 700 }}>
-              {orders.filter(o => o.status === 'antar' || o.status === 'cuci').length} Pesanan
+              {orders.filter(o => o.status === 'antar' || o.status === 'proses').length} Pesanan
             </span>
           </div>
 
@@ -342,10 +342,10 @@ const CourierDashboard = () => {
                   <tr><th>Order</th><th>Pelanggan</th><th>Alamat</th><th>Aksi</th></tr>
                 </thead>
                 <tbody>
-                  {orders.filter(o => o.status === 'antar' || o.status === 'cuci').length === 0 ? (
+                  {orders.filter(o => o.status === 'antar' || o.status === 'proses').length === 0 ? (
                     <tr><td colSpan="4" className="empty-cell">Tidak ada pengiriman saat ini</td></tr>
                   ) : (
-                    orders.filter(o => o.status === 'antar' || o.status === 'cuci')
+                    orders.filter(o => o.status === 'antar' || o.status === 'proses')
                       .sort((a, b) => getRemainingMs(a) - getRemainingMs(b))
                       .map(order => (
                       <tr key={order.id}>
@@ -390,9 +390,9 @@ const CourierDashboard = () => {
           </div>
 
           <div className="mobile-order-list mobile-only">
-            {orders.filter(o => o.status === 'antar' || o.status === 'cuci').length === 0 ? (
+            {orders.filter(o => o.status === 'antar' || o.status === 'proses').length === 0 ? (
               <div style={{ textAlign: 'center', padding: 24, color: 'var(--text-4)', background: 'white', borderRadius: 12, border: '1px dashed var(--border)' }}>Tidak ada pengiriman</div>
-            ) : orders.filter(o => o.status === 'antar' || o.status === 'cuci')
+            ) : orders.filter(o => o.status === 'antar' || o.status === 'proses')
                 .sort((a, b) => getRemainingMs(a) - getRemainingMs(b))
                 .map(order => (
               <div key={order.id} className="mobile-order-card" style={{ position: 'relative', overflow: 'hidden' }}>

@@ -122,7 +122,7 @@ router.get('/orders/:id', async (req, res) => {
 router.put('/orders/:id/status', async (req, res) => {
   const { status } = req.body;
   const orderId = req.params.id;
-  const allowedStatuses = ['menunggu', 'pickup', 'cuci', 'antar'];
+  const allowedStatuses = ['menunggu', 'pickup', 'proses', 'antar'];
 
   if (!allowedStatuses.includes(status)) {
     return res.status(400).json({ message: 'Status tidak valid. Gunakan endpoint deliver untuk menyelesaikan.' });

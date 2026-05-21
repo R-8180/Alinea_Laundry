@@ -120,7 +120,7 @@ router.post('/offline-order', uploadImage.fields([{name: 'photo'}, {name: 'payme
     const orderRes = await client.query(
       `INSERT INTO orders 
       (user_id, order_code, status, total_price, payment_status, notes, photo_url, is_offline, guest_name, guest_phone, branch_id, payment_proof)
-      VALUES (NULL, $1, 'cuci', $2, $3, $4, $5, true, $6, $7, $8, $9) RETURNING id`,
+      VALUES (NULL, $1, 'proses', $2, $3, $4, $5, true, $6, $7, $8, $9) RETURNING id`,
       [orderCode, parsedTotalPrice, payment_status || 'lunas', notes, photo_url, guest_name, guest_phone, parsedBranchId, payment_proof]
     );
     const orderId = orderRes.rows[0].id;
@@ -605,8 +605,7 @@ router.put('/orders/:id/validate-items', idParamValidation, validate, async (req
 router.put('/orders/:id/status', updateStatusValidation, validate, async (req, res) => {
   const { status } = req.body;
   const orderId = req.params.id;
-
-  const allowedStatuses = ['menunggu', 'pickup', 'cuci', 'antar', 'selesai', 'batal'];
+  const allowedStatuses = ['menunggu', 'pickup', 'proses', 'antar', 'selesai', 'batal'];
   if (!status || !allowedStatuses.includes(status)) {
     return res.status(400).json({ message: 'Status tidak valid' });
   }

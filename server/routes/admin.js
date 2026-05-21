@@ -32,7 +32,10 @@ router.get('/orders', async (req, res) => {
   try {
     // ⚠️ SAFETY: Auto-migrate to prevent "column does not exist" on Vercel
     try {
-      await db.query(`ALTER TABLE orders ADD COLUMN IF NOT EXISTS is_offline BOOLEAN DEFAULT FALSE, ADD COLUMN IF NOT EXISTS guest_name VARCHAR(255), ADD COLUMN IF NOT EXISTS guest_phone VARCHAR(50), ADD COLUMN IF NOT EXISTS payment_proof VARCHAR(255)`);
+      await db.query(`ALTER TABLE orders ADD COLUMN IF NOT EXISTS is_offline BOOLEAN DEFAULT FALSE`);
+      await db.query(`ALTER TABLE orders ADD COLUMN IF NOT EXISTS guest_name VARCHAR(255)`);
+      await db.query(`ALTER TABLE orders ADD COLUMN IF NOT EXISTS guest_phone VARCHAR(50)`);
+      await db.query(`ALTER TABLE orders ADD COLUMN IF NOT EXISTS payment_proof VARCHAR(255)`);
     } catch (e) { console.error('Migration error in GET /orders:', e); }
 
     const activeBranchId = req.user.branch_id || (req.query.branch_id ? parseInt(req.query.branch_id) : null);
@@ -66,7 +69,7 @@ router.get('/orders', async (req, res) => {
     res.json(result.rows);
   } catch (err) {
     console.error('Get admin orders error:', err);
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ message: 'DB Error GET orders: ' + err.message });
   }
 });
 
@@ -90,6 +93,15 @@ router.post('/offline-order', uploadImage.fields([{name: 'photo'}, {name: 'payme
   const client = await db.connect();
   try {
     await client.query('BEGIN');
+    
+    // Safety check migration inside POST too
+    try {
+      await client.query(`ALTER TABLE orders ADD COLUMN IF NOT EXISTS is_offline BOOLEAN DEFAULT FALSE`);
+      await client.query(`ALTER TABLE orders ADD COLUMN IF NOT EXISTS guest_name VARCHAR(255)`);
+      await client.query(`ALTER TABLE orders ADD COLUMN IF NOT EXISTS guest_phone VARCHAR(50)`);
+      await client.query(`ALTER TABLE orders ADD COLUMN IF NOT EXISTS payment_proof VARCHAR(255)`);
+    } catch (e) {}
+
     const { guest_name, guest_phone, notes, total_price, payment_status, items, service_id } = req.body;
     
     // Fallback if branch_id is empty string, make it null or use req.user.branch_id
@@ -124,7 +136,7 @@ router.post('/offline-order', uploadImage.fields([{name: 'photo'}, {name: 'payme
   } catch (error) {
     await client.query('ROLLBACK');
     console.error('Offline order error:', error);
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ message: 'DB Error POST: ' + error.message });
   } finally {
     client.release();
   }

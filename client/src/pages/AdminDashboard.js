@@ -266,6 +266,17 @@ const AdminDashboard = () => {
     }
   };
 
+  const updatePaymentStatus = async (id, newStatus) => {
+    try {
+      await axios.put(`/api/admin/orders/${id}/payment-status`, { payment_status: newStatus }, { headers: h });
+      setOrders(prev => prev.map(o => o.id === id ? { ...o, payment_status: newStatus } : o));
+      showSuccess('Status Pembayaran Diperbarui', 'Berhasil mengubah status pembayaran.');
+      fetchYesterdayStats();
+    } catch (err) {
+      showError('Gagal Update Pembayaran', err.response?.data?.message || 'Terjadi kesalahan jaringan.');
+    }
+  };
+
   const updateStatus = async (id, newStatus) => {
     if (newStatus === 'selesai') {
       setCompleteModal({ orderId: id });
@@ -352,19 +363,6 @@ const AdminDashboard = () => {
       setNewOrderForm({ address: '', notes: '', service_speed: 'reguler', items: [{ service_type: 'kiloan', name: '' }] });
       fetchOrders();
     } catch (err) { showError('Gagal Tambah Order', err.response?.data?.message || err.response?.data?.error || 'Gagal menambahkan order baru.'); }
-  };
-
-  const handleQuickPaymentUpdate = async (orderId, newStatus) => {
-    try {
-      const token = localStorage.getItem('token');
-      await axios.put(`/api/admin/orders/${orderId}/payment`, { payment_status: newStatus }, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      fetchOrders();
-      showSuccess('Update Pembayaran', 'Status pembayaran berhasil diupdate');
-    } catch (err) {
-      showError('Gagal Update', err.response?.data?.message || 'Terjadi kesalahan saat mengupdate pembayaran');
-    }
   };
 
   const validatePayment = async (oid) => {
@@ -1003,30 +1001,23 @@ const AdminDashboard = () => {
 
                       {/* Kolom Pembayaran */}
                       <td>
-                        <select
-                          className="form-input"
-                          style={{
-                            padding: '4px 8px',
-                            fontSize: '0.8rem',
-                            width: '120px',
-                            backgroundColor: order.payment_status === 'paid' ? '#dcfce7' : '#fee2e2',
-                            color: order.payment_status === 'paid' ? '#166534' : '#991b1b',
-                            border: 'none',
-                            fontWeight: 600,
-                            borderRadius: '6px'
-                          }}
-                          value={order.payment_status === 'paid' ? 'paid' : 'pending'}
-                          onChange={(e) => handleQuickPaymentUpdate(order.id, e.target.value)}
-                        >
-                          <option value="pending">Belum Lunas</option>
-                          <option value="paid">Lunas</option>
-                        </select>
-                        {order.payment_proof && order.payment_status !== 'paid' && (
-                          <div style={{ marginTop: 6 }}>
-                            <button className="btn-validasi" style={{ padding: '2px 6px', fontSize: '0.7rem' }} onClick={() => openPaymentModal(order.id)}>
-                              <FiAlertCircle /> Bukti
-                            </button>
-                          </div>
+                        {order.is_offline ? (
+                          <select 
+                            value={order.payment_status}
+                            onChange={(e) => updatePaymentStatus(order.id, e.target.value)}
+                            style={{ padding: '4px 8px', borderRadius: '4px', border: '1px solid #cbd5e1', fontSize: '0.8rem', background: order.payment_status === 'paid' ? '#dcfce7' : '#fee2e2', color: order.payment_status === 'paid' ? '#166534' : '#991b1b', fontWeight: 600, outline: 'none', cursor: 'pointer' }}
+                          >
+                            <option value="paid">Lunas</option>
+                            <option value="pending">Belum Lunas</option>
+                          </select>
+                        ) : order.payment_status === 'paid' ? (
+                          <span className="badge-lunas"><FiCheckCircle /> Lunas</span>
+                        ) : order.payment_proof ? (
+                          <button className="btn-validasi" onClick={() => openPaymentModal(order.id)}>
+                            <FiAlertCircle /> Validasi
+                          </button>
+                        ) : (
+                          <span className="badge-belum-bayar">Belum Bayar</span>
                         )}
                       </td>
 
@@ -1049,22 +1040,24 @@ const AdminDashboard = () => {
 
                       {/* Kolom Kurir */}
                       <td>
-                        <div className="assign-action">
-                          {order.is_offline ? (
-                            <span style={{ fontSize: '0.8rem', color: 'var(--text-3)' }}>- (Offline)</span>
-                          ) : order.courier_name ? (
-                            <>
-                              <span className="courier-name-label"><FiTruck /> {order.courier_name}</span>
-                              <button className="btn-assign btn-sm" onClick={() => { setAssignModal({ orderId: order.id }); setSelectedCourier(order.courier_id || ''); fetchCouriers(); }}>
-                                <FiEdit2 /> Ganti
+                        {order.is_offline ? (
+                          <span style={{ fontSize: '0.75rem', color: '#64748b', fontStyle: 'italic', fontWeight: 600, background: '#f8fafc', padding: '4px 8px', borderRadius: 4, border: '1px solid #e2e8f0' }}>Tidak Tersedia</span>
+                        ) : (
+                          <div className="assign-action">
+                            {order.courier_name ? (
+                              <>
+                                <span className="courier-name-label"><FiTruck /> {order.courier_name}</span>
+                                <button className="btn-assign btn-sm" onClick={() => { setAssignModal({ orderId: order.id }); setSelectedCourier(order.courier_id || ''); fetchCouriers(); }}>
+                                  <FiEdit2 /> Ganti
+                                </button>
+                              </>
+                            ) : (
+                              <button className="btn-assign" onClick={() => { setAssignModal({ orderId: order.id }); setSelectedCourier(''); fetchCouriers(); }}>
+                                <FiUserPlus /> Assign
                               </button>
-                            </>
-                          ) : (
-                            <button className="btn-assign" onClick={() => { setAssignModal({ orderId: order.id }); setSelectedCourier(''); fetchCouriers(); }}>
-                              <FiUserPlus /> Assign
-                            </button>
-                          )}
-                        </div>
+                            )}
+                          </div>
+                        )}
                       </td>
 
                       {/* Kolom Aksi */}
@@ -1320,30 +1313,17 @@ const AdminDashboard = () => {
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', padding: '7px 0', borderTop: '1px solid var(--border)', fontSize: '0.82rem', alignItems: 'center' }}>
                     <span style={{ color: 'var(--text-3)' }}>Pembayaran</span>
-                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '4px' }}>
-                      <select
-                        className="form-input"
-                        style={{
-                          padding: '2px 6px',
-                          fontSize: '0.75rem',
-                          backgroundColor: order.payment_status === 'paid' ? '#dcfce7' : '#fee2e2',
-                          color: order.payment_status === 'paid' ? '#166534' : '#991b1b',
-                          border: 'none',
-                          fontWeight: 600,
-                          borderRadius: '4px'
-                        }}
-                        value={order.payment_status === 'paid' ? 'paid' : 'pending'}
-                        onChange={(e) => handleQuickPaymentUpdate(order.id, e.target.value)}
-                      >
-                        <option value="pending">Belum Lunas</option>
-                        <option value="paid">Lunas</option>
-                      </select>
-                      {order.payment_proof && order.payment_status !== 'paid' && (
-                        <button className="btn-validasi" style={{ padding: '2px 6px', fontSize: '0.7rem' }} onClick={() => openPaymentModal(order.id)}>
-                          <FiAlertCircle /> Bukti
+                    <span>
+                      {order.payment_status === 'paid' ? (
+                        <span className="badge-lunas"><FiCheckCircle /> Lunas</span>
+                      ) : order.payment_proof ? (
+                        <button className="btn-validasi" onClick={() => openPaymentModal(order.id)}>
+                          <FiAlertCircle /> Validasi
                         </button>
+                      ) : (
+                        <span className="badge-belum-bayar">Belum Bayar</span>
                       )}
-                    </div>
+                    </span>
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', padding: '7px 0', borderTop: '1px solid var(--border)', fontSize: '0.82rem' }}>
                     <span style={{ color: 'var(--text-3)' }}>Total</span>
@@ -1360,7 +1340,7 @@ const AdminDashboard = () => {
                       {order.total_price > 0 ? <FiCheckCircle /> : <GiWeight />} Validasi
                     </button>
 
-                    {order.is_offline ? null : order.courier_name ? (
+                    {order.courier_name ? (
                       <button className="btn-assign" onClick={() => { setAssignModal({ orderId: order.id }); setSelectedCourier(order.courier_id || ''); fetchCouriers(); }}>
                         <FiTruck /> {order.courier_name}
                       </button>
@@ -1671,6 +1651,27 @@ const AdminDashboard = () => {
                 </div>
               )}
             </div>
+
+            {/* Foto Offline Order */}
+            {(detailModal.photo_url || detailModal.payment_proof) && (
+              <div className="detail-section">
+                <h4>Media Pendukung</h4>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16 }}>
+                  {detailModal.photo_url && (
+                    <div style={{ border: '1px solid #e2e8f0', borderRadius: 8, padding: 8, background: '#f8fafc' }}>
+                      <div style={{ fontSize: '0.75rem', fontWeight: 700, color: '#64748b', marginBottom: 8, textAlign: 'center' }}><FiCamera className="icon-inline" /> Foto Cucian</div>
+                      <img src={resolveFileUrl(detailModal.photo_url)} alt="Foto Cucian" style={{ width: '100%', height: 'auto', borderRadius: 6, display: 'block', maxHeight: 200, objectFit: 'contain' }} />
+                    </div>
+                  )}
+                  {detailModal.payment_proof && (
+                    <div style={{ border: '1px solid #e2e8f0', borderRadius: 8, padding: 8, background: '#f8fafc' }}>
+                      <div style={{ fontSize: '0.75rem', fontWeight: 700, color: '#64748b', marginBottom: 8, textAlign: 'center' }}><FiCreditCard className="icon-inline" /> Bukti Pembayaran</div>
+                      <img src={resolveFileUrl(detailModal.payment_proof)} alt="Bukti Pembayaran" style={{ width: '100%', height: 'auto', borderRadius: 6, display: 'block', maxHeight: 200, objectFit: 'contain' }} />
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
 
             {/* Tabel Item */}
             {detailModal.items?.length > 0 && (

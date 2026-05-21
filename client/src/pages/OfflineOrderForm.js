@@ -38,7 +38,7 @@ const OfflineOrderForm = () => {
   
   const [additionalFee, setAdditionalFee] = useState(0);
   const [totalPrice, setTotalPrice] = useState(0);
-  const [paymentStatus, setPaymentStatus] = useState('lunas');
+  const [paymentStatus, setPaymentStatus] = useState('paid');
   const [notes, setNotes] = useState('');
   const [photo, setPhoto] = useState(null);
   const [paymentProof, setPaymentProof] = useState(null);
@@ -441,8 +441,8 @@ const OfflineOrderForm = () => {
               <div>
                 <label style={{ fontSize: '0.85rem', color: '#64748b', display: 'block', marginBottom: 6 }}>Status Pembayaran</label>
                 <select style={{ width: '100%', padding: '10px 14px', borderRadius: 8, border: '1px solid #e2e8f0' }} value={paymentStatus} onChange={e => setPaymentStatus(e.target.value)}>
-                  <option value="lunas">Lunas</option>
-                  <option value="belum_lunas">Belum Lunas</option>
+                  <option value="paid">Lunas</option>
+                  <option value="pending">Belum Lunas</option>
                 </select>
               </div>
             </div>
@@ -455,11 +455,15 @@ const OfflineOrderForm = () => {
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: 16 }}>
               <div>
                 <label style={{ fontSize: '0.85rem', color: '#64748b', display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8 }}><FiCamera /> Foto Tas Cucian</label>
-                <PhotoUploader onPhoto={setPhoto} photo={photo} />
+                <PhotoUploader onPhotoSelected={setPhoto} />
               </div>
               <div>
-                <label style={{ fontSize: '0.85rem', color: '#64748b', display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8 }}><FiCreditCard /> Foto Bukti Transfer</label>
-                <PhotoUploader onPhoto={setPaymentProof} photo={paymentProof} />
+                <label style={{ fontSize: '0.85rem', color: '#64748b', display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8 }}><FiCreditCard /> Foto Bukti Transfer (Opsional)</label>
+                <div style={{ textAlign: 'center', marginBottom: '12px', padding: '12px', background: '#f8fafc', borderRadius: '8px', border: '1px dashed #cbd5e1' }}>
+                  <img src="/qris.png" alt="QRIS" style={{ width: '100%', maxWidth: '160px', borderRadius: '8px' }} />
+                  <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '6px', fontWeight: 600 }}>Tunjukkan QRIS ini ke pelanggan</div>
+                </div>
+                <PhotoUploader onPhotoSelected={setPaymentProof} />
               </div>
             </div>
             

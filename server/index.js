@@ -233,7 +233,6 @@ const reviewRoutes = require('./routes/reviews');
 const trackRoutes = require('./routes/track');
 const addressRoutes = require('./routes/addresses');
 const servicesRoutes = require('./routes/services');
-const branchRoutes = require('./routes/branch');
 const notificationsRoutes = require('./routes/notifications');
 
 app.use('/api/auth', authRoutes);
@@ -245,7 +244,6 @@ app.use('/api/reviews', reviewRoutes);
 app.use('/api/track', trackRoutes);
 app.use('/api/addresses', addressRoutes);
 app.use('/api/services', servicesRoutes);
-app.use('/api/branch', branchRoutes);
 app.use('/api/notifications', notificationsRoutes);
 
 // ==========================================

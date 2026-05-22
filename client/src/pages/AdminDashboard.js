@@ -512,7 +512,7 @@ const AdminDashboard = () => {
   /* ---------- FILTER ---------- */
   const needWeightCount = orders.filter(o => o.status !== 'selesai' && o.status !== 'batal' && (!o.total_price || o.total_price === 0)).length;
   const needPaymentCount = orders.filter(o => o.status !== 'selesai' && o.status !== 'batal' && o.payment_proof && o.payment_status !== 'paid').length;
-  const needCourierCount = orders.filter(o => o.status !== 'selesai' && o.status !== 'batal' && !o.courier_id).length;
+  const needCourierCount = orders.filter(o => o.status !== 'selesai' && o.status !== 'batal' && !o.is_offline && !o.courier_id).length;
 
   const dynamicSubTabs = ['all_active'];
   if (needWeightCount > 0) dynamicSubTabs.push('need_weight');
@@ -530,7 +530,7 @@ const AdminDashboard = () => {
       } else if (subTab === 'need_payment') {
         if (o.status === 'selesai' || o.status === 'batal' || !o.payment_proof || o.payment_status === 'paid') return false;
       } else if (subTab === 'need_courier') {
-        if (o.status === 'selesai' || o.status === 'batal' || o.courier_id) return false;
+        if (o.status === 'selesai' || o.status === 'batal' || o.is_offline || o.courier_id) return false;
       } else {
         if (o.status !== subTab) return false;
       }

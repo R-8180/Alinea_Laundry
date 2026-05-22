@@ -1,6 +1,17 @@
 const webpush = require('web-push');
 const pool = require('../db');
 
+// ⚠️ VAPID keys HARUS di-setup di sini karena file ini yang benar-benar kirim notif
+if (process.env.VAPID_PUBLIC_KEY && process.env.VAPID_PRIVATE_KEY) {
+  webpush.setVapidDetails(
+    'mailto:admin@alinealaundry.biz.id',
+    process.env.VAPID_PUBLIC_KEY,
+    process.env.VAPID_PRIVATE_KEY
+  );
+} else {
+  console.warn('⚠️  VAPID keys tidak ditemukan di environment. Push notification tidak akan berfungsi!');
+}
+
 /**
  * Mengirim Web Push Notification ke seluruh perangkat user yang terdaftar
  * @param {number|string} userId - ID dari user yang akan dikirimi notifikasi

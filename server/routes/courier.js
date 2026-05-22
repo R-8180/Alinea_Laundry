@@ -4,6 +4,7 @@ const pool = require('../db');
 const auth = require('../middleware/auth');
 const { uploadDelivery, getFileUrl } = require('../utils/upload');
 const { notifyAdmins } = require('../utils/notifications');
+const { sendWebPush } = require('../utils/push');
 
 router.use(auth);
 router.use((req, res, next) => {
@@ -148,6 +149,7 @@ router.put('/orders/:id/status', async (req, res) => {
         'INSERT INTO notifications (user_id, order_id, title, message) VALUES ($1, $2, $3, $4)',
         [user_id, orderId, 'Update Status oleh Kurir', msg]
       );
+      sendWebPush(user_id, { title: 'Update Status oleh Kurir', body: msg });
     }
     
     res.json({ message: 'Status diupdate' });
@@ -183,6 +185,7 @@ router.post('/orders/:id/deliver', uploadDelivery.single('photo'), async (req, r
         'INSERT INTO notifications (user_id, order_id, title, message) VALUES ($1, $2, $3, $4)',
         [user_id, orderId, 'Pesanan Selesai! 🎉', `Pesanan Anda #${order_code} telah berhasil diantar dan selesai. Terima kasih.`]
       );
+      sendWebPush(user_id, { title: 'Pesanan Selesai! 🎉', body: `Pesanan Anda #${order_code} telah berhasil diantar dan selesai. Terima kasih.` });
     }
 
     // Notify admins that the order is completed

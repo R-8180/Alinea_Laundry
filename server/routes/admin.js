@@ -4,6 +4,7 @@ const db = require('../db'); // db is pg.Pool
 const auth = require('../middleware/auth');
 const { uploadImage, uploadDelivery, getFileUrl } = require('../utils/upload');
 const { notifyAdmins } = require('../utils/notifications');
+const { sendWebPush } = require('../utils/push');
 const { adminLimiter } = require('../middleware/rateLimiter');
 const { idParamValidation, updateStatusValidation, searchValidation, validate } = require('../utils/validators');
 
@@ -441,6 +442,7 @@ router.put('/orders/:id/assign', idParamValidation, validate, async (req, res) =
         'INSERT INTO notifications (user_id, order_id, title, message) VALUES ($1, $2, $3, $4)',
         [courier_id, orderId, 'Penugasan Baru', `Kamu ditugaskan untuk pesanan #${orderCode} (${layananStr}).`]
       );
+      sendWebPush(courier_id, { title: 'Penugasan Baru', body: `Kamu ditugaskan untuk pesanan #${orderCode} (${layananStr}).` });
     } else if ((estimated_days !== undefined || estimated_hours !== undefined) && oldCourierId) {
       // Estimation update
       await client.query(
@@ -461,6 +463,7 @@ router.put('/orders/:id/assign', idParamValidation, validate, async (req, res) =
         'INSERT INTO notifications (user_id, order_id, title, message) VALUES ($1, $2, $3, $4)',
         [customerId, orderId, 'Update Pesanan', msg]
       );
+      sendWebPush(customerId, { title: 'Update Pesanan', body: msg });
     }
 
     if (express_fee !== undefined) {
@@ -620,6 +623,7 @@ router.put('/orders/:id/status', updateStatusValidation, validate, async (req, r
         'INSERT INTO notifications (user_id, order_id, title, message) VALUES ($1, $2, $3, $4)',
         [user_id, orderId, 'Status Pesanan Diperbarui', `Pesanan Anda #${order_code} sekarang berstatus: ${status.toUpperCase()}.`]
       );
+      sendWebPush(user_id, { title: 'Status Pesanan Diperbarui', body: `Pesanan Anda #${order_code} sekarang berstatus: ${status.toUpperCase()}.` });
     }
 
     if (status === 'selesai') {

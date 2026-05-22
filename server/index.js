@@ -45,6 +45,20 @@ pool.query(`
   console.error('❌ Error verifying notifications table:', err);
 });
 
+// Membuat tabel push_subscriptions
+pool.query(`
+  CREATE TABLE IF NOT EXISTS push_subscriptions (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    subscription JSONB NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+  );
+`).then(() => {
+  console.log('✅ Push subscriptions table verified/created');
+}).catch(err => {
+  console.error('❌ Error verifying push_subscriptions table:', err);
+});
+
 // Auto-migrate orders table for offline orders
 pool.query(`
   ALTER TABLE orders 
@@ -219,7 +233,8 @@ const reviewRoutes = require('./routes/reviews');
 const trackRoutes = require('./routes/track');
 const addressRoutes = require('./routes/addresses');
 const servicesRoutes = require('./routes/services');
-const notificationRoutes = require('./routes/notifications');
+const branchRoutes = require('./routes/branch');
+const notificationsRoutes = require('./routes/notifications');
 
 app.use('/api/auth', authRoutes);
 app.use('/api/orders', orderRoutes);
@@ -230,7 +245,8 @@ app.use('/api/reviews', reviewRoutes);
 app.use('/api/track', trackRoutes);
 app.use('/api/addresses', addressRoutes);
 app.use('/api/services', servicesRoutes);
-app.use('/api/notifications', notificationRoutes);
+app.use('/api/branch', branchRoutes);
+app.use('/api/notifications', notificationsRoutes);
 
 // ==========================================
 // 11. SISTEM ROUTING FRONTEND (SPA FALLBACK)

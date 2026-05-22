@@ -13,6 +13,7 @@
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
+    "@supabase/supabase-js": "^2.43.4",
     "bcryptjs": "^3.0.3",
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
@@ -24,12 +25,12 @@
     "helmet": "^8.1.0",
     "isomorphic-dompurify": "^3.13.0",
     "jsonwebtoken": "^9.0.3",
-    "@supabase/supabase-js": "^2.43.4",
     "morgan": "^1.10.1",
     "multer": "^2.1.1",
     "mysql2": "^3.22.3",
     "pg": "^8.20.0",
     "pg-format": "^1.0.4",
+    "web-push": "^3.6.7",
     "winston": "^3.19.0"
   },
   "devDependencies": {

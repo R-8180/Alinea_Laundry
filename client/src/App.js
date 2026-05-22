@@ -11,6 +11,7 @@ import Login from './pages/Login';
 
 import OfflineOrderForm from './pages/OfflineOrderForm';
 import Register from './pages/Register';
+import { subscribeUserToPush } from './utils/push';
 
 // Halaman lain di-lazy load — hanya di-download saat user buka halaman itu
 const CustomerDashboard  = lazy(() => import('./pages/CustomerDashboard'));
@@ -107,6 +108,7 @@ function App() {
           if (data && data.id) {
             setUser(data);
             localStorage.setItem('user', JSON.stringify(data));
+            subscribeUserToPush(token);
           } else {
             localStorage.clear();
             setUser(null);
@@ -125,6 +127,7 @@ function App() {
     localStorage.setItem('token', token);
     localStorage.setItem('user', JSON.stringify(userData));
     setUser(userData);
+    subscribeUserToPush(token);
   };
 
   const handleLogout = () => {

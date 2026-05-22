@@ -2,71 +2,64 @@ import React, { useState, useEffect } from 'react';
 import { FiDownload, FiX, FiSmartphone } from 'react-icons/fi';
 
 /**
- * InstallPWA - Komponen install aplikasi
- * Tombol SELALU muncul. Jika Chrome belum siap, tampilkan panduan manual.
- * @param {string} variant - "home" (mencolok) atau "dashboard" (subtle)
+ * InstallPWA - Tombol install aplikasi
+ * Variants:
+ *  - "mobile-banner"  → hanya tampil di layar ≤768px (di atas Promo Spesial di Home)
+ *  - "desktop-banner" → hanya tampil di layar >768px (di bawah Sosmed di Home)
+ *  - "dashboard"      → banner subtle di Customer Dashboard
  */
-const InstallPWA = ({ variant = 'home' }) => {
+const InstallPWA = ({ variant = 'mobile-banner' }) => {
   const [deferredPrompt, setDeferredPrompt] = useState(null);
   const [isInstalled, setIsInstalled] = useState(false);
   const [showGuide, setShowGuide] = useState(false);
   const [isIOS, setIsIOS] = useState(false);
   const [dismissed, setDismissed] = useState(false);
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
 
   useEffect(() => {
-    // Kalau sudah jalan sebagai PWA standalone → sembunyikan
+    const handleResize = () => setIsMobile(window.innerWidth <= 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  useEffect(() => {
+    // Jika sudah diinstall sebagai standalone app → sembunyikan
     const inStandaloneMode =
       window.matchMedia('(display-mode: standalone)').matches ||
       window.navigator.standalone;
-    if (inStandaloneMode) {
-      setIsInstalled(true);
-      return;
-    }
+    if (inStandaloneMode) { setIsInstalled(true); return; }
 
     // Deteksi iOS
     const ios = /iphone|ipad|ipod/.test(navigator.userAgent.toLowerCase());
     if (ios) setIsIOS(true);
 
-    // Tangkap native Chrome install prompt jika tersedia
-    const handler = (e) => {
-      e.preventDefault();
-      setDeferredPrompt(e);
-    };
+    // Tangkap native Chrome install prompt
+    const handler = (e) => { e.preventDefault(); setDeferredPrompt(e); };
     window.addEventListener('beforeinstallprompt', handler);
-
-    // Jika berhasil diinstall
     window.addEventListener('appinstalled', () => setIsInstalled(true));
-
     return () => window.removeEventListener('beforeinstallprompt', handler);
   }, []);
 
+  // Logika visibility berdasarkan variant & ukuran layar
+  if (isInstalled || dismissed) return null;
+  if (variant === 'mobile-banner' && !isMobile) return null;
+  if (variant === 'desktop-banner' && isMobile) return null;
+
   const handleInstall = async () => {
-    if (isIOS) {
-      // iOS: selalu tampilkan panduan manual
-      setShowGuide(true);
-      return;
-    }
+    if (isIOS) { setShowGuide(true); return; }
     if (deferredPrompt) {
-      // Chrome sudah siap → pakai native prompt
       deferredPrompt.prompt();
       const { outcome } = await deferredPrompt.userChoice;
       if (outcome === 'accepted') setIsInstalled(true);
       setDeferredPrompt(null);
     } else {
-      // Chrome belum siap → tampilkan panduan manual
       setShowGuide(true);
     }
   };
 
-  const handleDismiss = () => {
-    setDismissed(true);
-    setShowGuide(false);
-  };
+  const handleDismiss = () => { setDismissed(true); setShowGuide(false); };
 
-  // Jangan tampilkan jika sudah diinstall atau ditutup
-  if (isInstalled || dismissed) return null;
-
-  // ── Modal Panduan Manual ────────────────────────────────────────────
+  // ── Modal Panduan Manual ─────────────────────────────────────────────
   const GuideModal = () => (
     <div style={{
       position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)',
@@ -99,7 +92,7 @@ const InstallPWA = ({ variant = 'home' }) => {
             1. Buka web ini di <strong>Google Chrome</strong>.<br />
             2. Ketuk ikon <strong>tiga titik (⋮)</strong> di pojok kanan atas.<br />
             3. Pilih <strong>"Tambahkan ke Layar Utama"</strong> atau <strong>"Install App"</strong>.<br />
-            4. Konfirmasi dengan mengetuk <strong>"Install"</strong> / <strong>"Tambah"</strong>.
+            4. Konfirmasi dengan mengetuk <strong>"Install"</strong>.
           </p>
         )}
         <button onClick={() => setShowGuide(false)} style={{
@@ -113,7 +106,7 @@ const InstallPWA = ({ variant = 'home' }) => {
     </div>
   );
 
-  // ── VARIANT: DASHBOARD (Subtle) ─────────────────────────────────────
+  // ── VARIANT: DASHBOARD (subtle banner) ──────────────────────────────
   if (variant === 'dashboard') {
     return (
       <>
@@ -126,7 +119,7 @@ const InstallPWA = ({ variant = 'home' }) => {
         }}>
           <FiSmartphone style={{ flexShrink: 0, color: '#3b82f6', fontSize: '1rem' }} />
           <span style={{ flex: 1 }}>
-            Pasang sebagai aplikasi di HP kamu untuk pengalaman lebih baik.{' '}
+            Pasang sebagai aplikasi di HP untuk pengalaman lebih baik.{' '}
             <button onClick={handleInstall} style={{
               background: 'none', border: 'none', color: '#3b82f6',
               fontWeight: 700, cursor: 'pointer', padding: 0,
@@ -147,34 +140,85 @@ const InstallPWA = ({ variant = 'home' }) => {
     );
   }
 
-  // ── VARIANT: HOME (Mencolok) ────────────────────────────────────────
+  // ── VARIANT: MOBILE-BANNER (di atas Promo Spesial, mobile only) ──────
+  if (variant === 'mobile-banner') {
+    return (
+      <>
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: 12,
+          background: 'linear-gradient(135deg, #0b1d3a 0%, #1e50a0 100%)',
+          borderRadius: 14, padding: '14px 16px', marginBottom: 20,
+          position: 'relative', boxShadow: '0 4px 16px rgba(11,29,58,0.2)',
+        }}>
+          <FiSmartphone style={{ color: '#fff', fontSize: '1.6rem', flexShrink: 0 }} />
+          <div style={{ flex: 1 }}>
+            <p style={{ margin: 0, fontWeight: 700, color: '#fff', fontSize: '0.9rem' }}>
+              Install Aplikasi Alinea Laundry
+            </p>
+            <p style={{ margin: '2px 0 0', color: 'rgba(255,255,255,0.7)', fontSize: '0.78rem' }}>
+              Notifikasi real-time, order lebih mudah
+            </p>
+          </div>
+          <button onClick={handleInstall} style={{
+            background: '#fff', color: '#0b1d3a', border: 'none',
+            borderRadius: 9, padding: '8px 14px', fontWeight: 700,
+            fontSize: '0.82rem', cursor: 'pointer', flexShrink: 0,
+            display: 'flex', alignItems: 'center', gap: 5,
+          }}>
+            <FiDownload size={14} /> Install
+          </button>
+          <button onClick={handleDismiss} style={{
+            position: 'absolute', top: 8, right: 8,
+            background: 'none', border: 'none', cursor: 'pointer',
+            color: 'rgba(255,255,255,0.5)', padding: 0,
+          }}>
+            <FiX size={14} />
+          </button>
+        </div>
+        {showGuide && <GuideModal />}
+      </>
+    );
+  }
+
+  // ── VARIANT: DESKTOP-BANNER (di bawah Sosmed, desktop only) ─────────
   return (
     <>
-      <button
-        id="pwa-install-btn"
-        onClick={handleInstall}
-        style={{
-          display: 'inline-flex', alignItems: 'center', gap: 10,
-          background: 'linear-gradient(135deg, #1e50a0 0%, #0b1d3a 100%)',
-          color: '#fff', border: '2px solid rgba(255,255,255,0.2)',
-          borderRadius: 14, padding: '13px 28px',
-          fontSize: '0.97rem', fontWeight: 700, cursor: 'pointer',
-          boxShadow: '0 4px 20px rgba(11,29,58,0.25)',
-          transition: 'transform 0.2s, box-shadow 0.2s',
-          letterSpacing: '0.01em',
-        }}
-        onMouseEnter={e => {
-          e.currentTarget.style.transform = 'translateY(-2px)';
-          e.currentTarget.style.boxShadow = '0 8px 28px rgba(11,29,58,0.35)';
-        }}
-        onMouseLeave={e => {
-          e.currentTarget.style.transform = 'translateY(0)';
-          e.currentTarget.style.boxShadow = '0 4px 20px rgba(11,29,58,0.25)';
-        }}
-      >
-        <FiDownload style={{ fontSize: '1.1rem' }} />
-        Install Aplikasi Alinea Laundry
-      </button>
+      <div style={{
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        gap: 16, marginTop: 32, marginBottom: 8, flexWrap: 'wrap',
+      }}>
+        <div style={{ textAlign: 'center' }}>
+          <p style={{ margin: '0 0 4px', fontSize: '0.9rem', color: '#64748b' }}>
+            🖥️ Tersedia juga sebagai aplikasi
+          </p>
+          <p style={{ margin: 0, fontSize: '0.8rem', color: '#94a3b8' }}>
+            Install langsung di laptop atau HP kamu
+          </p>
+        </div>
+        <button
+          id="pwa-install-btn-desktop"
+          onClick={handleInstall}
+          style={{
+            display: 'inline-flex', alignItems: 'center', gap: 8,
+            background: 'linear-gradient(135deg, #1e50a0 0%, #0b1d3a 100%)',
+            color: '#fff', border: 'none', borderRadius: 12,
+            padding: '12px 24px', fontSize: '0.93rem', fontWeight: 700,
+            cursor: 'pointer', boxShadow: '0 4px 16px rgba(11,29,58,0.2)',
+            transition: 'transform 0.2s, box-shadow 0.2s',
+          }}
+          onMouseEnter={e => {
+            e.currentTarget.style.transform = 'translateY(-2px)';
+            e.currentTarget.style.boxShadow = '0 8px 24px rgba(11,29,58,0.3)';
+          }}
+          onMouseLeave={e => {
+            e.currentTarget.style.transform = 'translateY(0)';
+            e.currentTarget.style.boxShadow = '0 4px 16px rgba(11,29,58,0.2)';
+          }}
+        >
+          <FiDownload style={{ fontSize: '1.05rem' }} />
+          Install Aplikasi Alinea Laundry
+        </button>
+      </div>
       {showGuide && <GuideModal />}
     </>
   );

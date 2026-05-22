@@ -135,7 +135,6 @@ const HeroWithTrack = () => {
         </p>
         <div className="hero-actions">
           <Link to="/register" className="btn hero-btn-primary">Mulai Laundry Sekarang</Link>
-          <InstallPWA variant="home" />
         </div>
 
         {/* Integrated Track Order */}
@@ -604,6 +603,8 @@ const Home = () => {
       <HeroWithTrack />
       <div className="home-content-bg">
         <div className="container" style={{ paddingBottom: 0 }}>
+          {/* Mobile only: install banner above promo */}
+          <InstallPWA variant="mobile-banner" />
           <PromoSlider />
           <LayananSection />
         </div>
@@ -615,6 +616,8 @@ const Home = () => {
           <FAQSection />
           <TestimoniSection />
           <SocialMediaSection />
+          {/* Desktop only: install button below sosmed */}
+          <InstallPWA variant="desktop-banner" />
         </div>
       </div>
       <Footer />

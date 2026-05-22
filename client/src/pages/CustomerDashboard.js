@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import ProfileTab from '../components/ProfileTab';
 import FloatingWA from '../components/FloatingWA';
 import ReceiptDownloader from '../components/ReceiptDownloader';
+import InstallPWA from '../components/InstallPWA';
 import axios from 'axios';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { showSuccess, showError, showLoading } from '../utils/swal';
@@ -327,6 +328,9 @@ const CustomerDashboard = () => {
       </div>
 
       <div className="container">
+        {/* Subtle PWA install prompt */}
+        <InstallPWA variant="dashboard" />
+
         {/* Stats singkat */}
 
         {/* Header Tabs */}

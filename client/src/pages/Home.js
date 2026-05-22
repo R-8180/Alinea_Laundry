@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import axios from 'axios';
 import Footer from '../components/Footer';
 import FloatingWA from '../components/FloatingWA';
+import InstallPWA from '../components/InstallPWA';
 import {
   FiPackage, FiDroplet, FiBox, FiBriefcase, FiHeart,
   FiShield, FiSettings, FiTool,
@@ -134,6 +135,7 @@ const HeroWithTrack = () => {
         </p>
         <div className="hero-actions">
           <Link to="/register" className="btn hero-btn-primary">Mulai Laundry Sekarang</Link>
+          <InstallPWA variant="home" />
         </div>
 
         {/* Integrated Track Order */}

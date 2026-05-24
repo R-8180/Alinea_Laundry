@@ -27,6 +27,7 @@ export default function PhotoUploader({ onPhoto, photo, label, required = false 
   const [compressing, setCompressing] = useState(false);
   const [preview, setPreview] = useState(null);
   const [camError, setCamError] = useState('');
+  const [compressionLog, setCompressionLog] = useState('');
 
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
@@ -41,6 +42,11 @@ export default function PhotoUploader({ onPhoto, photo, label, required = false 
       // Beri nama file yang wajar
       const named = new File([compressed], file.name || 'photo.jpg', { type: 'image/jpeg' });
       const previewUrl = URL.createObjectURL(named);
+      
+      const originalSize = (file.size / 1024 / 1024).toFixed(2);
+      const compressedKb = (compressed.size / 1024).toFixed(0);
+      setCompressionLog(`Dikompres dari ${originalSize} MB ➔ ${compressedKb} KB`);
+      
       setPreview(previewUrl);
       onPhoto(named);
     } catch (err) {
@@ -110,6 +116,7 @@ export default function PhotoUploader({ onPhoto, photo, label, required = false 
   // ------ HAPUS FOTO ------
   const clearPhoto = () => {
     setPreview(null);
+    setCompressionLog('');
     onPhoto(null);
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
@@ -163,6 +170,11 @@ export default function PhotoUploader({ onPhoto, photo, label, required = false 
                 <FiX />
               </button>
             </div>
+            {compressionLog && (
+              <div style={{ marginTop: 8, fontSize: '0.75rem', color: '#059669', background: '#d1fae5', padding: '4px 8px', borderRadius: 6, textAlign: 'center', fontWeight: 600 }}>
+                {compressionLog}
+              </div>
+            )}
           </div>
         ) : (
           /* Tombol pilih foto */

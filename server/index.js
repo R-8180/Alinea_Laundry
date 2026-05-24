@@ -258,6 +258,7 @@ const addressRoutes = require('./routes/addresses');
 const servicesRoutes = require('./routes/services');
 const notificationsRoutes = require('./routes/notifications');
 const feedbackRoutes = require('./routes/feedback');
+const settingsRoutes = require('./routes/settings');
 
 app.use('/api/auth', authRoutes);
 app.use('/api/orders', orderRoutes);
@@ -270,6 +271,7 @@ app.use('/api/addresses', addressRoutes);
 app.use('/api/services', servicesRoutes);
 app.use('/api/notifications', notificationsRoutes);
 app.use('/api/feedback', feedbackRoutes);
+app.use('/api/settings', settingsRoutes);
 
 // ==========================================
 // 11. SISTEM ROUTING FRONTEND (SPA FALLBACK)

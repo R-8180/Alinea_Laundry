@@ -125,6 +125,7 @@ const AdminLayout = ({ user, onLogout, children }) => {
       label: 'PENGATURAN',
       items: [
         { key: 'services', path: '/services', icon: <GiWashingMachine />, label: 'Layanan' },
+        ...(user?.branch_id === null ? [{ key: 'cms', path: '/dashboard?tab=cms', icon: <FiStar />, label: 'Manajemen Konten' }] : []),
         { key: 'bantuan', path: '/dashboard?tab=bantuan', icon: <FiHelpCircle />, label: 'Bantuan' },
       ]
     }

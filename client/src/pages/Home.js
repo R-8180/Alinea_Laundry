@@ -58,6 +58,8 @@ const faqList = [
   { q: 'Berapa minimal order?', a: 'Tidak ada minimal order, Anda bisa laundry 1 item saja.' },
 ];
 
+export const CMSContext = React.createContext();
+
 /* ========== KOMPONEN ========== */
 const ScrollProgressBar = () => {
   const [scrollW, setScrollW] = useState('0%');
@@ -95,6 +97,7 @@ const ScrollProgressBar = () => {
 
 
 const HeroWithTrack = () => {
+  const cms = React.useContext(CMSContext);
   const [orderCode, setOrderCode] = useState('');
   const [result, setResult] = useState(null);
   const [error, setError] = useState('');
@@ -128,8 +131,8 @@ const HeroWithTrack = () => {
       
       <div className="hero-content-wrapper">
         <span className="hero-badge"> Laundry Express Semarang 24 Jam</span>
-        <h1 className="hero-title-new">Laundry Bersih, Wangi, & Praktis</h1>
-        <p className="hero-subtitle-new">Tanpa Keluar Rumah!</p>
+        <h1 className="hero-title-new">{cms?.heroTitle || 'Laundry Bersih, Wangi, & Praktis'}</h1>
+        <p className="hero-subtitle-new">{cms?.heroSubtitle || 'Tanpa Keluar Rumah!'}</p>
         <p className="hero-description-new">
           Gratis antar-jemput di seluruh area Semarang. Cukup order via website, kurir kami siap menjemput pakaian kotor Anda kapan saja, tanpa perlu repot keluar rumah.
         </p>
@@ -169,9 +172,11 @@ const HeroWithTrack = () => {
 };
 
 const PromoSlider = () => {
+  const cms = React.useContext(CMSContext);
+  const currentPromoImages = cms?.promoImages?.length ? cms.promoImages : promoImages;
   const [current, setCurrent] = useState(0);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
-  const total = promoImages.length;
+  const total = currentPromoImages.length;
 
   // Deteksi ukuran layar
   useEffect(() => {
@@ -187,67 +192,73 @@ const PromoSlider = () => {
   }, [autoNext]);
 
   // Mode Mobile: 1 slide dengan aspect ratio 16:9
- if (isMobile) {
-  return (
-    <section className="section reveal promo-top">
-      <h2 className="section-title">Promo Spesial</h2>
-      <div className="promo-slider-mobile-viewport">
-        <div
-          className="promo-slider-mobile-track"
-          style={{ transform: `translateX(-${current * 100}%)` }}
-        >
-          {promoImages.map((img, idx) => (
-            <div
+  if (isMobile) {
+    return (
+      <section className="section reveal promo-top">
+        <h2 className="section-title">Promo Spesial</h2>
+        <div className="promo-slider-mobile-viewport">
+          <div
+            className="promo-slider-mobile-track"
+            style={{ transform: `translateX(-${current * 100}%)` }}
+          >
+            {currentPromoImages.map((img, idx) => (
+              <div
+                key={idx}
+                className="promo-slide-mobile-item"
+              >
+                <img src={img.src} alt={img.alt} style={{ width: '100%', display: 'block', borderRadius: 16 }} />
+              </div>
+            ))}
+          </div>
+        </div>
+        <div className="promo-dots-mobile">
+          {currentPromoImages.map((_, idx) => (
+            <button
               key={idx}
-              className="promo-slider-mobile-item"
-              style={{ backgroundImage: `url(${img.src})` }}
+              className={`promo-dot-mobile ${idx === current ? 'active' : ''}`}
+              onClick={() => setCurrent(idx)}
+              aria-label={`Slide ${idx + 1}`}
             />
           ))}
         </div>
-      </div>
-      {/* Pindahkan dots ke luar viewport */}
-      <div className="promo-dots-custom" style={{ marginTop: 12 }}>
-        {promoImages.map((_, idx) => (
-          <button
-            key={idx}
-            className={`promo-dot-custom ${idx === current ? 'active' : ''}`}
-            onClick={() => setCurrent(idx)}
-            aria-label={`Slide ${idx + 1}`}
-          />
-        ))}
-      </div>
-    </section>
-  );
-}
-
-  // Mode Desktop: Coverflow
-  const prevIdx = (current - 1 + total) % total;
-  const nextIdx = (current + 1) % total;
+      </section>
+    );
+  }
 
   return (
     <section className="section reveal promo-top">
       <h2 className="section-title">Promo Spesial</h2>
-      <div className="promo-coverflow">
-        <div className="promo-coverflow-stage">
-          {promoImages.map((img, idx) => {
-            let className = 'promo-coverflow-item';
-            if (idx === current) className += ' active';
-            else if (idx === prevIdx) className += ' prev';
-            else if (idx === nextIdx) className += ' next';
-            else className += ' hidden';
+      <div className="promo-slider-viewport" style={{ overflow: 'hidden' }}>
+        <div
+          className="promo-slider-track"
+          style={{
+            display: 'flex',
+            transition: 'transform 0.5s ease-in-out',
+            transform: `translateX(-${current * 33.333}%)`,
+          }}
+        >
+          {currentPromoImages.map((img, idx) => {
+            const isActive = idx === current || idx === current + 1 || idx === current + 2;
             return (
               <div
                 key={idx}
-                className={className}
-                style={{ backgroundImage: `url(${img.src})` }}
-                onClick={() => { if (idx !== current) setCurrent(idx); }}
-              />
+                className="promo-slide-item"
+                style={{
+                  flex: '0 0 33.333%',
+                  padding: '0 10px',
+                  opacity: isActive ? 1 : 0.5,
+                  transform: isActive ? 'scale(1)' : 'scale(0.9)',
+                  transition: 'all 0.5s',
+                }}
+              >
+                <img src={img.src} alt={img.alt} style={{ width: '100%', borderRadius: 16, boxShadow: '0 10px 20px rgba(0,0,0,0.05)', display: 'block' }} />
+              </div>
             );
           })}
         </div>
       </div>
-      <div className="promo-dots-custom">
-        {promoImages.map((_, idx) => (
+      <div className="promo-dots-custom" style={{ marginTop: 12 }}>
+        {currentPromoImages.map((_, idx) => (
           <button
             key={idx}
             className={`promo-dot-custom ${idx === current ? 'active' : ''}`}
@@ -283,6 +294,8 @@ const LayananSection = () => (
 );
 
 const ParfumShop = () => {
+  const cms = React.useContext(CMSContext);
+  const currentParfums = cms?.parfumList?.length ? cms.parfumList : parfumList;
   const waNumber = '6281234567890';
   const handleBuy = (parfum) => {
     const msg = `Halo, saya ingin beli parfum ${parfum.name}.`;
@@ -296,7 +309,7 @@ const ParfumShop = () => {
         <h2 className="section-title text-white">Parfum Laundry Premium</h2>
         <p className="section-desc text-sky-light">Rasakan aroma mewah yang sama seperti yang kami pakaikan di cucian Anda — kini tersedia untuk dibawa pulang.</p>
         <div className="parfum-grid-new">
-          {parfumList.map((p, idx) => (
+          {currentParfums.map((p, idx) => (
             <div key={idx} className="parfum-card-new">
               <div className="parfum-img-wrapper">
                 <img src={p.img} alt={p.name} className="parfum-card-img" />
@@ -379,7 +392,6 @@ const TestimoniSection = () => {
   }, []);
 
   const itemsPerPage = isMobile ? 1 : 3;
- 
   const totalSlides = isMobile ? testimoniList.length : Math.ceil(testimoniList.length / itemsPerPage);
 
   const nextSlide = () => setCurrent(prev => (prev + 1) % totalSlides);
@@ -513,7 +525,12 @@ const HowToOrderSection = () => {
 
 
 
-const SocialMediaSection = () => (
+const SocialMediaSection = () => {
+  const cms = React.useContext(CMSContext);
+  const wa = cms?.waNumber || '6281234567890';
+  const ig = cms?.igLink || 'https://instagram.com/alinealaundry';
+
+  return (
   <section className="section reveal" id="social-media" style={{ padding: '80px 0', background: 'var(--bg)', textAlign: 'center' }}>
     {/* SVG Defs for Instagram Gradient */}
     <svg width="0" height="0" style={{ position: 'absolute' }}>
@@ -535,7 +552,7 @@ const SocialMediaSection = () => (
     </p>
 
     <div className="social-media-grid-new">
-      <a href="https://wa.me/6281234567890" target="_blank" rel="noreferrer" className="socmed-frame wa-frame">
+      <a href={`https://wa.me/${wa}`} target="_blank" rel="noreferrer" className="socmed-frame wa-frame">
         <div className="socmed-bg" style={{ backgroundImage: "url('/images/socmed-wa.png')" }}></div>
         <div className="socmed-overlay">
           <FaWhatsapp className="socmed-main-icon" style={{ color: '#25D366' }} />
@@ -547,7 +564,7 @@ const SocialMediaSection = () => (
         </div>
       </a>
       
-      <a href="https://instagram.com/alinealaundry" target="_blank" rel="noreferrer" className="socmed-frame ig-frame">
+      <a href={ig} target="_blank" rel="noreferrer" className="socmed-frame ig-frame">
         <div className="socmed-bg" style={{ backgroundImage: "url('/images/socmed-ig.png')" }}></div>
         <div className="socmed-overlay">
           <div className="socmed-main-icon instagram-gradient-icon">
@@ -578,7 +595,8 @@ const SocialMediaSection = () => (
       <FiHeart style={{ color: '#3b82f6' }} /> Terima kasih sudah mempercayakan laundry Anda kepada kami.
     </div>
   </section>
-);
+  );
+};
 
 const useScrollReveal = () => {
   useEffect(() => {
@@ -596,33 +614,43 @@ const useScrollReveal = () => {
 
 /* ========== HOME PAGE ========== */
 const Home = () => {
+  const [cms, setCms] = useState(null);
+
+  useEffect(() => {
+    axios.get('/api/settings/home_content').then(res => {
+      if(res.data) setCms(res.data);
+    }).catch(err => console.log('CMS fetch err:', err));
+  }, []);
+
   useScrollReveal();
   return (
-    <div style={{ background: 'var(--bg)' }}>
-      <ScrollProgressBar />
-      <HeroWithTrack />
-      <div className="home-content-bg">
-        <div className="container" style={{ paddingBottom: 0 }}>
-          {/* Mobile only: install banner above promo */}
-          <InstallPWA variant="mobile-banner" />
-          <PromoSlider />
-          <LayananSection />
+    <CMSContext.Provider value={cms}>
+      <div style={{ background: 'var(--bg)' }}>
+        <ScrollProgressBar />
+        <HeroWithTrack />
+        <div className="home-content-bg">
+          <div className="container" style={{ paddingBottom: 0 }}>
+            {/* Mobile only: install banner above promo */}
+            <InstallPWA variant="mobile-banner" />
+            <PromoSlider />
+            <LayananSection />
+          </div>
+          
+          <ParfumShop />
+          
+          <div className="container" style={{ paddingTop: 0 }}>
+            <HowToOrderSection />
+            <FAQSection />
+            <TestimoniSection />
+            <SocialMediaSection />
+            {/* Desktop only: install button below sosmed */}
+            <InstallPWA variant="desktop-banner" />
+          </div>
         </div>
-        
-        <ParfumShop />
-        
-        <div className="container" style={{ paddingTop: 0 }}>
-          <HowToOrderSection />
-          <FAQSection />
-          <TestimoniSection />
-          <SocialMediaSection />
-          {/* Desktop only: install button below sosmed */}
-          <InstallPWA variant="desktop-banner" />
-        </div>
+        <Footer />
+        <FloatingWA waNumber={cms?.waNumber} />
       </div>
-      <Footer />
-      <FloatingWA />
-    </div>
+    </CMSContext.Provider>
   );
 };
 

@@ -201,6 +201,7 @@ const CMSLandingPage = () => {
               </div>
             ))}
           </div>
+        </div>
 
         {/* Gambar Promo */}
         <div style={{ background: 'white', padding: 24, borderRadius: 16, border: '1px solid #e2e8f0', gridColumn: '1 / -1' }}>

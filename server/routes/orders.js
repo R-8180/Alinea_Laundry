@@ -123,7 +123,7 @@ router.get('/', auth, async (req, res) => {
   if (req.user.role !== 'customer') return res.status(403).json({ message: 'Hanya customer' });
   try {
     const result = await pool.query(
-      `SELECT o.*, u.name AS courier_name, p.payment_proof, b.name AS branch_name,
+      `SELECT o.*, u.name AS courier_name, u.phone AS courier_phone, p.payment_proof, b.name AS branch_name,
               (SELECT s.name FROM order_items oi JOIN services s ON oi.service_id = s.id WHERE oi.order_id = o.id LIMIT 1) AS service_name,
               (SELECT s.category FROM order_items oi JOIN services s ON oi.service_id = s.id WHERE oi.order_id = o.id LIMIT 1) AS service_category,
               (SELECT s.time_days FROM order_items oi JOIN services s ON oi.service_id = s.id WHERE oi.order_id = o.id LIMIT 1) AS service_time_days,

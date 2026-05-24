@@ -8,7 +8,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { showSuccess, showError, showLoading } from '../utils/swal';
 import {
   FiClock, FiTruck, FiDroplet, FiPackage, FiCheckCircle,
-  FiPlus, FiGift, FiCopy, FiEye, FiDollarSign, FiXCircle, FiZap, FiCreditCard, FiDownload, FiUser, FiMapPin, FiClipboard
+  FiPlus, FiGift, FiCopy, FiEye, FiDollarSign, FiXCircle, FiZap, FiCreditCard, FiDownload, FiUser, FiMapPin, FiClipboard, FiMessageCircle
 } from 'react-icons/fi';
 
 const categoryLabels = { cuci_setrika: 'Cuci Setrika', cuci_lipat: 'Cuci Lipat', satuan: 'Satuan' };
@@ -64,6 +64,13 @@ const formatServiceLabel = (order) => {
 
 const formatRupiah = (n) => 'Rp ' + Math.floor(Number(n) || 0).toLocaleString('id-ID');
 
+const formatWA = (phone) => {
+  if (!phone) return '';
+  const clean = phone.replace(/\D/g, '');
+  if (clean.startsWith('62')) return clean;
+  return clean.startsWith('0') ? '62' + clean.slice(1) : '62' + clean;
+};
+
 const statusLabels = {
   menunggu: 'Menunggu',
   pickup: 'Dijemput',
@@ -78,7 +85,7 @@ const statusOrder = ['menunggu', 'pickup', 'proses', 'antar', 'selesai'];
 const stepIcons = {
   menunggu: <FiClock />,
   pickup: <FiTruck />,
-  cuci: <FiDroplet />,
+  proses: <FiDroplet />,
   antar: <FiPackage />,
   selesai: <FiCheckCircle />,
   batal: <FiXCircle />,
@@ -258,6 +265,36 @@ const CustomerDashboard = () => {
             </span>
           </div>
         </div>
+
+        {(order.status === 'antar' || order.status === 'pickup') && order.courier_name && order.courier_phone && (
+          <div style={{
+            marginBottom: 20, padding: '12px 16px',
+            background: '#e6fcf0', borderRadius: 12,
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            border: '1px solid #10b981'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <div style={{ width: 36, height: 36, borderRadius: '50%', background: '#10b981', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <FiTruck size={18} />
+              </div>
+              <div>
+                <div style={{ fontSize: '0.75rem', color: '#047857', fontWeight: 600 }}>{order.status === 'pickup' ? 'Kurir Penjemput' : 'Kurir Pengantar'}</div>
+                <div style={{ fontSize: '0.9rem', color: '#065f46', fontWeight: 800 }}>{order.courier_name}</div>
+              </div>
+            </div>
+            <a 
+              href={`https://wa.me/${formatWA(order.courier_phone)}?text=${encodeURIComponent(`Halo Mas/Mbak ${order.courier_name}, saya ${user.name || 'pelanggan'} ingin bertanya terkait pesanan laundry saya dengan nomor order ${order.order_code}.`)}`}
+              target="_blank" rel="noopener noreferrer"
+              style={{
+                background: '#10b981', color: 'white', padding: '8px 14px',
+                borderRadius: '8px', fontSize: '0.8rem', fontWeight: 700,
+                display: 'flex', alignItems: 'center', gap: 6, textDecoration: 'none'
+              }}
+            >
+              <FiMessageCircle /> Hubungi
+            </a>
+          </div>
+        )}
 
         {renderProgressBar(order)}
 

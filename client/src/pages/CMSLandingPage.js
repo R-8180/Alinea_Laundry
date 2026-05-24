@@ -13,12 +13,24 @@ const CMSLandingPage = () => {
     heroTitle: 'Laundry Bersih, Wangi, & Praktis',
     heroSubtitle: 'Tanpa Keluar Rumah!',
     waNumber: '6281234567890',
-    igLink: 'https://instagram.com',
+    igLink: 'https://instagram.com/alinealaundry',
+    tiktokLink: 'https://tiktok.com/@alinealaundry',
+    marqueeText: [
+      { icon: 'FiClock', text: 'Buka 24 Jam' },
+      { icon: 'FiMapPin', text: 'Gratis Ongkir Semarang Kota' },
+      { icon: 'FiTruck', text: 'Layanan Antar Jemput Cepat' },
+      { icon: 'none', text: '#LaundryMudahLewatWebAlineaLaundry' }
+    ],
     promoImages: [
-      { src: '/images/alineapromo1.webp', alt: 'Promo 1' }
+      { src: '/images/alineapromo1.webp', alt: 'Promo 1' },
+      { src: '/images/alineapromo2.webp', alt: 'Promo 2' },
+      { src: '/images/alineapromo3.webp', alt: 'Promo 3' }
     ],
     parfumList: [
-      { name: 'Lavender', desc: 'Aroma calming', tag: 'Rp 300.000', img: '/images/parfum-lavender.webp' }
+      { name: 'Lavender', desc: 'Aroma calming dan relaxing cocok untuk pakaian harian.', tag: 'Rp 300.000', img: '/images/parfum-lavender.webp' },
+      { name: 'Sakura', desc: 'Floral premium ala Jepang wangi lembut & feminin.', tag: 'Rp 300.000', img: '/images/parfum-sakura.webp' },
+      { name: 'Ocean Fresh', desc: 'Fresh clean seperti linen hotel dan terasa lebih mewah.', tag: 'Rp 300.000', img: '/images/parfum-ocean.webp' },
+      { name: 'Vanilla', desc: 'Sweet creamy yang hangat dan elegan sepanjang hari.', tag: 'Rp 300.000', img: '/images/parfum-vanilla.webp' }
     ]
   });
 
@@ -31,10 +43,10 @@ const CMSLandingPage = () => {
       setLoading(true);
       const res = await axios.get('/api/settings/home_content');
       if (res.data) {
-        setContent(res.data);
+        // Gabungkan dengan default properties jika ada yang kurang (misal tiktokLink baru ditambah)
+        setContent(prev => ({ ...prev, ...res.data }));
       }
     } catch (err) {
-      // If 404, we just use default state
       console.log('Settings not found or error, using default');
     } finally {
       setLoading(false);
@@ -49,6 +61,19 @@ const CMSLandingPage = () => {
     } catch (err) {
       showError('Gagal menyimpan pengaturan');
     }
+  };
+
+  // MARQUEE HANDLER
+  const handleAddMarquee = () => {
+    setContent(prev => ({
+      ...prev,
+      marqueeText: [...(prev.marqueeText || []), { icon: 'none', text: 'Teks Baru' }]
+    }));
+  };
+  const handleRemoveMarquee = (idx) => {
+    const newM = [...content.marqueeText];
+    newM.splice(idx, 1);
+    setContent({ ...content, marqueeText: newM });
   };
 
   // PROMO IMAGES HANDLER
@@ -144,7 +169,38 @@ const CMSLandingPage = () => {
             <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: '#475569', marginBottom: 4 }}>Link URL Instagram</label>
             <input className="form-input" value={content.igLink} onChange={e => setContent({...content, igLink: e.target.value})} />
           </div>
+          <div style={{ marginTop: 12 }}>
+            <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: '#475569', marginBottom: 4 }}>Link URL TikTok</label>
+            <input className="form-input" value={content.tiktokLink} onChange={e => setContent({...content, tiktokLink: e.target.value})} />
+          </div>
         </div>
+
+        {/* Teks Berjalan (Marquee) */}
+        <div style={{ background: 'white', padding: 24, borderRadius: 16, border: '1px solid #e2e8f0', gridColumn: '1 / -1' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+            <h3 style={{ fontSize: '1.1rem', fontWeight: 700, margin: 0 }}>Teks Berjalan (Marquee Atas)</h3>
+            <button className="btn btn-sm btn-secondary" onClick={handleAddMarquee}><FiPlus /> Tambah Teks</button>
+          </div>
+          
+          <div style={{ display: 'flex', gap: 16, overflowX: 'auto', paddingBottom: 16 }}>
+            {(content.marqueeText || []).map((mq, idx) => (
+              <div key={idx} style={{ flex: '0 0 250px', border: '1px solid #cbd5e1', borderRadius: 12, padding: 16, position: 'relative' }}>
+                <button onClick={() => handleRemoveMarquee(idx)} style={{ position: 'absolute', top: 10, right: 10, background: '#fee2e2', color: '#ef4444', border: 'none', borderRadius: 6, padding: 6, cursor: 'pointer' }}><FiTrash2 /></button>
+                <div style={{ marginBottom: 12 }}>
+                  <label style={{ fontSize: '0.8rem', fontWeight: 600 }}>Ikon (Nama Fi...)</label>
+                  <input className="form-input" value={mq.icon} onChange={e => {
+                    const newM = [...content.marqueeText]; newM[idx].icon = e.target.value; setContent({...content, marqueeText: newM});
+                  }} placeholder="Misal: FiClock, FiTruck" />
+                </div>
+                <div style={{ marginBottom: 12 }}>
+                  <label style={{ fontSize: '0.8rem', fontWeight: 600 }}>Teks</label>
+                  <input className="form-input" value={mq.text} onChange={e => {
+                    const newM = [...content.marqueeText]; newM[idx].text = e.target.value; setContent({...content, marqueeText: newM});
+                  }} />
+                </div>
+              </div>
+            ))}
+          </div>
 
         {/* Gambar Promo */}
         <div style={{ background: 'white', padding: 24, borderRadius: 16, border: '1px solid #e2e8f0', gridColumn: '1 / -1' }}>

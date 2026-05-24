@@ -529,6 +529,7 @@ const SocialMediaSection = () => {
   const cms = React.useContext(CMSContext);
   const wa = cms?.waNumber || '6281234567890';
   const ig = cms?.igLink || 'https://instagram.com/alinealaundry';
+  const tiktok = cms?.tiktokLink || 'https://tiktok.com/@alinealaundry';
 
   return (
   <section className="section reveal" id="social-media" style={{ padding: '80px 0', background: 'var(--bg)', textAlign: 'center' }}>
@@ -578,7 +579,7 @@ const SocialMediaSection = () => {
         </div>
       </a>
       
-      <a href="https://tiktok.com/@alinealaundry" target="_blank" rel="noreferrer" className="socmed-frame tiktok-frame">
+      <a href={tiktok} target="_blank" rel="noreferrer" className="socmed-frame tiktok-frame">
         <div className="socmed-bg" style={{ backgroundImage: "url('/images/socmed-tiktok.png')" }}></div>
         <div className="socmed-overlay">
           <FaTiktok className="socmed-main-icon" style={{ color: '#fff', filter: 'drop-shadow(2px 2px 0px #ff0050) drop-shadow(-2px -2px 0px #00f2fe)' }} />

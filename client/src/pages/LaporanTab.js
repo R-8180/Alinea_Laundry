@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import {
-  FiCalendar, FiDollarSign, FiTrendingUp, FiTrendingDown, FiBarChart2,
-  FiDownload, FiPrinter, FiFilter, FiChevronDown, FiPlus, FiTrash2, FiPieChart, FiActivity, FiBriefcase
+  FiDollarSign, FiTrendingUp, FiTrendingDown, FiBarChart2,
+  FiDownload, FiPrinter, FiFilter, FiPlus, FiTrash2, FiPieChart, FiActivity, FiBriefcase
 } from 'react-icons/fi';
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer,
@@ -19,7 +19,6 @@ const COLORS = ['#6366f1', '#14b8a6', '#f59e0b', '#ec4899', '#8b5cf6'];
 
 const LaporanTab = ({ activeBranchId }) => {
   const token = localStorage.getItem('token');
-  const h = { Authorization: `Bearer ${token}` };
 
   const [activeTab, setActiveTab] = useState('overview'); // 'overview' | 'transactions'
   
@@ -66,6 +65,8 @@ const LaporanTab = ({ activeBranchId }) => {
       }
       const paramStr = params.length > 0 ? `?${params.join('&')}` : '';
 
+      const h = { Authorization: `Bearer ${token}` };
+
       const [finRes, chartRes, srvRes, brnRes] = await Promise.all([
         axios.get(`/api/admin/financial${paramStr}`, { headers: h }),
         axios.get(`/api/admin/chart${paramStr}`, { headers: h }),
@@ -89,17 +90,18 @@ const LaporanTab = ({ activeBranchId }) => {
     } finally {
       setLoading(false);
     }
-  }, [filterMode, startDate, endDate, filterMonth, filterYear, activeBranchId]);
+  }, [filterMode, startDate, endDate, filterMonth, filterYear, activeBranchId, token]);
 
   const fetchTransactions = useCallback(async () => {
     try {
       const p = activeBranchId ? `?branch_id=${activeBranchId}` : '';
+      const h = { Authorization: `Bearer ${token}` };
       const res = await axios.get(`/api/admin/transactions${p}`, { headers: h });
       setTransactions(res.data);
     } catch {
       showToast('Gagal memuat transaksi', 'error');
     }
-  }, [activeBranchId]);
+  }, [activeBranchId, token]);
 
   useEffect(() => {
     if (activeTab === 'overview') fetchOverviewData();
@@ -110,6 +112,7 @@ const LaporanTab = ({ activeBranchId }) => {
     e.preventDefault();
     if (!txForm.category || !txForm.amount) return showToast('Lengkapi data', 'error');
     try {
+      const h = { Authorization: `Bearer ${token}` };
       await axios.post('/api/admin/transactions', txForm, { headers: h });
       showToast('Transaksi berhasil ditambahkan');
       setShowTxForm(false);
@@ -124,6 +127,7 @@ const LaporanTab = ({ activeBranchId }) => {
   const handleDeleteTx = async (id) => {
     if (!window.confirm('Hapus catatan ini?')) return;
     try {
+      const h = { Authorization: `Bearer ${token}` };
       await axios.delete(`/api/admin/transactions/${id}`, { headers: h });
       showToast('Transaksi dihapus');
       fetchTransactions();

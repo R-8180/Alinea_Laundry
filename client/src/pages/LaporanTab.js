@@ -205,7 +205,7 @@ const LaporanTab = ({ activeBranchId }) => {
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
                 <XAxis dataKey="displayDate" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#64748b' }} dy={10} />
-                <YAxis tickFormatter={(val) => \`Rp \${val/1000}k\`} axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#64748b' }} dx={-10} />
+                <YAxis tickFormatter={(val) => `Rp ${val/1000}k`} axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#64748b' }} dx={-10} />
                 <RechartsTooltip 
                   formatter={(value) => [fmtRp(value), 'Total']}
                   contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' }}
@@ -225,7 +225,7 @@ const LaporanTab = ({ activeBranchId }) => {
                 <PieChart>
                   <Pie data={topServices} cx="50%" cy="50%" innerRadius={60} outerRadius={90} paddingAngle={5} dataKey="value">
                     {topServices.map((entry, index) => (
-                      <Cell key={\`cell-\${index}\`} fill={COLORS[index % COLORS.length]} />
+                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                     ))}
                   </Pie>
                   <RechartsTooltip contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)' }} />
@@ -252,7 +252,7 @@ const LaporanTab = ({ activeBranchId }) => {
                     <RechartsTooltip formatter={(val) => [fmtRp(val), 'Pendapatan']} cursor={{fill: 'transparent'}} contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)' }} />
                     <Bar dataKey="total_revenue" fill="#14b8a6" radius={[0, 4, 4, 0]} barSize={24}>
                       {topBranches.map((entry, index) => (
-                        <Cell key={\`cell-\${index}\`} fill={COLORS[index % COLORS.length]} />
+                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                       ))}
                     </Bar>
                   </BarChart>

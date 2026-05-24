@@ -2,6 +2,32 @@ import React, { forwardRef } from 'react';
 
 const formatRupiah = (num) => 'Rp ' + (num || 0).toLocaleString('id-ID');
 
+const categoryLabels = {
+  cuci_setrika: 'Cuci Setrika',
+  cuci_lipat: 'Cuci Lipat',
+  satuan: 'Satuan',
+};
+
+const statusLabels = {
+  menunggu: 'Menunggu',
+  pickup: 'Dijemput',
+  proses: 'Diproses',
+  antar: 'Diantar',
+  selesai: 'Selesai',
+  batal: 'Dibatalkan',
+};
+
+const formatServiceLabel = (order) => {
+  const cat = categoryLabels[order.service_category] || order.service_name || '';
+  const speed = order.service_speed ? (order.service_speed === 'express' ? 'Express' : 'Reguler') : '';
+  let duration = '';
+  if (order.service_time_days > 0) duration = `${order.service_time_days} Hari`;
+  else if (order.service_time_hours > 0) duration = `${order.service_time_hours} Jam`;
+  
+  const parts = [cat, speed, duration].filter(Boolean);
+  return parts.length > 0 ? parts.join(' · ') : 'Layanan Laundry';
+};
+
 const Receipt = forwardRef(({ order }, ref) => {
   if (!order) return null;
 
@@ -30,7 +56,8 @@ const Receipt = forwardRef(({ order }, ref) => {
           <tr><td style={{ width: '70px', padding: '2px 0' }}>Order ID</td><td style={{ padding: '2px 0' }}>: #{order.id} / {order.order_code}</td></tr>
           <tr><td style={{ padding: '2px 0' }}>Tanggal</td><td style={{ padding: '2px 0' }}>: {new Date(order.created_at).toLocaleString('id-ID', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })}</td></tr>
           <tr><td style={{ padding: '2px 0' }}>Pelanggan</td><td style={{ padding: '2px 0' }}>: {order.customer_name}</td></tr>
-          <tr><td style={{ padding: '2px 0' }}>Layanan</td><td style={{ padding: '2px 0' }}>: {order.service_speed === 'express' ? 'Express' : 'Reguler'}</td></tr>
+          <tr><td style={{ padding: '2px 0' }}>Layanan</td><td style={{ padding: '2px 0' }}>: {formatServiceLabel(order)}</td></tr>
+          <tr><td style={{ padding: '2px 0' }}>Status</td><td style={{ padding: '2px 0', fontWeight: 'bold' }}>: {statusLabels[order.status] || order.status}</td></tr>
         </tbody>
       </table>
 
@@ -78,6 +105,24 @@ const Receipt = forwardRef(({ order }, ref) => {
           </tr>
         </tbody>
       </table>
+
+      {order.is_offline && order.payment_status !== 'paid' && (
+        <div style={{ textAlign: 'center', marginTop: '15px' }}>
+          <div style={{ fontSize: '10px', marginBottom: '5px', fontWeight: 'bold' }}>Scan untuk Pembayaran:</div>
+          <img 
+            src="/qris.jpg" 
+            alt="QRIS" 
+            style={{ 
+              width: '120px', 
+              height: '120px', 
+              display: 'inline-block',
+              border: '1px solid #ccc', 
+              padding: '4px',
+              backgroundColor: '#fff'
+            }} 
+          />
+        </div>
+      )}
 
       <div style={{ borderBottom: '1px dashed #000', margin: '15px 0 10px 0' }}></div>
 

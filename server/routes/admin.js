@@ -117,12 +117,21 @@ router.post('/offline-order', uploadImage.fields([{name: 'photo'}, {name: 'payme
     const parsedBranchId = branch_id ? parseInt(branch_id, 10) : null;
     const parsedServiceId = service_id ? parseInt(service_id, 10) : null;
 
+    // Ambil tipe kecepatan layanan (reguler/express) dari database
+    let serviceSpeed = 'reguler';
+    if (parsedServiceId) {
+      const sRes = await client.query('SELECT type FROM services WHERE id = $1', [parsedServiceId]);
+      if (sRes.rows.length > 0) {
+        serviceSpeed = sRes.rows[0].type || 'reguler';
+      }
+    }
+
     // Status langsung cuci
     const orderRes = await client.query(
       `INSERT INTO orders 
-      (user_id, order_code, status, total_price, payment_status, notes, photo_url, is_offline, guest_name, guest_phone, branch_id, payment_proof)
-      VALUES (NULL, $1, 'proses', $2, $3, $4, $5, true, $6, $7, $8, $9) RETURNING id`,
-      [orderCode, parsedTotalPrice, payment_status || 'lunas', notes, photo_url, guest_name, guest_phone, parsedBranchId, payment_proof]
+      (user_id, order_code, status, total_price, payment_status, notes, photo_url, is_offline, guest_name, guest_phone, branch_id, payment_proof, service_speed)
+      VALUES (NULL, $1, 'proses', $2, $3, $4, $5, true, $6, $7, $8, $9, $10) RETURNING id`,
+      [orderCode, parsedTotalPrice, payment_status || 'lunas', notes, photo_url, guest_name, guest_phone, parsedBranchId, payment_proof, serviceSpeed]
     );
     const orderId = orderRes.rows[0].id;
 
@@ -584,7 +593,7 @@ router.put('/orders/:id/validate-items', idParamValidation, validate, async (req
 
     // Send payment notification to customer automatically
     const orderInfo = await client.query('SELECT user_id, order_code FROM orders WHERE id = $1', [orderId]);
-    if (orderInfo.rows.length > 0) {
+    if (orderInfo.rows.length > 0 && orderInfo.rows[0].user_id) {
       const { user_id, order_code } = orderInfo.rows[0];
       const msg = `Pesanan Anda #${order_code} telah divalidasi oleh Admin. Total tagihan: Rp ${total.toLocaleString('id-ID')}. Silakan segera lakukan pembayaran.`;
       await client.query(
@@ -617,7 +626,7 @@ router.put('/orders/:id/status', updateStatusValidation, validate, async (req, r
     const orderInfo = await db.query('SELECT user_id, order_code FROM orders WHERE id = $1', [orderId]);
     await db.query('UPDATE orders SET status = $1 WHERE id = $2', [status, orderId]);
     
-    if (orderInfo.rows.length > 0) {
+    if (orderInfo.rows.length > 0 && orderInfo.rows[0].user_id) {
       const { user_id, order_code } = orderInfo.rows[0];
       await db.query(
         'INSERT INTO notifications (user_id, order_id, title, message) VALUES ($1, $2, $3, $4)',
@@ -676,7 +685,7 @@ router.put('/orders/:id/complete', uploadDelivery.single('photo'), idParamValida
       return res.status(404).json({ message: 'Order tidak ditemukan' });
     }
     
-    if (orderInfo.rows.length > 0) {
+    if (orderInfo.rows.length > 0 && orderInfo.rows[0].user_id) {
       const { user_id, order_code } = orderInfo.rows[0];
       await db.query(
         'INSERT INTO notifications (user_id, order_id, title, message) VALUES ($1, $2, $3, $4)',
@@ -705,7 +714,7 @@ router.put('/payments/validate/:id', idParamValidation, validate, async (req, re
 
     // Send payment confirmation notification to customer
     const orderInfo = await client.query('SELECT user_id, order_code FROM orders WHERE id = $1', [orderId]);
-    if (orderInfo.rows.length > 0) {
+    if (orderInfo.rows.length > 0 && orderInfo.rows[0].user_id) {
       const { user_id, order_code } = orderInfo.rows[0];
       await client.query(
         'INSERT INTO notifications (user_id, order_id, title, message) VALUES ($1, $2, $3, $4)',

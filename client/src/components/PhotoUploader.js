@@ -1,6 +1,6 @@
 import React, { useState, useRef, useCallback } from 'react';
 import imageCompression from 'browser-image-compression';
-import { FiCamera, FiUpload, FiX, FiCheckCircle, FiLoader, FiZap } from 'react-icons/fi';
+import { FiCamera, FiUpload, FiX, FiCheckCircle, FiLoader, FiZap, FiAlertTriangle } from 'react-icons/fi';
 
 const COMPRESSION_OPTIONS = {
   maxSizeMB: 0.5,           // max 500KB
@@ -219,9 +219,9 @@ export default function PhotoUploader({ onPhoto, photo, label, required = false 
 
       {/* Error message */}
       {required && !photo && !compressing && (
-        <p style={{ marginTop: 4, fontSize: '0.75rem', color: '#ef4444', display: 'flex', alignItems: 'center', gap: 4 }}>
-          ⚠ Foto wajib diupload untuk memproses pesanan
-        </p>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: '#ef4444', fontSize: '0.82rem', marginTop: 10, fontWeight: 500, fontFamily: 'Outfit, sans-serif' }}>
+          <FiAlertTriangle /> Foto wajib diupload untuk memproses pesanan
+        </div>
       )}
 
       {/* Canvas tersembunyi untuk capture kamera */}

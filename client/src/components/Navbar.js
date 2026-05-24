@@ -7,6 +7,7 @@ import {
   FiUser, FiChevronDown, FiX, FiMenu, FiBell, FiTrash2,
 } from 'react-icons/fi';
 import TopMarquee from './TopMarquee';
+import FeedbackModal from './FeedbackModal';
 
 const menuItems = [
   { id: 'home', label: 'Home', icon: <FiHome /> },
@@ -37,6 +38,7 @@ const Navbar = ({ user, onLogout }) => {
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [notifications, setNotifications] = useState([]);
   const [notifOpen, setNotifOpen] = useState(false);
+  const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -244,6 +246,27 @@ const Navbar = ({ user, onLogout }) => {
             <>
               <Link to="/" className={isActive('/') ? 'active' : ''}>Home</Link>
               <Link to="/dashboard" className={isActive('/dashboard') ? 'active' : ''}>{dashLabel}</Link>
+              {user.role === 'customer' && (
+                <span
+                  onClick={() => setIsFeedbackOpen(true)}
+                  style={{
+                    color: 'rgba(255, 255, 255, 0.9)',
+                    cursor: 'pointer',
+                    fontSize: '0.92rem',
+                    fontWeight: 600,
+                    padding: '0 8px',
+                    transition: 'color 0.2s',
+                    fontFamily: 'Outfit, sans-serif',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 6
+                  }}
+                  onMouseEnter={e => e.currentTarget.style.color = 'var(--sky)'}
+                  onMouseLeave={e => e.currentTarget.style.color = 'rgba(255, 255, 255, 0.9)'}
+                >
+                  <FiMessageCircle /> Feedback
+                </span>
+              )}
 
               {/* Notification Bell for Desktop */}
               {renderBellDropdown(false)}
@@ -364,8 +387,29 @@ const Navbar = ({ user, onLogout }) => {
                   <div style={{ fontSize: '0.72rem', color: badgeColor, fontWeight: 600, textTransform: 'capitalize' }}>{user.role}</div>
                 </div>
               </div>
-              <Link to="/" className={isActive('/') ? 'active' : ''} onClick={() => setOpen(false)}><FiHome /> Home</Link>
+               <Link to="/" className={isActive('/') ? 'active' : ''} onClick={() => setOpen(false)}><FiHome /> Home</Link>
               <Link to="/dashboard" className={isActive('/dashboard') ? 'active' : ''} onClick={() => setOpen(false)}><FiGrid /> {dashLabel}</Link>
+              {user.role === 'customer' && (
+                <span
+                  onClick={() => { setIsFeedbackOpen(true); setOpen(false); }}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 8,
+                    cursor: 'pointer',
+                    padding: '10px 14px',
+                    borderRadius: 10,
+                    fontSize: '0.95rem',
+                    fontWeight: 600,
+                    color: 'white',
+                    transition: 'all 0.2s'
+                  }}
+                  onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.1)'}
+                  onMouseLeave={e => e.currentTarget.style.background = 'none'}
+                >
+                  <FiMessageCircle /> Feedback
+                </span>
+              )}
               {user.role === 'customer' && (
                 <Link to="/dashboard?tab=profile" className={isActive('/dashboard', 'profile') ? 'active' : ''} onClick={() => setOpen(false)} style={{ display: 'flex', alignItems: 'center', gap: 8 }}><FiUser /> Profil &amp; Alamat</Link>
               )}
@@ -525,6 +569,7 @@ const Navbar = ({ user, onLogout }) => {
         </div>
       )}
       {isPublicPage && <TopMarquee />}
+      <FeedbackModal isOpen={isFeedbackOpen} onClose={() => setIsFeedbackOpen(false)} user={user} />
     </>
   );
 };

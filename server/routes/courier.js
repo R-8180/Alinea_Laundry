@@ -136,7 +136,7 @@ router.put('/orders/:id/status', async (req, res) => {
       [status, orderId, req.user.id]
     );
     
-    if (orderInfo.rows.length > 0) {
+    if (orderInfo.rows.length > 0 && orderInfo.rows[0].user_id) {
       const { user_id, order_code } = orderInfo.rows[0];
       let msg = `Pesanan Anda #${order_code} sekarang berstatus: ${status.toUpperCase()}.`;
       if (status === 'pickup') {
@@ -179,7 +179,7 @@ router.post('/orders/:id/deliver', uploadDelivery.single('photo'), async (req, r
       return res.status(403).json({ message: 'Order tidak ditemukan atau bukan milik kurir ini' });
     }
     
-    if (orderInfo.rows.length > 0) {
+    if (orderInfo.rows.length > 0 && orderInfo.rows[0].user_id) {
       const { user_id, order_code } = orderInfo.rows[0];
       await pool.query(
         'INSERT INTO notifications (user_id, order_id, title, message) VALUES ($1, $2, $3, $4)',

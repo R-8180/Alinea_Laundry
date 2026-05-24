@@ -460,7 +460,7 @@ const OfflineOrderForm = () => {
               <div>
                 <label style={{ fontSize: '0.85rem', color: '#64748b', display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8 }}><FiCreditCard /> Foto Bukti Transfer (Opsional)</label>
                 <div style={{ textAlign: 'center', marginBottom: '12px', padding: '12px', background: '#f8fafc', borderRadius: '8px', border: '1px dashed #cbd5e1' }}>
-                  <img src="/qris.png" alt="QRIS" style={{ width: '100%', maxWidth: '160px', borderRadius: '8px' }} />
+                  <img src="/qris.jpg" alt="QRIS" style={{ width: '100%', maxWidth: '160px', borderRadius: '8px' }} />
                   <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '6px', fontWeight: 600 }}>Tunjukkan QRIS ini ke pelanggan</div>
                 </div>
                 <PhotoUploader onPhotoSelected={setPaymentProof} />

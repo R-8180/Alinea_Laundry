@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FiDownload, FiX, FiSmartphone } from 'react-icons/fi';
+import { FiDownload, FiX, FiSmartphone, FiMonitor } from 'react-icons/fi';
 
 /**
  * InstallPWA - Tombol install aplikasi
@@ -188,8 +188,8 @@ const InstallPWA = ({ variant = 'mobile-banner' }) => {
         gap: 16, marginTop: 32, marginBottom: 8, flexWrap: 'wrap',
       }}>
         <div style={{ textAlign: 'center' }}>
-          <p style={{ margin: '0 0 4px', fontSize: '0.9rem', color: '#64748b' }}>
-            🖥️ Tersedia juga sebagai aplikasi
+          <p style={{ margin: '0 0 4px', fontSize: '0.9rem', color: '#64748b', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
+            <FiMonitor /> Tersedia juga sebagai aplikasi
           </p>
           <p style={{ margin: 0, fontSize: '0.8rem', color: '#94a3b8' }}>
             Install langsung di laptop atau HP kamu

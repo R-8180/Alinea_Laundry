@@ -3,7 +3,8 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import {
   FiHome, FiGrid, FiBarChart2, FiRotateCcw,
-  FiLogOut, FiMenu, FiX, FiUsers, FiChevronDown, FiStar, FiTruck, FiBell, FiTrash2, FiHelpCircle, FiUser
+  FiLogOut, FiMenu, FiX, FiUsers, FiChevronDown, FiStar, FiTruck, FiBell, FiTrash2, FiHelpCircle, FiUser,
+  FiMessageCircle
 } from 'react-icons/fi';
 import { GiWashingMachine } from 'react-icons/gi';
 
@@ -117,6 +118,7 @@ const AdminLayout = ({ user, onLogout, children }) => {
         { key: 'laporan', path: '/dashboard?tab=laporan', icon: <FiBarChart2 />, label: 'Laporan' },
         { key: 'riwayat', path: '/dashboard?tab=riwayat', icon: <FiRotateCcw />, label: 'Riwayat' },
         { key: 'users', path: '/dashboard?tab=users', icon: <FiUsers />, label: 'Pengguna' },
+        { key: 'feedback', path: '/dashboard?tab=feedback', icon: <FiMessageCircle />, label: 'Feedback' },
       ]
     },
     {

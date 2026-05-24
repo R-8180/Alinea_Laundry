@@ -572,7 +572,7 @@ const CustomerDashboard = () => {
                           showError('Bukti Belum Diunggah', 'Gagal: Anda belum mengunggah foto bukti pembayaran!');
                           return;
                         }
-                        showSuccess('Pembayaran Terkirim', 'Pembayaran Anda sedang divalidasi oleh admin. Terima kasih banyak! 🎉');
+                        showSuccess('Pembayaran Terkirim', 'Pembayaran Anda sedang divalidasi oleh admin. Terima kasih banyak!');
                         setPaymentModal(null);
                       }}
                     >

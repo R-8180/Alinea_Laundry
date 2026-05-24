@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { showSuccess, showError, showWarning, showLoading } from '../utils/swal';
 import {
   FiMapPin, FiPackage, FiTag, FiFileText,
-  FiPlus, FiTrash2, FiSend, FiCheckCircle, FiClock, FiArrowLeft, FiZap, FiDroplet, FiChevronDown, FiHome, FiStar, FiTruck
+  FiPlus, FiTrash2, FiSend, FiCheckCircle, FiClock, FiArrowLeft, FiZap, FiDroplet, FiChevronDown, FiHome, FiStar, FiTruck, FiInfo
 } from 'react-icons/fi';
 import { GiWashingMachine } from 'react-icons/gi';
 
@@ -1218,7 +1218,7 @@ const OrderForm = () => {
           lineHeight: 1.5,
           marginBottom: 16
         }}>
-          <strong>ℹ️ Informasi:</strong><br />
+          <strong><FiInfo style={{ position: 'relative', top: '2px', marginRight: '4px' }}/> Informasi:</strong><br />
           Harga akan dihitung oleh admin saat validasi pesanan. Anda akan menerima notifikasi total biaya setelah pesanan divalidasi.
           <div style={{ marginTop: 8, paddingTop: 8, borderTop: '1px solid rgba(146, 64, 14, 0.1)' }}>
             <strong><FiFileText className="icon-inline" /> Catatan Penting:</strong><br />

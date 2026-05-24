@@ -1918,27 +1918,6 @@ const AdminDashboard = () => {
               )}
             </div>
 
-            {/* Foto Offline Order */}
-            {(detailModal.photo_url || detailModal.payment_proof) && (
-              <div className="detail-section">
-                <h4>Media Pendukung</h4>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16 }}>
-                  {detailModal.photo_url && (
-                    <div style={{ border: '1px solid #e2e8f0', borderRadius: 8, padding: 8, background: '#f8fafc' }}>
-                      <div style={{ fontSize: '0.75rem', fontWeight: 700, color: '#64748b', marginBottom: 8, textAlign: 'center' }}><FiCamera className="icon-inline" /> Foto Cucian</div>
-                      <img src={resolveFileUrl(detailModal.photo_url)} alt="Foto Cucian" style={{ width: '100%', height: 'auto', borderRadius: 6, display: 'block', maxHeight: 200, objectFit: 'contain' }} />
-                    </div>
-                  )}
-                  {detailModal.payment_proof && (
-                    <div style={{ border: '1px solid #e2e8f0', borderRadius: 8, padding: 8, background: '#f8fafc' }}>
-                      <div style={{ fontSize: '0.75rem', fontWeight: 700, color: '#64748b', marginBottom: 8, textAlign: 'center' }}><FiCreditCard className="icon-inline" /> Bukti Pembayaran</div>
-                      <img src={resolveFileUrl(detailModal.payment_proof)} alt="Bukti Pembayaran" style={{ width: '100%', height: 'auto', borderRadius: 6, display: 'block', maxHeight: 200, objectFit: 'contain' }} />
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
-
             {/* Tabel Item */}
             {detailModal.items?.length > 0 && (
               <div className="detail-section">

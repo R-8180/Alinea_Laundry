@@ -743,27 +743,67 @@ router.get('/financial', async (req, res) => {
     COUNT(*) AS total_order 
     FROM orders WHERE payment_status = 'paid'`;
   const params = [];
+  
+  let finQuery = `SELECT type, SUM(amount) as total_amount FROM financial_records WHERE 1=1`;
+  const finParams = [];
+  
   let paramIndex = 1;
+  let finParamIndex = 1;
 
   if (activeBranchId) {
     query += ` AND branch_id = $${paramIndex++}`;
     params.push(activeBranchId);
+    
+    finQuery += ` AND (branch_id = $${finParamIndex++} OR branch_id IS NULL)`;
+    finParams.push(activeBranchId);
   }
 
   if (start && end) {
     query += ` AND created_at::date BETWEEN $${paramIndex++} AND $${paramIndex++}`;
     params.push(start, end);
+    
+    finQuery += ` AND date BETWEEN $${finParamIndex++} AND $${finParamIndex++}`;
+    finParams.push(start, end);
   } else if (year && month) {
     query += ` AND EXTRACT(YEAR FROM created_at) = $${paramIndex++} AND EXTRACT(MONTH FROM created_at) = $${paramIndex++}`;
     params.push(parseInt(year), parseInt(month));
+    
+    finQuery += ` AND EXTRACT(YEAR FROM date) = $${finParamIndex++} AND EXTRACT(MONTH FROM date) = $${finParamIndex++}`;
+    finParams.push(parseInt(year), parseInt(month));
   } else if (year) {
     query += ` AND EXTRACT(YEAR FROM created_at) = $${paramIndex++}`;
     params.push(parseInt(year));
+    
+    finQuery += ` AND EXTRACT(YEAR FROM date) = $${finParamIndex++}`;
+    finParams.push(parseInt(year));
   }
+  
+  finQuery += ` GROUP BY type`;
 
   try {
     const result = await db.query(query, params);
-    res.json(result.rows[0]);
+    const finResult = await db.query(finQuery, finParams);
+    
+    let manual_income = 0;
+    let manual_expense = 0;
+    let manual_debt = 0;
+    
+    finResult.rows.forEach(row => {
+      if (row.type === 'pendapatan_lain') manual_income = parseInt(row.total_amount) || 0;
+      if (row.type === 'pengeluaran') manual_expense = parseInt(row.total_amount) || 0;
+      if (row.type === 'utang') manual_debt = parseInt(row.total_amount) || 0;
+    });
+
+    const ordersRevenue = parseInt(result.rows[0].total_pendapatan) || 0;
+    
+    res.json({
+      total_order: parseInt(result.rows[0].total_order) || 0,
+      orders_revenue: ordersRevenue,
+      manual_income,
+      manual_expense,
+      manual_debt,
+      net_revenue: (ordersRevenue + manual_income) - manual_expense
+    });
   } catch (err) {
     console.error('Get financial stats error:', err);
     res.status(500).json({ error: err.message });
@@ -888,6 +928,94 @@ router.get('/bantuan-directory', async (req, res) => {
     res.json(result.rows);
   } catch (err) {
     console.error('Get bantuan directory error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// GET top services (layanan terlaris)
+router.get('/top-services', async (req, res) => {
+  const activeBranchId = req.user.branch_id || (req.query.branch_id ? parseInt(req.query.branch_id) : null);
+  let query = `
+    SELECT oi.service_type, COUNT(oi.id) as total_sold
+    FROM order_items oi
+    JOIN orders o ON oi.order_id = o.id
+    WHERE o.payment_status = 'paid'
+  `;
+  const params = [];
+  if (activeBranchId) {
+    query += ` AND o.branch_id = $1`;
+    params.push(activeBranchId);
+  }
+  query += ` GROUP BY oi.service_type ORDER BY total_sold DESC LIMIT 5`;
+
+  try {
+    const result = await db.query(query, params);
+    res.json(result.rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// GET top branches (cabang terlaris)
+router.get('/top-branches', async (req, res) => {
+  try {
+    const result = await db.query(`
+      SELECT b.name as branch_name, SUM(o.total_price) as total_revenue
+      FROM orders o
+      JOIN branches b ON o.branch_id = b.id
+      WHERE o.payment_status = 'paid'
+      GROUP BY b.name
+      ORDER BY total_revenue DESC
+      LIMIT 5
+    `);
+    res.json(result.rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// GET manual transactions (catatan keuangan)
+router.get('/transactions', async (req, res) => {
+  const activeBranchId = req.user.branch_id || (req.query.branch_id ? parseInt(req.query.branch_id) : null);
+  let query = `SELECT * FROM financial_records`;
+  const params = [];
+  if (activeBranchId) {
+    query += ` WHERE branch_id = $1 OR branch_id IS NULL`;
+    params.push(activeBranchId);
+  }
+  query += ` ORDER BY date DESC, created_at DESC`;
+
+  try {
+    const result = await db.query(query, params);
+    res.json(result.rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// POST manual transaction
+router.post('/transactions', async (req, res) => {
+  const { type, category, amount, description, date, branch_id } = req.body;
+  const activeBranchId = req.user.branch_id || (branch_id ? parseInt(branch_id) : null);
+  
+  try {
+    const result = await db.query(
+      `INSERT INTO financial_records (type, category, amount, description, date, branch_id) 
+       VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
+      [type, category, amount, description, date || new Date(), activeBranchId]
+    );
+    res.json(result.rows[0]);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// DELETE manual transaction
+router.delete('/transactions/:id', async (req, res) => {
+  try {
+    await db.query('DELETE FROM financial_records WHERE id = $1', [req.params.id]);
+    res.json({ message: 'Deleted' });
+  } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });

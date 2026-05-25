@@ -482,8 +482,6 @@ const TestimoniCard = ({ item, isMobile, isActive }) => {
 
 const TestimoniSection = () => {
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
-  const [touchStart, setTouchStart] = useState(null);
-  const [touchEnd, setTouchEnd] = useState(null);
 
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth <= 768);

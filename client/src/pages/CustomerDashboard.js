@@ -9,7 +9,7 @@ import { showSuccess, showError, showLoading } from '../utils/swal';
 import Swal from 'sweetalert2';
 import {
   FiClock, FiTruck, FiDroplet, FiPackage, FiCheckCircle,
-  FiPlus, FiGift, FiCopy, FiEye, FiDollarSign, FiXCircle, FiZap, FiCreditCard, FiDownload, FiUser, FiMapPin, FiClipboard, FiMessageCircle, FiStar
+  FiPlus, FiGift, FiCopy, FiEye, FiDollarSign, FiXCircle, FiZap, FiCreditCard, FiDownload, FiUser, FiMapPin, FiClipboard, FiMessageCircle, FiStar, FiX
 } from 'react-icons/fi';
 
 const categoryLabels = { cuci_setrika: 'Cuci Setrika', cuci_lipat: 'Cuci Lipat', satuan: 'Satuan' };
@@ -199,13 +199,7 @@ const CustomerDashboard = ({ user: propUser }) => {
   };
 
 
-  const claimVoucher = async (template_id) => {
-    try {
-      const res = await axios.post('/api/orders/voucher/claim', { template_id }, { headers: { Authorization: `Bearer ${token}` } });
-      showSuccess('Klaim Voucher', res.data.message + ': ' + res.data.code);
-      fetchVoucherStatus();
-    } catch (err) { showError('Klaim Gagal', err.response?.data?.message || 'Gagal klaim voucher'); }
-  };
+
 
   const ongoing = orders.filter(o => o.status !== 'selesai' && o.status !== 'batal');
   const formatDateTime = (dateStr) => dateStr

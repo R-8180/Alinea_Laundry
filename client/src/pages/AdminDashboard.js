@@ -6,7 +6,7 @@ import axios from 'axios';
 import { useLocation } from 'react-router-dom';
 import { showSuccess, showError, showWarning, showConfirm, showLoading } from '../utils/swal';
 import {
-  FiPackage, FiClock, FiCheckCircle, FiDollarSign, FiAlertCircle,
+  FiPackage, FiClock, FiCheckCircle, FiAlertCircle,
   FiUserPlus, FiChevronDown, FiPhone, FiCamera, FiFileText, FiMapPin,
   FiTruck, FiEdit2, FiX, FiEye, FiUsers, FiTag, FiArrowUp, FiArrowDown,
   FiPlus, FiUser, FiMessageCircle, FiZap, FiCreditCard, FiHelpCircle, FiClipboard,

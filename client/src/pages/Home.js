@@ -186,6 +186,8 @@ const PromoSlider = () => {
   const currentPromoImages = cms?.promoImages?.length ? cms.promoImages : promoImages;
   const [current, setCurrent] = useState(0);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+  const [touchStart, setTouchStart] = useState(null);
+  const [touchEnd, setTouchEnd] = useState(null);
   const total = currentPromoImages.length;
 
   // Deteksi ukuran layar
@@ -202,16 +204,43 @@ const PromoSlider = () => {
   }, [total]);
 
   useEffect(() => {
-    const t = setInterval(autoNext, 3000);
+    const t = setInterval(autoNext, 4000);
     return () => clearInterval(t);
   }, [autoNext]);
 
-  // Mode Mobile: 1 slide dengan aspect ratio 16:9 (aman dari collapse dengan clamp height)
+  const handleTouchStart = (e) => {
+    setTouchStart(e.targetTouches[0].clientX);
+  };
+
+  const handleTouchMove = (e) => {
+    setTouchEnd(e.targetTouches[0].clientX);
+  };
+
+  const handleTouchEnd = () => {
+    if (!touchStart || !touchEnd) return;
+    const diff = touchStart - touchEnd;
+    if (diff > 50) {
+      autoNext();
+    }
+    if (diff < -50) {
+      setCurrent(prev => (prev - 1 + total) % total);
+    }
+    setTouchStart(null);
+    setTouchEnd(null);
+  };
+
+  // Mode Mobile: 1 slide dengan aspect ratio 16:9 (aman dari collapse dengan clamp height + touch swipe)
   if (isMobile) {
     return (
       <section className="section reveal promo-top">
         <h2 className="section-title">Promo Spesial</h2>
-        <div className="promo-slider-mobile-viewport" style={{ height: 'clamp(140px, 37.5vw, 220px)' }}>
+        <div 
+          className="promo-slider-mobile-viewport" 
+          style={{ height: 'clamp(140px, 37.5vw, 220px)' }}
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
+        >
           <div
             className="promo-slider-mobile-track"
             style={{ transform: `translateX(-${current * 100}%)` }}
@@ -392,6 +421,8 @@ const testimoniList = [
 const TestimoniSection = () => {
   const [current, setCurrent] = useState(0);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+  const [touchStart, setTouchStart] = useState(null);
+  const [touchEnd, setTouchEnd] = useState(null);
 
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth <= 768);
@@ -405,9 +436,31 @@ const TestimoniSection = () => {
   const nextSlide = () => setCurrent(prev => (prev + 1) % totalSlides);
   const prevSlide = () => setCurrent(prev => (prev - 1 + totalSlides) % totalSlides);
 
+  const handleTouchStart = (e) => {
+    setTouchStart(e.targetTouches[0].clientX);
+  };
+
+  const handleTouchMove = (e) => {
+    setTouchEnd(e.targetTouches[0].clientX);
+  };
+
+  const handleTouchEnd = () => {
+    if (!touchStart || !touchEnd) return;
+    const diff = touchStart - touchEnd;
+    if (diff > 50) {
+      nextSlide();
+    }
+    if (diff < -50) {
+      prevSlide();
+    }
+    setTouchStart(null);
+    setTouchEnd(null);
+  };
+
   const getTransform = () => {
     if (isMobile) {
-      return `translateX(calc(-${current * 85}% + 7.5%))`;
+      // 72% width per slide, leaves 28% total side space -> 14% left and 14% right preview
+      return `translateX(calc(-${current * 72}% + 14%))`;
     }
     return `translateX(-${current * 100}%)`;
   };
@@ -420,12 +473,18 @@ const TestimoniSection = () => {
         
         {!isMobile && <button className="slider-arrow slider-left" onClick={prevSlide} style={{ position: 'absolute', left: 0, top: '50%', transform: 'translateY(-50%)' }}>‹</button>}
 
-        <div className="testimoni-slider-viewport" style={{ overflow: 'hidden', padding: isMobile ? '10px 0' : '0' }}>
+        <div 
+          className="testimoni-slider-viewport" 
+          style={{ overflow: 'hidden', padding: isMobile ? '20px 0' : '0' }}
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
+        >
           <div
             className="testimoni-slider-track"
             style={{
               display: 'flex',
-              transition: 'transform 0.5s ease-in-out',
+              transition: 'transform 0.5s cubic-bezier(0.25, 1, 0.5, 1)', // smooth spring-like animation
               transform: getTransform(),
             }}
           >
@@ -433,15 +492,27 @@ const TestimoniSection = () => {
               const isActive = isMobile ? idx === current : true;
               return (
                 <div key={idx} className="testimoni-slide-item" style={{ 
-                  flex: `0 0 ${isMobile ? '85%' : '33.333%'}`, 
+                  flex: `0 0 ${isMobile ? '72%' : '33.333%'}`, 
                   padding: '0 10px',
-                  opacity: isActive ? 1 : 0.4,
+                  opacity: isActive ? 1 : 0.45,
                   filter: isActive ? 'blur(0px)' : 'blur(2px)',
-                  transition: 'all 0.5s ease-in-out',
-                  transform: isActive ? 'scale(1)' : 'scale(0.95)'
+                  transition: 'all 0.5s cubic-bezier(0.25, 1, 0.5, 1)',
+                  transform: isActive ? 'scale(1.03)' : 'scale(0.88)',
                 }}>
-                  <div className="testimoni-card card" style={{ display: 'flex', flexDirection: 'column', height: '100%', padding: '30px 24px', borderRadius: 20, boxShadow: '0 10px 40px rgba(0,0,0,0.05)', backgroundColor: '#fff', border: '1px solid rgba(0,0,0,0.03)' }}>
-                    
+                  <div 
+                    className="testimoni-card card" 
+                    style={{ 
+                      display: 'flex', 
+                      flexDirection: 'column', 
+                      height: '100%', 
+                      padding: '30px 24px', 
+                      borderRadius: 24, 
+                      boxShadow: isActive ? '0 20px 40px rgba(0,0,0,0.1)' : '0 4px 12px rgba(0,0,0,0.02)', 
+                      backgroundColor: '#fff', 
+                      border: isActive ? '1.5px solid rgba(99, 102, 241, 0.15)' : '1px solid rgba(0,0,0,0.03)',
+                      transition: 'all 0.5s ease'
+                    }}
+                  >
                     <div style={{ display: 'flex', alignItems: 'center', gap: 15, marginBottom: 20 }}>
                       <img src={item.img} alt={item.name} style={{ width: 56, height: 56, borderRadius: '50%', objectFit: 'cover' }} />
                       <div>

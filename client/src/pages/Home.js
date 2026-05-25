@@ -204,18 +204,17 @@ const PromoSlider = () => {
             {currentPromoImages.map((img, idx) => (
               <div
                 key={idx}
-                className="promo-slide-mobile-item"
-              >
-                <img src={img.src} alt={img.alt} style={{ width: '100%', display: 'block', borderRadius: 16 }} />
-              </div>
+                className="promo-slider-mobile-item"
+                style={{ backgroundImage: `url(${img.src})` }}
+              />
             ))}
           </div>
         </div>
-        <div className="promo-dots-mobile">
+        <div className="promo-dots-custom" style={{ marginTop: 12 }}>
           {currentPromoImages.map((_, idx) => (
             <button
               key={idx}
-              className={`promo-dot-mobile ${idx === current ? 'active' : ''}`}
+              className={`promo-dot-custom ${idx === current ? 'active' : ''}`}
               onClick={() => setCurrent(idx)}
               aria-label={`Slide ${idx + 1}`}
             />

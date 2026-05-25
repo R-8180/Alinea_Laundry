@@ -320,7 +320,7 @@ const LaporanTab = ({ activeBranchId }) => {
       )}
 
       <div className="table-responsive">
-        <table className="table">
+        <table className="admin-order-table">
           <thead>
             <tr>
               <th>Tanggal</th>

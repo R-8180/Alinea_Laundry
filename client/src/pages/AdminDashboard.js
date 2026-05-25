@@ -952,7 +952,6 @@ const AdminDashboard = () => {
       {tab === 'order' && (
         <div className="admin-summary-row">
           <div className="admin-summary-card">
-            <div className="admin-summary-icon" style={{ background: 'var(--sky-faint)', color: 'var(--blue)' }}><FiPackage /></div>
             <div>
               <div className="admin-summary-value">{countToday}</div>
               <div className="admin-summary-label">Order Hari Ini</div>
@@ -960,7 +959,6 @@ const AdminDashboard = () => {
             </div>
           </div>
           <div className="admin-summary-card">
-            <div className="admin-summary-icon" style={{ background: '#fef3c7', color: '#b45309' }}><FiClock /></div>
             <div>
               <div className="admin-summary-value">{activeOrders}</div>
               <div className="admin-summary-label">Sedang Diproses</div>
@@ -968,7 +966,6 @@ const AdminDashboard = () => {
             </div>
           </div>
           <div className="admin-summary-card">
-            <div className="admin-summary-icon" style={{ background: 'var(--green-light)', color: 'var(--green)' }}><FiCheckCircle /></div>
             <div>
               <div className="admin-summary-value">{doneToday}</div>
               <div className="admin-summary-label">Selesai Hari Ini</div>
@@ -976,7 +973,6 @@ const AdminDashboard = () => {
             </div>
           </div>
           <div className="admin-summary-card">
-            <div className="admin-summary-icon" style={{ background: 'var(--sky-pale)', color: 'var(--navy-60)' }}><FiDollarSign /></div>
             <div>
               <div className="admin-summary-value" style={{ fontSize: '1.1rem' }}>{formatRupiah(revenueToday)}</div>
               <div className="admin-summary-label">Pendapatan Hari Ini</div>

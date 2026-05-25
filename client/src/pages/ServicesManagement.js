@@ -4,7 +4,7 @@ import { showSuccess, showError, showWarning } from '../utils/swal';
 import {
   FiEdit2, FiPlus, FiCheck, FiX, FiSave, FiRefreshCw,
   FiClock, FiDollarSign, FiPackage, FiAlertCircle, FiEye, FiEyeOff, FiZap,
-  FiChevronDown, FiCheckCircle
+  FiChevronDown, FiCheckCircle, FiGift, FiMessageCircle, FiSend
 } from 'react-icons/fi';
 import { GiWashingMachine } from 'react-icons/gi';
 
@@ -41,6 +41,11 @@ const ServicesManagement = () => {
   const [catDropdownOpen, setCatDropdownOpen] = useState(false);
   const [unitDropdownOpen, setUnitDropdownOpen] = useState(false);
   const [typeDropdownOpen, setTypeDropdownOpen] = useState(false);
+  const [vouchers, setVouchers] = useState([]);
+  const [broadcastMsg, setBroadcastMsg] = useState('');
+  
+  const [editingVoucherId, setEditingVoucherId] = useState(null);
+  const [editVoucherForm, setEditVoucherForm] = useState({});
 
   const token = localStorage.getItem('token');
   const user = JSON.parse(localStorage.getItem('user') || '{}');
@@ -60,9 +65,17 @@ const ServicesManagement = () => {
     }
   }, [token]);
 
+  const fetchVouchers = useCallback(async () => {
+    try {
+      const res = await axios.get('/api/admin/vouchers', { headers: { Authorization: `Bearer ${token}` } });
+      setVouchers(res.data);
+    } catch (err) {}
+  }, [token]);
+
   useEffect(() => {
     fetchServices();
-  }, [fetchServices]);
+    if (isSuperAdmin) fetchVouchers();
+  }, [fetchServices, fetchVouchers, isSuperAdmin]);
 
   const startEdit = (service) => {
     setEditingId(service.id);
@@ -92,6 +105,28 @@ const ServicesManagement = () => {
       setEditForm({});
     } catch (err) {
       showError('Gagal Memperbarui', 'Gagal memperbarui layanan: ' + (err.response?.data?.message || err.message));
+    }
+  };
+
+  const saveVoucherEdit = async (id) => {
+    try {
+      await axios.put(`/api/admin/vouchers/${id}`, editVoucherForm, { headers: { Authorization: `Bearer ${token}` } });
+      showSuccess('Berhasil', 'Voucher diperbarui');
+      setEditingVoucherId(null);
+      fetchVouchers();
+    } catch (err) {
+      showError('Gagal', 'Gagal update voucher');
+    }
+  };
+
+  const handleBroadcast = async () => {
+    if (!broadcastMsg) return;
+    try {
+      await axios.post('/api/admin/notifications/broadcast', { message: broadcastMsg }, { headers: { Authorization: `Bearer ${token}` } });
+      showSuccess('Terkirim', 'Broadcast berhasil dikirim');
+      setBroadcastMsg('');
+    } catch (err) {
+      showError('Gagal', 'Gagal mengirim broadcast');
     }
   };
 
@@ -1068,6 +1103,66 @@ const ServicesManagement = () => {
             </div>
           </div>
         ))
+      )}
+
+      {/* --- ADMIN VOUCHER & NOTIF SECTION --- */}
+      {isSuperAdmin && (
+        <div style={{ marginTop: 40, borderTop: '2px dashed #cbd5e1', paddingTop: 32 }}>
+          {/* Vouchers */}
+          <div style={{ marginBottom: 32 }}>
+            <h3 style={{ color: '#1e293b', fontWeight: 700, marginBottom: 12, display: 'flex', alignItems: 'center', gap: 8 }}>
+              <FiGift /> Manajemen Voucher & Poin
+            </h3>
+            <div style={{ display: 'grid', gap: 12 }}>
+              {vouchers.map(v => (
+                <div key={v.id} style={{ background: 'white', borderRadius: 12, padding: 16, border: '1.5px solid #e2e8f0' }}>
+                  {editingVoucherId === v.id ? (
+                    <div style={{ display: 'grid', gap: 12 }}>
+                      <input type="text" className="form-input" value={editVoucherForm.name} onChange={e => setEditVoucherForm({...editVoucherForm, name: e.target.value})} placeholder="Nama Voucher" />
+                      <input type="number" className="form-input" value={editVoucherForm.points_required} onChange={e => setEditVoucherForm({...editVoucherForm, points_required: e.target.value})} placeholder="Poin Dibutuhkan" />
+                      <input type="number" className="form-input" value={editVoucherForm.discount_amount} onChange={e => setEditVoucherForm({...editVoucherForm, discount_amount: e.target.value})} placeholder="Nominal Diskon (Rp)" />
+                      <textarea className="form-input" value={editVoucherForm.description} onChange={e => setEditVoucherForm({...editVoucherForm, description: e.target.value})} placeholder="Deskripsi Voucher"></textarea>
+                      <div style={{ display: 'flex', gap: 8 }}>
+                        <button onClick={() => saveVoucherEdit(v.id)} className="btn btn-sm" style={{ background: '#10b981', color: 'white' }}><FiSave /> Simpan</button>
+                        <button onClick={() => setEditingVoucherId(null)} className="btn btn-secondary btn-sm"><FiX /> Batal</button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <div>
+                        <h4 style={{ margin: 0 }}>{v.name} <span style={{ fontSize: '0.8rem', color: '#64748b' }}>({v.points_required} Poin)</span></h4>
+                        <p style={{ margin: '4px 0 0', fontSize: '0.85rem', color: '#475569' }}>Diskon Rp {v.discount_amount?.toLocaleString('id-ID')}</p>
+                      </div>
+                      <button onClick={() => {
+                        setEditingVoucherId(v.id);
+                        setEditVoucherForm(v);
+                      }} className="btn btn-secondary btn-sm"><FiEdit2 /> Edit</button>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Broadcast */}
+          <div>
+            <h3 style={{ color: '#1e293b', fontWeight: 700, marginBottom: 12, display: 'flex', alignItems: 'center', gap: 8 }}>
+              <FiMessageCircle /> Broadcast Notifikasi ke Semua Customer
+            </h3>
+            <div style={{ background: 'white', borderRadius: 12, padding: 16, border: '1.5px solid #e2e8f0' }}>
+              <textarea 
+                className="form-input" 
+                rows="3" 
+                placeholder="Tulis pesan pengumuman atau promo di sini..."
+                value={broadcastMsg}
+                onChange={e => setBroadcastMsg(e.target.value)}
+              />
+              <button onClick={handleBroadcast} className="btn" style={{ marginTop: 12, width: '100%', display: 'flex', justifyContent: 'center' }}>
+                <FiSend /> Kirim Broadcast
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

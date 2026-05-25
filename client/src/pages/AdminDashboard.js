@@ -1999,7 +1999,7 @@ const AdminDashboard = () => {
               Order: <strong>{validateModal.order_code}</strong><br />
               Layanan: <strong>{formatServiceLabel(validateModal)}</strong>
               {validateModal.voucher_code && (
-                <><br />Voucher: <strong style={{ color: '#10b981' }}>{validateModal.voucher_code} (Diskon {validateModal.discount || 0}%)</strong></>
+                <><br />Voucher: <strong style={{ color: '#10b981' }}>{validateModal.voucher_code} (Diskon Rp {(validateModal.discount || 0).toLocaleString('id-ID')})</strong></>
               )}
             </p>
             <div style={{ overflowX: 'auto' }}>

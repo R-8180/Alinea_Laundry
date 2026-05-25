@@ -6,9 +6,10 @@ import InstallPWA from '../components/InstallPWA';
 import axios from 'axios';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { showSuccess, showError, showLoading } from '../utils/swal';
+import Swal from 'sweetalert2';
 import {
   FiClock, FiTruck, FiDroplet, FiPackage, FiCheckCircle,
-  FiPlus, FiGift, FiCopy, FiEye, FiDollarSign, FiXCircle, FiZap, FiCreditCard, FiDownload, FiUser, FiMapPin, FiClipboard, FiMessageCircle
+  FiPlus, FiGift, FiCopy, FiEye, FiDollarSign, FiXCircle, FiZap, FiCreditCard, FiDownload, FiUser, FiMapPin, FiClipboard, FiMessageCircle, FiStar
 } from 'react-icons/fi';
 
 const categoryLabels = { cuci_setrika: 'Cuci Setrika', cuci_lipat: 'Cuci Lipat', satuan: 'Satuan' };
@@ -100,16 +101,20 @@ const getEstimatedDate = (order) => {
 };
 
 
-const CustomerDashboard = () => {
+const CustomerDashboard = ({ user: propUser }) => {
   const [orders, setOrders] = useState([]);
   const [paymentModal, setPaymentModal] = useState(null);
   const [detailModal, setDetailModal] = useState(null);
   const [voucherStatus, setVoucherStatus] = useState(null);
   const [activeTab, setActiveTab] = useState('orders');
+  const [showVoucherModal, setShowVoucherModal] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
   const token = localStorage.getItem('token');
-  const user = JSON.parse(localStorage.getItem('user') || '{}');
+  
+  // Use the reactive user prop, or fall back to cached localStorage user details
+  const localUser = JSON.parse(localStorage.getItem('user') || '{}');
+  const user = propUser || localUser;
 
   // Read ?tab=profile from URL to switch tab on navigation
   useEffect(() => {
@@ -133,6 +138,26 @@ const CustomerDashboard = () => {
       const res = await axios.get('/api/orders/voucher/status', { headers: { Authorization: `Bearer ${token}` } });
       setVoucherStatus(res.data);
     } catch {}
+  };
+
+  const claimVoucher = async (templateId) => {
+    try {
+      await axios.post('/api/orders/voucher/claim', { template_id: templateId }, { headers: { Authorization: `Bearer ${token}` } });
+      Swal.fire({
+        icon: 'success',
+        title: 'Berhasil!',
+        text: 'Voucher berhasil diklaim!',
+        confirmButtonColor: '#6366f1'
+      });
+      fetchVoucherStatus();
+    } catch (err) {
+      Swal.fire({
+        icon: 'error',
+        title: 'Gagal',
+        text: err.response?.data?.message || 'Gagal klaim voucher',
+        confirmButtonColor: '#6366f1'
+      });
+    }
   };
 
   const openPaymentModal = async (orderId) => {
@@ -174,9 +199,9 @@ const CustomerDashboard = () => {
   };
 
 
-  const claimVoucher = async () => {
+  const claimVoucher = async (template_id) => {
     try {
-      const res = await axios.post('/api/orders/voucher/claim', {}, { headers: { Authorization: `Bearer ${token}` } });
+      const res = await axios.post('/api/orders/voucher/claim', { template_id }, { headers: { Authorization: `Bearer ${token}` } });
       showSuccess('Klaim Voucher', res.data.message + ': ' + res.data.code);
       fetchVoucherStatus();
     } catch (err) { showError('Klaim Gagal', err.response?.data?.message || 'Gagal klaim voucher'); }
@@ -356,11 +381,37 @@ const CustomerDashboard = () => {
     <div className="customer-dashboard">
       {/* Welcome Banner */}
       <div className="welcome-banner">
-        <div className="welcome-content">
+        <div className="welcome-content" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 16 }}>
           <div className="welcome-text">
             <h2>Halo, <span className="highlight">{user.name || 'Customer'}! </span></h2>
             <p>Kelola pesanan laundry kamu dengan mudah di sini.</p>
           </div>
+          {voucherStatus && (
+            <div style={{ 
+              background: 'rgba(255, 255, 255, 0.05)', 
+              border: '1px solid rgba(255, 255, 255, 0.1)', 
+              padding: '12px 20px', 
+              borderRadius: 16, 
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: 20, 
+              flexWrap: 'wrap',
+              marginTop: 10
+            }}>
+               <div style={{ display: 'flex', alignItems: 'center', gap: 12, borderRight: '1px solid rgba(255,255,255,0.2)', paddingRight: 20 }}>
+                 <div style={{ width: 44, height: 44, borderRadius: '50%', background: 'linear-gradient(135deg, #3b82f6, #1d4ed8)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 10px rgba(37, 99, 235, 0.3)' }}>
+                   <FiStar style={{ color: '#fff', fontSize: '1.3rem' }} />
+                 </div>
+                 <div style={{ display: 'flex', flexDirection: 'column' }}>
+                   <span style={{ fontSize: '0.85rem', color: '#cbd5e1' }}>Total Poinmu</span>
+                   <strong style={{ fontSize: '1.4rem', color: '#fff', lineHeight: 1.2 }}>{voucherStatus.points || 0} Poin</strong>
+                 </div>
+               </div>
+               <button onClick={() => setShowVoucherModal(true)} style={{ background: 'linear-gradient(135deg, #3b82f6, #2563eb)', color: '#fff', border: 'none', padding: '10px 18px', borderRadius: 10, fontWeight: 600, fontSize: '0.9rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, boxShadow: '0 4px 10px rgba(37, 99, 235, 0.2)' }}>
+                 <FiGift style={{ fontSize: '1.1rem' }} /> Tukar Voucher
+               </button>
+            </div>
+          )}
         </div>
       </div>
 
@@ -451,24 +502,6 @@ const CustomerDashboard = () => {
                  <button className="btn" onClick={() => navigate('/order')}><FiPlus /> Order Baru</button>
                </div>
              </div>
-
-            {/* Voucher Info */}
-            {voucherStatus && (
-              <div className="voucher-card">
-                <div className="voucher-info">
-                  <FiGift className="voucher-icon" />
-                  <div>
-                    <h4>Klaim Voucher Gratis!</h4>
-                    <p>Dapatkan voucher menarik untuk setiap pesananmu.</p>
-                  </div>
-                </div>
-                {voucherStatus.canClaim ? (
-                  <button className="btn btn-sm" onClick={claimVoucher}><FiGift className="icon-inline" /> Klaim Sekarang</button>
-                ) : (
-                  <span className="voucher-badge">{voucherStatus.need} order lagi</span>
-                )}
-              </div>
-            )}
 
             {/* Order List */}
             {ongoing.length === 0 && (
@@ -735,6 +768,46 @@ const CustomerDashboard = () => {
         )}
       </div>
       <FloatingWA />
+      {/* ====== MODAL TUKAR VOUCHER ====== */}
+      {showVoucherModal && voucherStatus && (
+        <div className="modal-overlay" onClick={() => setShowVoucherModal(false)}>
+          <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: 480 }}>
+            <div className="detail-header">
+              <h3><FiGift style={{ marginRight: 8, color: 'var(--blue)' }} /> Tukar Poin dengan Voucher</h3>
+              <button className="btn-close" onClick={() => setShowVoucherModal(false)}><FiX /></button>
+            </div>
+            
+            <div style={{ background: 'var(--sky-pale)', padding: '12px 16px', borderRadius: 12, display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+              <span style={{ color: 'var(--blue)', fontWeight: 600 }}>Poin Tersedia</span>
+              <span style={{ background: 'var(--blue)', color: 'white', padding: '4px 10px', borderRadius: 20, fontWeight: 700 }}>{voucherStatus.points || 0} Poin</span>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              {voucherStatus.templates && voucherStatus.templates.map(t => (
+                <div key={t.id} style={{ border: '1px solid var(--border)', borderRadius: 12, padding: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'white' }}>
+                  <div>
+                    <h5 style={{ margin: '0 0 4px 0', fontSize: '1rem', color: 'var(--navy)' }}>{t.name}</h5>
+                    <p style={{ fontSize: '0.8rem', color: 'var(--text-3)', margin: '0 0 6px 0' }}>{t.description || 'Syarat dan ketentuan berlaku.'}</p>
+                    <span style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--blue)' }}>Harga: {t.points_required} Poin</span>
+                  </div>
+                  <button 
+                    onClick={() => { claimVoucher(t.id); setShowVoucherModal(false); }}
+                    className="btn btn-sm" 
+                    style={{ background: voucherStatus.points >= t.points_required ? 'var(--blue)' : '#cbd5e1', cursor: voucherStatus.points >= t.points_required ? 'pointer' : 'not-allowed', color: 'white', border: 'none', borderRadius: '8px', padding: '8px 14px' }}
+                    disabled={voucherStatus.points < t.points_required}
+                  >
+                    Klaim
+                  </button>
+                </div>
+              ))}
+            </div>
+
+            <div style={{ marginTop: 20 }}>
+              <button className="btn btn-secondary" style={{ width: '100%' }} onClick={() => setShowVoucherModal(false)}>Tutup</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

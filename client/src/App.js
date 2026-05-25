@@ -100,24 +100,37 @@ function App() {
     const apiBase = process.env.REACT_APP_API_URL || '';
 
     if (storedUser && token) {
+      try {
+        // Render instantly using cached data from localStorage
+        setUser(JSON.parse(storedUser));
+      } catch (e) {
+        console.error('Error parsing stored user data:', e);
+      }
+      setLoading(false);
+
+      // Perform background revalidation
       fetch(`${apiBase}/api/auth/me`, {
         headers: { Authorization: `Bearer ${token}` }
       })
-        .then(res => res.json())
+        .then(res => {
+          if (res.status === 401 || res.status === 403) {
+            // Token expired or invalid
+            localStorage.clear();
+            setUser(null);
+            return null;
+          }
+          return res.json();
+        })
         .then(data => {
           if (data && data.id) {
             setUser(data);
             localStorage.setItem('user', JSON.stringify(data));
             subscribeUserToPush(token);
-          } else {
-            localStorage.clear();
-            setUser(null);
           }
         })
-        .catch(() => {
-          setUser(JSON.parse(storedUser));
-        })
-        .finally(() => setLoading(false));
+        .catch(err => {
+          console.error('Background profile refresh failed:', err);
+        });
     } else {
       setLoading(false);
     }
@@ -188,7 +201,7 @@ function App() {
                 </AdminLayout>
               ) : (
                 <Suspense fallback={<PageLoader />}>
-                  <CustomerDashboard />
+                  <CustomerDashboard user={user} />
                 </Suspense>
               )
             ) : <Navigate to="/login" />

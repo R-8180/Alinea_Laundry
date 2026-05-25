@@ -1062,7 +1062,10 @@ const OrderForm = () => {
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, flex: 1, minWidth: 0 }}>
                 <FiTag style={{ color: '#6366f1', flexShrink: 0 }} />
                 <span style={{ textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', fontWeight: 500 }}>
-                  {selectedVoucher ? selectedVoucher : (vouchers.length > 0 ? 'Tanpa Voucher' : 'Tidak ada voucher tersedia')}
+                  {selectedVoucher ? (() => {
+                     const sel = vouchers.find(v => v.code === selectedVoucher);
+                     return sel ? `${sel.voucher_name || sel.code} (-Rp ${sel.discount_amount?.toLocaleString('id-ID') || 0})` : selectedVoucher;
+                  })() : (vouchers.length > 0 ? 'Tanpa Voucher' : 'Tidak ada voucher tersedia')}
                 </span>
               </div>
               {vouchers.length > 0 && (
@@ -1159,7 +1162,12 @@ const OrderForm = () => {
                           if (!isSelected) e.currentTarget.style.background = 'transparent';
                         }}
                       >
-                        <FiTag className="icon-inline" /> {v.code}
+                        <div style={{ display: 'flex', flexDirection: 'column' }}>
+                          <span style={{ fontWeight: 600 }}><FiTag className="icon-inline" style={{ marginRight: '4px' }}/> {v.voucher_name || 'Voucher Laundry'}</span>
+                          <span style={{ fontSize: '0.75rem', color: isSelected ? 'rgba(255,255,255,0.9)' : '#64748b', marginTop: '2px' }}>
+                            Kode: {v.code} | Diskon: Rp {v.discount_amount?.toLocaleString('id-ID') || 0}
+                          </span>
+                        </div>
                       </div>
                     );
                   })}

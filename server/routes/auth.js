@@ -68,7 +68,7 @@ router.post('/login', loginValidation, validate, async (req, res) => {
   
   try {
     const result = await pool.query(
-      'SELECT id, email, password, role, name, branch_id FROM users WHERE email = $1',
+      'SELECT id, email, password, role, name, phone, branch_id FROM users WHERE email = $1',
       [email]
     );
     
@@ -89,7 +89,7 @@ router.post('/login', loginValidation, validate, async (req, res) => {
       { expiresIn: '2h' } // 2 hours
     );
     
-    res.json({ token, user: { id: user.id, name: user.name, role: user.role, branch_id: user.branch_id } });
+    res.json({ token, user: { id: user.id, name: user.name, email: user.email, phone: user.phone, role: user.role, branch_id: user.branch_id } });
   } catch (err) {
     console.error('Login error:', err);
     res.status(500).json({ error: 'Server error' });

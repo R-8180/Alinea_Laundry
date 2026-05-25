@@ -636,6 +636,9 @@ router.put('/orders/:id/status', updateStatusValidation, validate, async (req, r
     }
 
     if (status === 'selesai') {
+      if (orderInfo.rows.length > 0 && orderInfo.rows[0].user_id) {
+        await db.query('UPDATE users SET points = COALESCE(points, 0) + 10 WHERE id = $1', [orderInfo.rows[0].user_id]);
+      }
       notifyAdmins(orderId, 'completed').catch(err => console.error('Admin notification error:', err));
     }
     
@@ -687,9 +690,10 @@ router.put('/orders/:id/complete', uploadDelivery.single('photo'), idParamValida
     
     if (orderInfo.rows.length > 0 && orderInfo.rows[0].user_id) {
       const { user_id, order_code } = orderInfo.rows[0];
+      await db.query('UPDATE users SET points = COALESCE(points, 0) + 10 WHERE id = $1', [user_id]);
       await db.query(
         'INSERT INTO notifications (user_id, order_id, title, message) VALUES ($1, $2, $3, $4)',
-        [user_id, orderId, 'Pesanan Selesai! 🎉', `Pesanan Anda #${order_code} telah selesai diproses oleh Admin. Terima kasih.`]
+        [user_id, orderId, 'Pesanan Selesai! 🎉', `Pesanan Anda #${order_code} telah selesai diproses oleh Admin. Terima kasih. (+10 Poin)`]
       );
     }
 
@@ -1015,6 +1019,77 @@ router.delete('/transactions/:id', async (req, res) => {
   try {
     await db.query('DELETE FROM financial_records WHERE id = $1', [req.params.id]);
     res.json({ message: 'Deleted' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// GET voucher templates
+router.get('/vouchers', async (req, res) => {
+  try {
+    const result = await db.query('SELECT * FROM voucher_templates ORDER BY id ASC');
+    res.json(result.rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// POST voucher templates
+router.post('/vouchers', async (req, res) => {
+  const { name, points_required, description, discount_amount } = req.body;
+  try {
+    const result = await db.query(
+      'INSERT INTO voucher_templates (name, points_required, description, discount_amount) VALUES ($1, $2, $3, $4) RETURNING *',
+      [name, parseInt(points_required), description, parseInt(discount_amount)]
+    );
+    res.json(result.rows[0]);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// PUT voucher templates
+router.put('/vouchers/:id', async (req, res) => {
+  const { name, points_required, description, discount_amount, is_active } = req.body;
+  try {
+    const result = await db.query(
+      'UPDATE voucher_templates SET name = $1, points_required = $2, description = $3, discount_amount = $4, is_active = $5 WHERE id = $6 RETURNING *',
+      [name, parseInt(points_required), description, parseInt(discount_amount), is_active, req.params.id]
+    );
+    res.json(result.rows[0]);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// DELETE voucher templates
+router.delete('/vouchers/:id', async (req, res) => {
+  try {
+    await db.query('DELETE FROM voucher_templates WHERE id = $1', [req.params.id]);
+    res.json({ message: 'Deleted' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// POST send broadcast notification
+router.post('/notifications/broadcast', async (req, res) => {
+  const { message } = req.body;
+  try {
+    const users = await db.query("SELECT id FROM users WHERE role = 'customer' OR role IS NULL");
+    for (const u of users.rows) {
+      await db.query(
+        'INSERT INTO notifications (user_id, title, message) VALUES ($1, $2, $3)',
+        [u.id, 'Pengumuman Admin', message]
+      );
+      // Fail silently for push if not configured
+      try {
+        sendWebPush(u.id, { title: 'Pengumuman Admin', body: message });
+      } catch (pushErr) {
+        // ignore
+      }
+    }
+    res.json({ message: 'Broadcast terkirim' });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

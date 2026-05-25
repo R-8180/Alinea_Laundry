@@ -418,8 +418,69 @@ const testimoniList = [
   { name: 'Dimas Anggara', text: '“Tadinya cari-cari laundry sepatu yang bagus, eh ternyata Alinea juga nyediain. Sepatu sneakers putihku yang udah dekil kena lumpur jadi kinclong lagi. Solnya bersih dan bagian dalamnya wangi banget, gak bau apek sama sekali. The best deh pokoknya.”', stars: 5, img: 'https://ui-avatars.com/api/?name=Dimas+Anggara&background=6366f1&color=fff' }
 ];
 
+const TestimoniCard = ({ item, isMobile, isActive }) => {
+  const [isExpanded, setIsExpanded] = useState(false);
+  const maxChars = 100;
+  const isLongText = item.text.length > maxChars;
+
+  const displayText = isMobile && isLongText && !isExpanded
+    ? `${item.text.slice(0, maxChars)}...`
+    : item.text;
+
+  return (
+    <div className="testimoni-card card" style={{
+      display: 'flex',
+      flexDirection: 'column',
+      height: '100%',
+      padding: isMobile ? '20px 16px' : '30px 24px',
+      borderRadius: 20,
+      boxShadow: '0 10px 40px rgba(0,0,0,0.05)',
+      backgroundColor: '#fff',
+      border: '1px solid rgba(0,0,0,0.03)',
+      textAlign: 'left'
+    }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? 12 : 15, marginBottom: isMobile ? 12 : 20 }}>
+        <img src={item.img} alt={item.name} style={{ width: isMobile ? 44 : 56, height: isMobile ? 44 : 56, borderRadius: '50%', objectFit: 'cover' }} />
+        <div>
+          <strong style={{ display: 'block', fontSize: isMobile ? '1rem' : '1.1rem', color: '#0f172a' }}>{item.name}</strong>
+          <div className="stars" style={{ display: 'flex', gap: 2, marginTop: 4 }}>
+            {Array.from({ length: item.stars }).map((_, i) => (
+              <FiStar key={i} style={{ color: '#fbbf24', fill: '#fbbf24', fontSize: isMobile ? '0.8rem' : '0.9rem' }} />
+            ))}
+          </div>
+        </div>
+      </div>
+      
+      <p className="testimoni-text" style={{ fontSize: isMobile ? '0.88rem' : '0.95rem', color: '#475569', lineHeight: 1.5, fontStyle: 'italic', flex: 1, margin: 0 }}>
+        {displayText}
+      </p>
+
+      {isMobile && isLongText && (
+        <button
+          onClick={() => setIsExpanded(!isExpanded)}
+          style={{
+            background: 'none',
+            border: 'none',
+            color: 'var(--blue)',
+            padding: 0,
+            marginTop: 8,
+            fontSize: '0.82rem',
+            fontWeight: 600,
+            cursor: 'pointer',
+            textAlign: 'left',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 4
+          }}
+        >
+          {isExpanded ? 'Sembunyikan' : 'Baca Selengkapnya'}
+        </button>
+      )}
+    </div>
+  );
+};
+
 const TestimoniSection = () => {
-  const [current, setCurrent] = useState(0);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const [touchStart, setTouchStart] = useState(null);
   const [touchEnd, setTouchEnd] = useState(null);
@@ -430,121 +491,23 @@ const TestimoniSection = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  const itemsPerPage = isMobile ? 1 : 3;
-  const totalSlides = isMobile ? testimoniList.length : Math.ceil(testimoniList.length / itemsPerPage);
-
-  const nextSlide = () => setCurrent(prev => (prev + 1) % totalSlides);
-  const prevSlide = () => setCurrent(prev => (prev - 1 + totalSlides) % totalSlides);
-
-  const handleTouchStart = (e) => {
-    setTouchStart(e.targetTouches[0].clientX);
-  };
-
-  const handleTouchMove = (e) => {
-    setTouchEnd(e.targetTouches[0].clientX);
-  };
-
-  const handleTouchEnd = () => {
-    if (!touchStart || !touchEnd) return;
-    const diff = touchStart - touchEnd;
-    if (diff > 50) {
-      nextSlide();
-    }
-    if (diff < -50) {
-      prevSlide();
-    }
-    setTouchStart(null);
-    setTouchEnd(null);
-  };
-
-  const getTransform = () => {
-    if (isMobile) {
-      // 68% width per slide, leaves 32% total side space -> 16% left and 16% right preview
-      return `translateX(calc(-${current * 68}% + 16%))`;
-    }
-    return `translateX(-${current * 100}%)`;
-  };
+  // Double the list to create a seamless infinite marquee scrolling effect
+  const doubleList = [...testimoniList, ...testimoniList];
 
   return (
     <section id="testimoni" className="section reveal">
       <h2 className="section-title">Testimoni Pelanggan</h2>
       <p className="section-desc">Apa kata mereka yang sudah membuktikan kualitas Alinea Laundry?</p>
-      <div className="testimoni-slider-container" style={{ position: 'relative', marginTop: 40, padding: isMobile ? '0' : '0 40px' }}>
-        
-        {!isMobile && <button className="slider-arrow slider-left" onClick={prevSlide} style={{ position: 'absolute', left: 0, top: '50%', transform: 'translateY(-50%)' }}>‹</button>}
-
-        <div 
-          className="testimoni-slider-viewport" 
-          style={{ overflow: 'hidden', padding: isMobile ? '20px 0' : '0' }}
-          onTouchStart={handleTouchStart}
-          onTouchMove={handleTouchMove}
-          onTouchEnd={handleTouchEnd}
-        >
-          <div
-            className="testimoni-slider-track"
-            style={{
-              display: 'flex',
-              transition: 'transform 0.5s cubic-bezier(0.25, 1, 0.5, 1)', // smooth spring-like animation
-              transform: getTransform(),
-            }}
-          >
-            {testimoniList.map((item, idx) => {
-              const isActive = isMobile ? idx === current : true;
-              return (
-                <div key={idx} className="testimoni-slide-item" style={{ 
-                  flex: `0 0 ${isMobile ? '68%' : '33.333%'}`, 
-                  padding: '0 4px', // gap super dekat
-                  opacity: isActive ? 1 : 0.7, // preview sangat jelas
-                  filter: 'none', // tanpa blur agar teks terlihat jelas
-                  transition: 'all 0.5s cubic-bezier(0.25, 1, 0.5, 1)',
-                  transform: isActive ? 'scale(1.02)' : 'scale(0.94)', // lebih besar dan rapat
-                }}>
-                  <div 
-                    className="testimoni-card card" 
-                    style={{ 
-                      display: 'flex', 
-                      flexDirection: 'column', 
-                      height: '100%', 
-                      padding: '30px 24px', 
-                      borderRadius: 24, 
-                      boxShadow: isActive ? '0 20px 40px rgba(0,0,0,0.1)' : '0 4px 12px rgba(0,0,0,0.02)', 
-                      backgroundColor: '#fff', 
-                      border: isActive ? '1.5px solid rgba(99, 102, 241, 0.15)' : '1px solid rgba(0,0,0,0.03)',
-                      transition: 'all 0.5s ease'
-                    }}
-                  >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 15, marginBottom: 20 }}>
-                      <img src={item.img} alt={item.name} style={{ width: 56, height: 56, borderRadius: '50%', objectFit: 'cover' }} />
-                      <div>
-                        <strong style={{ display: 'block', fontSize: '1.1rem', color: '#0f172a' }}>{item.name}</strong>
-                        <div className="stars" style={{ display: 'flex', gap: 2, marginTop: 4 }}>
-                          {Array.from({ length: item.stars }).map((_, i) => (
-                            <FiStar key={i} style={{ color: '#fbbf24', fill: '#fbbf24', fontSize: '0.9rem' }} />
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <p className="testimoni-text" style={{ fontSize: '0.95rem', color: '#475569', lineHeight: 1.6, fontStyle: 'italic', flex: 1, margin: 0 }}>
-                      {item.text}
-                    </p>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+      
+      <div className="testimoni-marquee-container" style={{ marginTop: 40 }}>
+        <div className="testimoni-marquee-track">
+          {doubleList.map((item, idx) => (
+            <div key={idx} className="testimoni-marquee-item">
+              <TestimoniCard item={item} isMobile={isMobile} isActive={true} />
+            </div>
+          ))}
         </div>
-
-        {!isMobile && <button className="slider-arrow slider-right" onClick={nextSlide} style={{ position: 'absolute', right: 0, top: '50%', transform: 'translateY(-50%)' }}>›</button>}
       </div>
-
-      {isMobile && (
-        <div style={{ display: 'flex', justifyContent: 'center', gap: 8, marginTop: 20 }}>
-           {testimoniList.map((_, idx) => (
-             <button key={idx} onClick={() => setCurrent(idx)} style={{ width: 8, height: 8, borderRadius: '50%', backgroundColor: idx === current ? 'var(--blue)' : '#cbd5e1', border: 'none', padding: 0 }} />
-           ))}
-        </div>
-      )}
     </section>
   );
 };

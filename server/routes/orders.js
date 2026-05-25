@@ -67,7 +67,7 @@ router.post('/', auth, orderLimiter, uploadImage.single('photo'), parseItems, cr
       const vresults = await client.query('SELECT * FROM vouchers WHERE code = $1 AND user_id = $2 AND used = FALSE', [voucher_code, userId]);
       if (vresults.rows.length === 0) throw new Error('Voucher tidak valid');
       await client.query('UPDATE vouchers SET used = TRUE WHERE code = $1', [voucher_code]);
-      discount = 100;
+      discount = parseInt(vresults.rows[0].discount_amount) || 0;
     }
 
     const orderRes = await client.query(
@@ -190,32 +190,48 @@ router.put('/:id/cancel', auth, idParamValidation, validate, async (req, res) =>
 
 router.get('/voucher/status', auth, async (req, res) => {
   try {
-    const result = await pool.query(`SELECT COUNT(*) AS ready FROM orders WHERE user_id = $1 AND status = 'selesai' AND discount = 0`, [req.user.id]);
-    const readyOrders = parseInt(result.rows[0].ready, 10);
-    const canClaim = readyOrders >= 5;
-    res.json({ canClaim, need: canClaim ? 0 : 5 - readyOrders });
+    const userResult = await pool.query('SELECT points FROM users WHERE id = $1', [req.user.id]);
+    const points = userResult.rows[0]?.points || 0;
+    
+    const templatesResult = await pool.query('SELECT * FROM voucher_templates WHERE is_active = TRUE ORDER BY points_required ASC');
+    
+    res.json({ points, templates: templatesResult.rows });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
 router.post('/voucher/claim', auth, async (req, res) => {
+  const { template_id } = req.body;
+  if (!template_id) return res.status(400).json({ message: 'Pilih voucher' });
+  
+  const client = await pool.connect();
   try {
-    const result = await pool.query(`SELECT COUNT(*) AS ready FROM orders WHERE user_id = $1 AND status = 'selesai' AND discount = 0`, [req.user.id]);
-    if (parseInt(result.rows[0].ready, 10) < 5) return res.status(400).json({ message: 'Minimal 5 order selesai' });
-
-    await pool.query(
-      `UPDATE orders SET discount = 1 WHERE id IN (
-         SELECT id FROM orders WHERE user_id = $1 AND status = 'selesai' AND discount = 0 ORDER BY created_at ASC LIMIT 5
-       )`,
-      [req.user.id]
-    );
-
+    await client.query('BEGIN');
+    const userRes = await client.query('SELECT points FROM users WHERE id = $1 FOR UPDATE', [req.user.id]);
+    const points = userRes.rows[0]?.points || 0;
+    
+    const templateRes = await client.query('SELECT * FROM voucher_templates WHERE id = $1 AND is_active = TRUE', [template_id]);
+    if (templateRes.rows.length === 0) throw new Error('Voucher tidak ditemukan');
+    
+    const template = templateRes.rows[0];
+    if (points < template.points_required) throw new Error('Poin tidak mencukupi');
+    
+    await client.query('UPDATE users SET points = points - $1 WHERE id = $2', [template.points_required, req.user.id]);
+    
     const code = 'VOC-' + Math.random().toString(36).substring(2, 8).toUpperCase();
-    await pool.query('INSERT INTO vouchers (user_id, code) VALUES ($1, $2)', [req.user.id, code]);
+    await client.query(
+      'INSERT INTO vouchers (user_id, code, voucher_name, discount_amount) VALUES ($1, $2, $3, $4)',
+      [req.user.id, code, template.name, template.discount_amount]
+    );
+    
+    await client.query('COMMIT');
     res.json({ message: 'Voucher berhasil diklaim', code });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    await client.query('ROLLBACK');
+    res.status(400).json({ message: err.message || 'Gagal klaim' });
+  } finally {
+    client.release();
   }
 });
 

@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dokumentasi Sistem Informasi Alinea Laundry</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+  <script>
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: 'default',
+      securityLevel: 'loose',
+      flowchart: { useMaxWidth: true, htmlLabels: true, curve: 'basis' }
+    });
+  </script>
+  <style>
+    :root {
+      --primary: #0b1d3a;
+      --secondary: #1d56d8;
+      --text-main: #1e293b;
+      --text-muted: #475569;
+      --border: #cbd5e1;
+      --bg-light: #f8fafc;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      color: var(--text-main);
+      line-height: 1.6;
+      background-color: var(--bg-light);
+      padding: 40px 20px;
+    }
+
+    .document-container {
+      max-width: 900px;
+      margin: 0 auto;
+      background: white;
+      padding: 60px 50px;
+      border-radius: 16px;
+      box-shadow: 0 4px 30px rgba(0, 0, 0, 0.05);
+      border: 1px solid #e2e8f0;
+    }
+
+    .header-section {
+      text-align: center;
+      margin-bottom: 50px;
+      border-bottom: 3px double var(--primary);
+      padding-bottom: 25px;
+    }
+
+    .header-section h1 {
+      font-family: 'Outfit', sans-serif;
+      font-size: 2.2rem;
+      font-weight: 800;
+      color: var(--primary);
+      text-transform: uppercase;
+      letter-spacing: -0.5px;
+      margin-bottom: 8px;
+    }
+
+    .header-section h2 {
+      font-family: 'Outfit', sans-serif;
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: var(--secondary);
+      margin-bottom: 12px;
+    }
+
+    .header-section p {
+      font-size: 0.95rem;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+
+    h3 {
+      font-family: 'Outfit', sans-serif;
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: var(--primary);
+      margin-top: 40px;
+      margin-bottom: 20px;
+      border-left: 4px solid var(--secondary);
+      padding-left: 12px;
+      page-break-after: avoid;
+    }
+
+    p {
+      margin-bottom: 16px;
+      text-align: justify;
+      font-size: 0.95rem;
+      color: var(--text-main);
+    }
+
+    ul, ol {
+      margin-bottom: 20px;
+      padding-left: 24px;
+    }
+
+    li {
+      margin-bottom: 8px;
+      font-size: 0.95rem;
+      color: var(--text-main);
+    }
+
+    .diagram-container {
+      background: var(--bg-light);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 30px;
+      margin: 25px 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      page-break-inside: avoid;
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 25px 0;
+      font-size: 0.9rem;
+      page-break-inside: avoid;
+    }
+
+    th {
+      background-color: var(--primary);
+      color: white;
+      font-weight: 600;
+      text-align: left;
+      padding: 12px 16px;
+      border: 1px solid var(--primary);
+    }
+
+    td {
+      padding: 12px 16px;
+      border: 1px solid var(--border);
+      color: var(--text-main);
+    }
+
+    tr:nth-child(even) {
+      background-color: var(--bg-light);
+    }
+
+    .explanation-box {
+      background-color: var(--bg-light);
+      border-left: 4px solid var(--primary);
+      padding: 20px;
+      margin: 25px 0;
+      border-radius: 0 8px 8px 0;
+      page-break-inside: avoid;
+    }
+
+    .explanation-box h4 {
+      font-family: 'Outfit', sans-serif;
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: var(--primary);
+      margin-bottom: 10px;
+    }
+
+    .print-button-container {
+      position: fixed;
+      bottom: 30px;
+      right: 30px;
+      z-index: 1000;
+    }
+
+    .print-btn {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background-color: var(--secondary);
+      color: white;
+      border: none;
+      padding: 14px 28px;
+      font-size: 0.95rem;
+      font-weight: 700;
+      border-radius: 30px;
+      cursor: pointer;
+      box-shadow: 0 4px 14px rgba(29, 86, 216, 0.4);
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .print-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(29, 86, 216, 0.6);
+      background-color: #1d4ed8;
+    }
+
+    .print-btn:active {
+      transform: translateY(0);
+    }
+
+    /* Print specific styling styles */
+    @media print {
+      body {
+        background-color: white;
+        padding: 0;
+        color: black;
+      }
+
+      .document-container {
+        box-shadow: none;
+        border: none;
+        padding: 0;
+        max-width: 100%;
+      }
+
+      .print-button-container {
+        display: none !important;
+      }
+
+      .diagram-container {
+        border: none;
+        background: white;
+        padding: 10px 0;
+      }
+
+      h3 {
+        margin-top: 30px;
+        page-break-after: avoid;
+      }
+
+      table {
+        page-break-inside: avoid;
+      }
+
+      .explanation-box {
+        page-break-inside: avoid;
+      }
+
+      @page {
+        size: A4;
+        margin: 2cm;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="print-button-container">
+    <button class="print-btn" onclick="window.print()">
+      Cetak ke PDF / Print
+    </button>
+  </div>
+
+  <div class="document-container">
+    
+    <div class="header-section">
+      <h1>Dokumentasi Akademis Sistem</h1>
+      <h2>Alinea Laundry</h2>
+      <p>Spesifikasi Flowchart, Context Diagram, Data Flow Diagram (DFD) Level 1, dan Entity Relationship Diagram (ERD)</p>
+    </div>
+
+    <p>Dokumen spesifikasi teknis ini disusun dengan menggunakan pendekatan akademis standar yang berlaku umum di perguruan tinggi. Seluruh rancangan alur logis, aliran data, dan struktur relasi database disajikan dengan bahasa formal untuk mempermudah pengerjaan skripsi, tesis, maupun tugas akhir akademik tanpa menggunakan simbol emoji sama sekali.</p>
+
+    <!-- SECTION 1: FLOWCHART -->
+    <h3>1. Flowchart Sistem (Diagram Alir Operasional)</h3>
+    <p>Flowchart sistem ini menggambarkan tahapan logika operasional terperinci dari aplikasi Alinea Laundry. Proses dimulai dari registrasi pelanggan dengan pinpoint GPS, pembuatan pesanan, penjemputan oleh kurir, pemrosesan cuci di cabang, validasi berat/jumlah aktual, transaksi pembayaran transfer, pengantaran, hingga penyelesaian transaksi dan penambahan poin loyalitas.</p>
+
+    <div class="diagram-container">
+      <div class="mermaid">
+        graph TD
+          Start([Mulai]) --> Reg[Pelanggan Registrasi Akun dan Alamat Pinpoint]
+          Reg --> Login{Pelanggan Login?}
+          Login -- Tidak --> Reg
+          Login -- Ya --> SelectService[Pelanggan Memilih Layanan Kiloan/Satuan]
+          SelectService --> InputOrder[Pelanggan Input Detail Pesanan dan Alamat Jemput]
+          InputOrder --> CalcPrice[Sistem Menghitung Total Harga dan Estimasi Waktu]
+          CalcPrice --> SaveOrder[Sistem Menyimpan Pesanan - Status: Menunggu]
+          SaveOrder --> AdminNotif[Notifikasi Muncul di Dasbor Admin]
+          AdminNotif --> AssignCourier[Admin Menugaskan Kurir Tersedia]
+          AssignCourier --> CourierPickup[Kurir Melakukan Penjemputan Pakaian]
+          CourierPickup --> UpdateStatus1[Status Pesanan Berubah: Pickup]
+          UpdateStatus1 --> WashProcess[Pakaian Diproses di Cabang Laundry]
+          WashProcess --> UpdateStatus2[Status Pesanan Berubah: Cuci]
+          UpdateStatus2 --> CalcWeight[Admin Input Berat/Jumlah Riil dan Total Biaya Final]
+          CalcWeight --> CustomerPay[Pelanggan Melakukan Pembayaran via Transfer]
+          CustomerPay --> UploadProof[Pelanggan Mengunggah Bukti Pembayaran]
+          UploadProof --> ValidatePay{Admin Validasi Pembayaran?}
+          ValidatePay -- Tidak Valid --> CustomerPay
+          ValidatePay -- Valid --> MarkPaid[Status Pembayaran Berubah: Lunas]
+          MarkPaid --> DeliverOrder[Kurir Mengantarkan Pakaian ke Alamat Tujuan]
+          DeliverOrder --> UpdateStatus3[Status Pesanan Berubah: Antar]
+          UpdateStatus3 --> CourierComplete[Kurir Mengunggah Foto Bukti Pengantaran]
+          CourierComplete --> SaveComplete[Status Pesanan Berubah: Selesai]
+          SaveComplete --> AddPoints[Sistem Menambahkan Poin Loyalitas Pelanggan]
+          AddPoints --> End([Selesai])
+      </div>
+    </div>
+
+    <div class="explanation-box">
+      <h4>Penjelasan Alur Logika Flowchart:</h4>
+      <ol>
+        <li><strong>Tahap Inisialisasi Akun:</strong> Pelanggan mendaftarkan diri secara wajib dengan menyertakan pinpoint koordinat lintang (latitude) dan bujur (longitude) dari alamat rumahnya pada peta interaktif guna keperluan perhitungan jangkauan logistik kurir.</li>
+        <li><strong>Tahap Pemesanan:</strong> Pelanggan memilih jenis layanan (kiloan atau satuan) beserta pilihan wewangian kustom. Formulir pesanan disimpan ke database dengan status awal pemesanan yaitu "menunggu".</li>
+        <li><strong>Penugasan Kurir:</strong> Admin cabang menerima notifikasi pesanan di dasbor lalu menetapkan staf kurir yang berstatus tersedia (available) untuk melakukan penjemputan fisik pakaian kotor ke lokasi pelanggan.</li>
+        <li><strong>Tahap Pemrosesan Fisik:</strong> Pakaian kotor dibawa ke cabang fisik laundry oleh kurir dan status pesanan diperbarui menjadi "pickup". Setelah pakaian mulai masuk ke mesin cuci, status berubah menjadi "cuci".</li>
+        <li><strong>Validasi Berat Riil:</strong> Setelah pakaian selesai dicuci dan ditimbang secara aktual oleh admin di cabang, admin memasukkan berat riil ke sistem yang memicu pembaruan total nominal tagihan akhir.</li>
+        <li><strong>Pembayaran dan Verifikasi:</strong> Pelanggan mengunggah berkas transfer bank/QRIS. Admin memverifikasi kebenaran nominal tersebut pada dasbor. Setelah pembayaran terverifikasi, status berubah menjadi "lunas".</li>
+        <li><strong>Tahap Pengantaran dan Penyelesaian:</strong> Kurir mengantarkan pakaian bersih ke rumah pelanggan, mengunggah foto serah terima sebagai bukti pengantaran riil, dan menyelesaikan tugas. Status berubah menjadi "selesai" dan pelanggan memperoleh 10 poin loyalitas dari sistem secara otomatis.</li>
+      </ol>
+    </div>
+
+
+    <!-- SECTION 2: CONTEXT DIAGRAM -->
+    <h3>2. Context Diagram (Diagram Konteks / DFD Level 0)</h3>
+    <p>Context Diagram memetakan interaksi aliran data global antara Sistem Informasi Alinea Laundry dengan tiga entitas luar (external entity) yang memiliki hak akses khusus pada sistem.</p>
+
+    <div class="diagram-container">
+      <div class="mermaid">
+        graph LR
+          Customer[Entitas: Pelanggan] <-->|Aliran Data Pelanggan| System[("0.0 SISTEM INFORMASI ALINEA LAUNDRY")]
+          Courier[Entitas: Kurir] <-->|Aliran Data Kurir| System
+          Admin[Entitas: Admin Cabang] <-->|Aliran Data Admin| System
+      </div>
+    </div>
+
+    <div class="explanation-box">
+      <h4>Deskripsi Aliran Data Konteks:</h4>
+      <ul>
+        <li><strong>Aliran Data Pelanggan:</strong> Input data akun, koordinat pinpoint GPS, data checkout cucian, dan gambar berkas bukti transfer bank. Output yang diterima berupa invoice digital, pelacakan pesanan real-time, status pembayaran, serta kupon voucher loyalitas.</li>
+        <li><strong>Aliran Data Kurir:</strong> Input berupa penerimaan konfirmasi tugas jemput/antar, pembaruan status logistik pesanan, dan upload foto serah terima barang. Output yang diterima berupa daftar rincian tugas logistik, nama pelanggan, kontak WhatsApp, dan petunjuk peta koordinat tujuan.</li>
+        <li><strong>Aliran Data Admin Cabang:</strong> Input berupa penugasan kurir, entri data timbangan berat cucian aktual, master data layanan laundry, dan otorisasi verifikasi bukti bayar. Output yang didapat berupa notifikasi pesanan masuk, grafik data transaksi keuangan harian/bulanan, dan laporan histori data transaksi cabang.</li>
+      </ul>
+    </div>
+
+
+    <!-- SECTION 3: DFD LEVEL 1 -->
+    <h3>3. Data Flow Diagram (DFD) Level 1</h3>
+    <p>DFD Level 1 menjabarkan dekomposisi proses dari diagram konteks ke dalam lima modul fungsional utama serta memetakan pertukaran informasi dengan enam tempat penyimpanan data relasional (data store).</p>
+
+    <div class="diagram-container">
+      <div class="mermaid">
+        graph TD
+          Customer[Pelanggan]
+          Courier[Kurir]
+          Admin[Admin Cabang]
+
+          DS_Users[(D1: Users & Addresses)]
+          DS_Orders[(D2: Orders & Order Items)]
+          DS_Services[(D3: Services)]
+          DS_Payments[(D4: Payments)]
+          DS_Vouchers[(D5: Vouchers)]
+          DS_Notif[(D6: Notifications)]
+
+          P1[1.0 Proses Otentikasi & Profil]
+          P2[2.0 Proses Pembuatan Pesanan]
+          P3[3.0 Proses Manajemen Logistik Kurir]
+          P4[4.0 Proses Transaksi & Validasi Bayar]
+          P5[5.0 Proses Laporan & Notifikasi]
+
+          Customer -->|Input Data Akun| P1
+          P1 -->|Query & Simpan User| DS_Users
+          P1 -->|Kembalikan Token Sesi| Customer
+
+          Customer -->|Pilih Layanan & Alamat| P2
+          P2 <-->|Baca Master Layanan| DS_Services
+          P2 <-->|Periksa Voucher Valid| DS_Vouchers
+          P2 -->|Simpan Detail Pesanan| DS_Orders
+          P2 -->|Buat Notifikasi Masuk| DS_Notif
+          P2 -->|Tampilkan Detail Invoice| Customer
+
+          Admin -->|Tugaskan Kurir| P3
+          Courier -->|Update Status Pesanan| P3
+          P3 -->|Simpan Status & Bukti Foto| DS_Orders
+          P3 <-->|Update Status Kurir| DS_Users
+          P3 -->|Kirim Update Pelacakan| Customer
+
+          Customer -->|Unggah Bukti Bayar| P4
+          P4 -->|Simpan Bukti Transfer| DS_Payments
+          Admin -->|Verifikasi Pembayaran| P4
+          P4 -->|Update Status Transaksi: Lunas| DS_Orders
+          P4 -->|Kirim Status Lunas| Customer
+
+          P5 <-->|Tarik Data Transaksi| DS_Orders
+          P5 <-->|Baca Log Notifikasi| DS_Notif
+          P5 -->|Kirim Laporan Keuangan| Admin
+          P5 -->|Kirim Push Notifikasi Dasbor| Admin
+      </div>
+    </div>
+
+    <div class="explanation-box">
+      <h4>Rincian Fungsionalitas Modul DFD Level 1:</h4>
+      <ul>
+        <li><strong>Proses 1.0 (Otentikasi dan Manajemen Profil):</strong> Menangani alur pendaftaran dan verifikasi sesi login pengguna (pelanggan, kurir, dan admin) dengan mencocokkan kredensial surel dan kata sandi pada data store D1 (Users & Addresses).</li>
+        <li><strong>Proses 2.0 (Pembuatan dan Pemesanan Laundry):</strong> Memproses pesanan masuk dari pelanggan dengan membaca katalog tarif jasa pada data store D3 (Services) dan memvalidasi voucher belanja dari data store D5 (Vouchers), mencatat data pesanan pada data store D2 (Orders & Order Items), dan mengirimkan log notifikasi ke data store D6 (Notifications).</li>
+        <li><strong>Proses 3.0 (Manajemen Logistik Kurir):</strong> Mengatur penugasan kurir oleh admin dan pembaruan status logistik lapangan oleh kurir. Proses ini mencatat koordinat lintang/bujur dan link foto serah terima barang ke data store D2, serta mengupdate ketersediaan kurir pada data store D1.</li>
+        <li><strong>Proses 4.0 (Transaksi dan Validasi Pembayaran):</strong> Mengelola siklus uang masuk. Bukti bayar diunggah oleh pelanggan ke data store D4 (Payments). Admin memeriksa berkas tersebut di dasbor, menyetujuinya, lalu mengubah status transaksi pembayaran di data store D2 menjadi lunas.</li>
+        <li><strong>Proses 5.0 (Pencatatan Laporan dan Notifikasi):</strong> Mengolah kumpulan data transaksi historis dari data store D2 secara agregat menjadi grafik performa pendapatan berkala di dasbor admin, serta mengelola polling notifikasi dari data store D6 secara periodik.</li>
+      </ul>
+    </div>
+
+
+    <!-- SECTION 4: ERD -->
+    <h3>4. Entity Relationship Diagram (ERD Database Relasional)</h3>
+    <p>ERD menggambarkan hubungan asosiasi relasional antar-tabel database relasional PostgreSQL Supabase yang digunakan dalam Alinea Laundry, mematuhi model Crow's Foot akademis yang baku.</p>
+
+    <div class="diagram-container">
+      <div class="mermaid">
+        erDiagram
+          BRANCHES {
+              int id PK
+              string name
+              string address
+              timestamp created_at
+          }
+
+          USERS {
+              int id PK
+              string name
+              string email UK
+              string password
+              string role
+              string address
+              string phone
+              int points
+              int branch_id FK
+              timestamp created_at
+          }
+
+          ADDRESSES {
+              int id PK
+              int user_id FK
+              string label
+              text address
+              decimal lat
+              decimal lng
+              boolean is_primary
+              timestamp created_at
+          }
+
+          COURIERS {
+              int id PK
+              int user_id FK
+              string status
+          }
+
+          ORDERS {
+              int id PK
+              int user_id FK
+              int courier_id FK
+              string order_code UK
+              string status
+              int total_price
+              string payment_status
+              string address
+              int address_id
+              text notes
+              string photo_url
+              string service_speed
+              int estimated_days
+              int estimated_hours
+              timestamp estimated_start
+              int express_fee
+              string voucher_code
+              int discount
+              string delivery_proof
+              text admin_note
+              timestamp created_at
+              timestamp updated_at
+          }
+
+          SERVICES {
+              int id PK
+              string category
+              string name
+              string type
+              int time_days
+              int time_hours
+              string unit_type
+              decimal price_per_unit
+              boolean is_active
+              timestamp created_at
+              timestamp updated_at
+          }
+
+          ORDER_ITEMS {
+              int id PK
+              int order_id FK
+              int service_id FK
+              string service_type
+              string name
+              text notes
+              decimal weight
+              int qty_items
+              int price_per_unit
+              string parfum
+              int parfum_price
+          }
+
+          PAYMENTS {
+              int id PK
+              int order_id FK
+              string payment_proof
+              boolean validated
+              timestamp created_at
+          }
+
+          VOUCHERS {
+              int id PK
+              int user_id FK
+              string code UK
+              boolean used
+              timestamp created_at
+          }
+
+          NOTIFICATIONS {
+              int id PK
+              int user_id FK
+              string title
+              text message
+              boolean is_read
+              int branch_id FK
+              timestamp created_at
+          }
+
+          BRANCHES ||--o{ USERS : "memiliki staf"
+          USERS ||--o{ ADDRESSES : "memiliki daftar"
+          USERS ||--o| COURIERS : "terdaftar sebagai"
+          USERS ||--o{ ORDERS : "melakukan transaksi"
+          USERS ||--o{ ORDERS : "mengirimkan paket"
+          USERS ||--o{ VOUCHERS : "memiliki kupon"
+          USERS ||--o{ NOTIFICATIONS : "menerima pesan"
+          BRANCHES ||--o{ NOTIFICATIONS : "memiliki daftar notifikasi"
+          ORDERS ||--|{ ORDER_ITEMS : "memuat rincian"
+          SERVICES ||--o{ ORDER_ITEMS : "dipesan pada"
+          ORDERS ||--o| PAYMENTS : "memiliki status"
+          ORDERS ||--o{ VOUCHERS : "memotong nominal"
+      </div>
+    </div>
+
+    <div class="explanation-box">
+      <h4>Penjelasan Derajat Kardinalitas Relasi Basis Data:</h4>
+      <ul>
+        <li><strong>Relasi BRANCHES ke USERS (One-to-Many):</strong> Satu cabang dapat dikaitkan dengan satu atau banyak staf/admin cabang. Satu staf hanya boleh terikat pada paling banyak satu cabang fisik tertentu. Pelanggan umum memiliki nilai foreign key `branch_id` bernilai null.</li>
+        <li><strong>Relasi USERS ke ADDRESSES (One-to-Many):</strong> Satu pengguna terdaftar dapat mendaftarkan satu atau banyak alamat pinpoint rumah/kantor yang berbeda. Satu alamat hanya dikaitkan secara eksklusif dengan satu akun pengguna saja.</li>
+        <li><strong>Relasi USERS ke COURIERS (One-to-One):</strong> Satu akun pengguna secara opsional dapat didaftarkan sebagai satu staf kurir operasional lapangan, dan satu entitas kurir harus merujuk pada tepat satu akun pengguna aktif.</li>
+        <li><strong>Relasi USERS ke ORDERS (One-to-Many):</strong> Satu akun pelanggan dapat melakukan transaksi pesanan berkali-kali. Satu pesanan laundry hanya dibuat oleh tepat satu pelanggan terdaftar.</li>
+        <li><strong>Relasi ORDERS ke ORDER_ITEMS (One-to-Many):</strong> Satu transaksi pesanan wajib memuat satu atau banyak rincian item cucian (order items). Satu rincian item cucian terikat mati pada satu pesanan induk (menggunakan cascading delete).</li>
+        <li><strong>Relasi SERVICES ke ORDER_ITEMS (One-to-Many):</strong> Satu layanan master laundry dapat digunakan pada banyak item pesanan pelanggan berbeda. Jika layanan master dinonaktifkan, data rincian item historis tetap aman di database dengan opsi penanganan null.</li>
+        <li><strong>Relasi ORDERS ke PAYMENTS (One-to-One):</strong> Satu transaksi pemesanan diasosiasikan dengan paling banyak satu catatan transaksi bukti transfer pembayaran digital secara unik.</li>
+        <li><strong>Relasi USERS ke VOUCHERS (One-to-Many):</strong> Satu akun pelanggan dapat memiliki satu atau banyak voucher loyalitas diskon yang siap digunakan untuk memotong harga belanja.</li>
+      </ul>
+    </div>
+
+  </div>
+
+</body>
+</html>

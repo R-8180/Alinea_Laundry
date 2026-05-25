@@ -171,6 +171,16 @@ const HeroWithTrack = () => {
   );
 };
 
+const resolveFileUrl = (url) => {
+  if (!url) return '';
+  if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('data:')) return url;
+  let base = process.env.REACT_APP_API_URL || '';
+  if (!base && typeof window !== 'undefined' && window.location.hostname === 'localhost') {
+    base = 'http://localhost:5000';
+  }
+  return `${base}${url}`;
+};
+
 const PromoSlider = () => {
   const cms = React.useContext(CMSContext);
   const currentPromoImages = cms?.promoImages?.length ? cms.promoImages : promoImages;
@@ -185,18 +195,23 @@ const PromoSlider = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  const autoNext = useCallback(() => setCurrent(prev => (prev + 1) % total), [total]);
+  const autoNext = useCallback(() => {
+    if (total > 0) {
+      setCurrent(prev => (prev + 1) % total);
+    }
+  }, [total]);
+
   useEffect(() => {
     const t = setInterval(autoNext, 3000);
     return () => clearInterval(t);
   }, [autoNext]);
 
-  // Mode Mobile: 1 slide dengan aspect ratio 16:9
+  // Mode Mobile: 1 slide dengan aspect ratio 16:9 (aman dari collapse dengan clamp height)
   if (isMobile) {
     return (
       <section className="section reveal promo-top">
         <h2 className="section-title">Promo Spesial</h2>
-        <div className="promo-slider-mobile-viewport">
+        <div className="promo-slider-mobile-viewport" style={{ height: 'clamp(140px, 37.5vw, 220px)' }}>
           <div
             className="promo-slider-mobile-track"
             style={{ transform: `translateX(-${current * 100}%)` }}
@@ -205,7 +220,7 @@ const PromoSlider = () => {
               <div
                 key={idx}
                 className="promo-slider-mobile-item"
-                style={{ backgroundImage: `url(${img.src})` }}
+                style={{ backgroundImage: `url(${resolveFileUrl(img.src)})` }}
               />
             ))}
           </div>
@@ -243,7 +258,7 @@ const PromoSlider = () => {
               <div
                 key={idx}
                 className={className}
-                style={{ backgroundImage: `url(${img.src})` }}
+                style={{ backgroundImage: `url(${resolveFileUrl(img.src)})` }}
                 onClick={() => { if (idx !== current) setCurrent(idx); }}
               />
             );

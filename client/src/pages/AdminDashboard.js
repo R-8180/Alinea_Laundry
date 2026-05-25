@@ -14,7 +14,6 @@ import {
 } from 'react-icons/fi';
 import { GiWeight } from 'react-icons/gi';
 import LaporanTab from './LaporanTab';
-import CMSLandingPage from './CMSLandingPage';
 import ReceiptDownloader from '../components/ReceiptDownloader';
 
 /* ---------- COMPONENT: FEEDBACK TAB ---------- */
@@ -383,7 +382,6 @@ const AdminDashboard = () => {
 
   const getTabFromUrl = () => {
     const t = new URLSearchParams(location.search).get('tab');
-    if (t === 'cms') return 'cms';
     if (t === 'laporan') return 'laporan';
     if (t === 'riwayat') return 'riwayat';
     if (t === 'users') return 'users';
@@ -1001,9 +999,6 @@ const AdminDashboard = () => {
 
       {/* TAB LAPORAN */}
       {tab === 'laporan' && <LaporanTab activeBranchId={isSuperAdmin ? selectedBranchFilter : user.branch_id} />}
-
-      {/* TAB CMS */}
-      {tab === 'cms' && <CMSLandingPage />}
 
       {/* TAB FEEDBACK */}
       {tab === 'feedback' && (

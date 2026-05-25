@@ -459,8 +459,8 @@ const TestimoniSection = () => {
 
   const getTransform = () => {
     if (isMobile) {
-      // 78% width per slide, leaves 22% total side space -> 11% left and 11% right preview
-      return `translateX(calc(-${current * 78}% + 11%))`;
+      // 68% width per slide, leaves 32% total side space -> 16% left and 16% right preview
+      return `translateX(calc(-${current * 68}% + 16%))`;
     }
     return `translateX(-${current * 100}%)`;
   };
@@ -492,12 +492,12 @@ const TestimoniSection = () => {
               const isActive = isMobile ? idx === current : true;
               return (
                 <div key={idx} className="testimoni-slide-item" style={{ 
-                  flex: `0 0 ${isMobile ? '78%' : '33.333%'}`, 
-                  padding: '0 6px', // gap lebih dekat
-                  opacity: isActive ? 1 : 0.65, // preview lebih jelas
-                  filter: isActive ? 'blur(0px)' : 'blur(0.5px)', // blur sangat tipis agar jelas
+                  flex: `0 0 ${isMobile ? '68%' : '33.333%'}`, 
+                  padding: '0 4px', // gap super dekat
+                  opacity: isActive ? 1 : 0.7, // preview sangat jelas
+                  filter: 'none', // tanpa blur agar teks terlihat jelas
                   transition: 'all 0.5s cubic-bezier(0.25, 1, 0.5, 1)',
-                  transform: isActive ? 'scale(1.02)' : 'scale(0.92)', // lebih dekat ukuran dan posisinya
+                  transform: isActive ? 'scale(1.02)' : 'scale(0.94)', // lebih besar dan rapat
                 }}>
                   <div 
                     className="testimoni-card card" 

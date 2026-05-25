@@ -225,34 +225,28 @@ const PromoSlider = () => {
     );
   }
 
+  // Mode Desktop: Coverflow
+  const prevIdx = (current - 1 + total) % total;
+  const nextIdx = (current + 1) % total;
+
   return (
     <section className="section reveal promo-top">
       <h2 className="section-title">Promo Spesial</h2>
-      <div className="promo-slider-viewport" style={{ overflow: 'hidden' }}>
-        <div
-          className="promo-slider-track"
-          style={{
-            display: 'flex',
-            transition: 'transform 0.5s ease-in-out',
-            transform: `translateX(-${current * 33.333}%)`,
-          }}
-        >
+      <div className="promo-coverflow">
+        <div className="promo-coverflow-stage">
           {currentPromoImages.map((img, idx) => {
-            const isActive = idx === current || idx === current + 1 || idx === current + 2;
+            let className = 'promo-coverflow-item';
+            if (idx === current) className += ' active';
+            else if (idx === prevIdx) className += ' prev';
+            else if (idx === nextIdx) className += ' next';
+            else className += ' hidden';
             return (
               <div
                 key={idx}
-                className="promo-slide-item"
-                style={{
-                  flex: '0 0 33.333%',
-                  padding: '0 10px',
-                  opacity: isActive ? 1 : 0.5,
-                  transform: isActive ? 'scale(1)' : 'scale(0.9)',
-                  transition: 'all 0.5s',
-                }}
-              >
-                <img src={img.src} alt={img.alt} style={{ width: '100%', borderRadius: 16, boxShadow: '0 10px 20px rgba(0,0,0,0.05)', display: 'block' }} />
-              </div>
+                className={className}
+                style={{ backgroundImage: `url(${img.src})` }}
+                onClick={() => { if (idx !== current) setCurrent(idx); }}
+              />
             );
           })}
         </div>

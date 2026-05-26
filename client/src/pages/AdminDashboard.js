@@ -10,14 +10,14 @@ import {
   FiUserPlus, FiChevronDown, FiPhone, FiCamera, FiFileText, FiMapPin,
   FiTruck, FiEdit2, FiX, FiEye, FiUsers, FiTag, FiArrowUp, FiArrowDown,
   FiPlus, FiUser, FiMessageCircle, FiZap, FiCreditCard, FiHelpCircle, FiClipboard,
-  FiStar
+  FiStar, FiTrash2
 } from 'react-icons/fi';
 import { GiWeight } from 'react-icons/gi';
 import LaporanTab from './LaporanTab';
 import ReceiptDownloader from '../components/ReceiptDownloader';
 
 /* ---------- COMPONENT: FEEDBACK TAB ---------- */
-const FeedbackTab = ({ feedbacks, loading, onRefresh }) => {
+const FeedbackTab = ({ feedbacks, loading, onRefresh, onDeleteAll, onDeleteOne }) => {
   const formatDateTime = (ts) => {
     if (!ts) return '-';
     const d = new Date(ts);
@@ -70,9 +70,18 @@ const FeedbackTab = ({ feedbacks, loading, onRefresh }) => {
           <h2 style={{ fontSize: '1.4rem', fontWeight: 800, color: 'var(--navy)', margin: 0 }}>Daftar Feedback Pelanggan</h2>
           <p style={{ fontSize: '0.85rem', color: 'var(--text-3)', margin: '4px 0 0' }}>Rincian tingkat kepuasan dari pelanggan terdaftar</p>
         </div>
-        <button className="btn btn-sm btn-secondary" onClick={onRefresh} style={{ height: '38px', borderRadius: '10px', fontWeight: 700 }}>
-          Refresh Feedback
-        </button>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button className="btn btn-sm btn-secondary" onClick={onRefresh} style={{ height: '38px', borderRadius: '10px', fontWeight: 700 }}>
+            Refresh Feedback
+          </button>
+          <button 
+            className="btn btn-sm" 
+            onClick={onDeleteAll} 
+            style={{ height: '38px', borderRadius: '10px', fontWeight: 700, background: '#ef4444', color: 'white', border: 'none', display: 'flex', alignItems: 'center', gap: 4 }}
+          >
+            <FiTrash2 size={14} /> Hapus Semua
+          </button>
+        </div>
       </div>
 
       <div style={{
@@ -195,45 +204,76 @@ const FeedbackTab = ({ feedbacks, loading, onRefresh }) => {
                   {formatDateTime(f.created_at)}
                 </span>
                 
-                {f.customer_phone && (
+                <div style={{ display: 'flex', gap: 8 }}>
                   <button
-                    onClick={() => handleContactWA(
-                      f.customer_phone, 
-                      f.customer_name, 
-                      f.comment,
-                      f.rating_kebersihan,
-                      f.rating_kerapian,
-                      f.rating_parfum,
-                      f.rating_waktu,
-                      f.rating_web
-                    )}
+                    onClick={() => onDeleteOne(f.id)}
                     style={{
-                      background: '#e6fcf0',
+                      background: '#fde8e8',
                       border: 'none',
-                      color: '#0e9f6e',
-                      padding: '8px 14px',
+                      color: '#ef4444',
+                      padding: '8px 12px',
                       borderRadius: 10,
                       fontSize: '0.78rem',
                       fontWeight: 700,
                       cursor: 'pointer',
                       display: 'inline-flex',
                       alignItems: 'center',
-                      gap: 6,
+                      gap: 4,
                       transition: 'all 0.2s',
                       fontFamily: 'Outfit, sans-serif'
                     }}
                     onMouseEnter={e => {
-                      e.currentTarget.style.background = '#0e9f6e';
+                      e.currentTarget.style.background = '#ef4444';
                       e.currentTarget.style.color = 'white';
                     }}
                     onMouseLeave={e => {
-                      e.currentTarget.style.background = '#e6fcf0';
-                      e.currentTarget.style.color = '#0e9f6e';
+                      e.currentTarget.style.background = '#fde8e8';
+                      e.currentTarget.style.color = '#ef4444';
                     }}
                   >
-                    <FiMessageCircle size={14} /> Hubungi via WA
+                    <FiTrash2 size={13} /> Hapus
                   </button>
-                )}
+                  
+                  {f.customer_phone && (
+                    <button
+                      onClick={() => handleContactWA(
+                        f.customer_phone, 
+                        f.customer_name, 
+                        f.comment,
+                        f.rating_kebersihan,
+                        f.rating_kerapian,
+                        f.rating_parfum,
+                        f.rating_waktu,
+                        f.rating_web
+                      )}
+                      style={{
+                        background: '#e6fcf0',
+                        border: 'none',
+                        color: '#0e9f6e',
+                        padding: '8px 14px',
+                        borderRadius: 10,
+                        fontSize: '0.78rem',
+                        fontWeight: 700,
+                        cursor: 'pointer',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: 6,
+                        transition: 'all 0.2s',
+                        fontFamily: 'Outfit, sans-serif'
+                      }}
+                      onMouseEnter={e => {
+                        e.currentTarget.style.background = '#0e9f6e';
+                        e.currentTarget.style.color = 'white';
+                      }}
+                      onMouseLeave={e => {
+                        e.currentTarget.style.background = '#e6fcf0';
+                        e.currentTarget.style.color = '#0e9f6e';
+                      }}
+                    >
+                      <FiMessageCircle size={14} /> Hubungi via WA
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
           );
@@ -495,6 +535,40 @@ const AdminDashboard = () => {
       setFeedbackLoading(false);
     }
   }, []); // eslint-disable-line
+
+  const handleDeleteAllFeedbacks = async () => {
+    const isConfirmed = await showConfirm(
+      'Hapus Semua Feedback',
+      'Apakah Anda yakin ingin menghapus seluruh kritik & saran dari pelanggan? Tindakan ini permanen.'
+    );
+    if (!isConfirmed) return;
+    
+    showLoading('Menghapus...', 'Sedang menghapus semua data feedback...');
+    try {
+      await axios.delete('/api/feedback', { headers: h });
+      setFeedbacks([]);
+      showSuccess('Hapus Berhasil', 'Semua masukan kritik & saran berhasil dibersihkan.');
+    } catch (err) {
+      showError('Gagal Menghapus', err.response?.data?.error || 'Terjadi kesalahan saat menghapus feedback.');
+    }
+  };
+
+  const handleDeleteOneFeedback = async (id) => {
+    const isConfirmed = await showConfirm(
+      'Hapus Feedback',
+      'Apakah Anda yakin ingin menghapus kritik & saran ini?'
+    );
+    if (!isConfirmed) return;
+
+    showLoading('Menghapus...', 'Sedang menghapus feedback...');
+    try {
+      await axios.delete(`/api/feedback/${id}`, { headers: h });
+      setFeedbacks(prev => prev.filter(f => f.id !== id));
+      showSuccess('Hapus Berhasil', 'Masukan kritik & saran berhasil dihapus.');
+    } catch (err) {
+      showError('Gagal Menghapus', err.response?.data?.error || 'Terjadi kesalahan saat menghapus feedback.');
+    }
+  };
  
   useEffect(() => { fetchOrders(); fetchYesterdayStats(); }, [fetchOrders, fetchYesterdayStats]);
   useEffect(() => { if (tab === 'users') fetchCustomers(); }, [tab, fetchCustomers]);
@@ -1002,6 +1076,8 @@ const AdminDashboard = () => {
           feedbacks={feedbacks}
           loading={feedbackLoading}
           onRefresh={fetchFeedbacks}
+          onDeleteAll={handleDeleteAllFeedbacks}
+          onDeleteOne={handleDeleteOneFeedback}
         />
       )}
 

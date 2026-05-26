@@ -121,4 +121,34 @@ router.get('/', auth, async (req, res) => {
   }
 });
 
+// DELETE /api/feedback - Admin menghapus seluruh kritik & saran (Protected Admin)
+router.delete('/', auth, async (req, res) => {
+  if (req.user.role !== 'admin') {
+    return res.status(403).json({ error: 'Akses ditolak. Hanya admin yang diperbolehkan.' });
+  }
+  try {
+    await pool.query('TRUNCATE TABLE feedback_saran');
+    res.json({ message: 'Semua kritik & saran berhasil dihapus.' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// DELETE /api/feedback/:id - Admin menghapus salah satu kritik & saran (Protected Admin)
+router.delete('/:id', auth, async (req, res) => {
+  if (req.user.role !== 'admin') {
+    return res.status(403).json({ error: 'Akses ditolak. Hanya admin yang diperbolehkan.' });
+  }
+  const { id } = req.params;
+  try {
+    const result = await pool.query('DELETE FROM feedback_saran WHERE id = $1', [id]);
+    if (result.rowCount === 0) {
+      return res.status(404).json({ error: 'Feedback tidak ditemukan.' });
+    }
+    res.json({ message: 'Kritik & saran berhasil dihapus.' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 module.exports = router;

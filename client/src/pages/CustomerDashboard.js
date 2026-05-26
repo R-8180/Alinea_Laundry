@@ -381,27 +381,17 @@ const CustomerDashboard = ({ user: propUser }) => {
             <p>Kelola pesanan laundry kamu dengan mudah di sini.</p>
           </div>
           {voucherStatus && (
-            <div style={{ 
-              background: 'rgba(255, 255, 255, 0.05)', 
-              border: '1px solid rgba(255, 255, 255, 0.1)', 
-              padding: '12px 20px', 
-              borderRadius: 16, 
-              display: 'flex', 
-              alignItems: 'center', 
-              gap: 20, 
-              flexWrap: 'wrap',
-              marginTop: 10
-            }}>
-               <div style={{ display: 'flex', alignItems: 'center', gap: 12, borderRight: '1px solid rgba(255,255,255,0.2)', paddingRight: 20 }}>
-                 <div style={{ width: 44, height: 44, borderRadius: '50%', background: 'linear-gradient(135deg, #3b82f6, #1d4ed8)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 10px rgba(37, 99, 235, 0.3)' }}>
+            <div className="dashboard-points-card">
+               <div className="dashboard-points-info">
+                 <div className="dashboard-points-icon-wrapper">
                    <FiStar style={{ color: '#fff', fontSize: '1.3rem' }} />
                  </div>
-                 <div style={{ display: 'flex', flexDirection: 'column' }}>
-                   <span style={{ fontSize: '0.85rem', color: '#cbd5e1' }}>Total Poinmu</span>
-                   <strong style={{ fontSize: '1.4rem', color: '#fff', lineHeight: 1.2 }}>{voucherStatus.points || 0} Poin</strong>
+                 <div className="dashboard-points-text">
+                   <span>Total Poinmu</span>
+                   <strong>{voucherStatus.points || 0} Poin</strong>
                  </div>
                </div>
-               <button onClick={() => setShowVoucherModal(true)} style={{ background: 'linear-gradient(135deg, #3b82f6, #2563eb)', color: '#fff', border: 'none', padding: '10px 18px', borderRadius: 10, fontWeight: 600, fontSize: '0.9rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, boxShadow: '0 4px 10px rgba(37, 99, 235, 0.2)' }}>
+               <button onClick={() => setShowVoucherModal(true)} className="dashboard-points-button">
                  <FiGift style={{ fontSize: '1.1rem' }} /> Tukar Voucher
                </button>
             </div>

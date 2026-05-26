@@ -22,6 +22,7 @@ const path = require('path');
 const morgan = require('morgan');
 const logger = require('./utils/logger');
 const { apiLimiter, speedLimiter } = require('./middleware/rateLimiter');
+const { startCleanupScheduler } = require('./utils/cleanup');
 const app = express();
 const pool = require('./db');
 
@@ -338,6 +339,8 @@ if (process.env.NODE_ENV !== 'production' || !isVercel) {
   const PORT = process.env.PORT || 5000;
   app.listen(PORT, '0.0.0.0', () => {
     console.log(`Server berjalan di port ${PORT}`);
+    // Start automatic 30-day uploads cleanup scheduler
+    startCleanupScheduler();
   });
 }
 

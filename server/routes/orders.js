@@ -67,7 +67,7 @@ router.post('/', auth, orderLimiter, uploadImage.single('photo'), parseItems, cr
       const vresults = await client.query('SELECT * FROM vouchers WHERE code = $1 AND user_id = $2 AND used = FALSE', [voucher_code, userId]);
       if (vresults.rows.length === 0) throw new Error('Voucher tidak valid');
       await client.query('UPDATE vouchers SET used = TRUE WHERE code = $1', [voucher_code]);
-      discount = parseInt(vresults.rows[0].discount_amount) || 0;
+      discount = 0; // voucher does not reduce automatically, handled by admin manually via negative additional_charge
     }
 
     const orderRes = await client.query(
@@ -128,7 +128,8 @@ router.get('/', auth, async (req, res) => {
               (SELECT s.category FROM order_items oi JOIN services s ON oi.service_id = s.id WHERE oi.order_id = o.id LIMIT 1) AS service_category,
               (SELECT s.time_days FROM order_items oi JOIN services s ON oi.service_id = s.id WHERE oi.order_id = o.id LIMIT 1) AS service_time_days,
               (SELECT s.time_hours FROM order_items oi JOIN services s ON oi.service_id = s.id WHERE oi.order_id = o.id LIMIT 1) AS service_time_hours,
-              (SELECT string_agg(DISTINCT service_type, ', ') FROM order_items WHERE order_id = o.id) AS service_types
+              (SELECT string_agg(DISTINCT service_type, ', ') FROM order_items WHERE order_id = o.id) AS service_types,
+              (SELECT voucher_name FROM vouchers WHERE code = o.voucher_code LIMIT 1) AS voucher_name
        FROM orders o
        LEFT JOIN users u ON o.courier_id = u.id
        LEFT JOIN payments p ON p.order_id = o.id
@@ -153,7 +154,8 @@ router.get('/:id', auth, idParamValidation, validate, async (req, res) => {
               (SELECT s.category FROM order_items oi JOIN services s ON oi.service_id = s.id WHERE oi.order_id = o.id LIMIT 1) AS service_category,
               (SELECT s.time_days FROM order_items oi JOIN services s ON oi.service_id = s.id WHERE oi.order_id = o.id LIMIT 1) AS service_time_days,
               (SELECT s.time_hours FROM order_items oi JOIN services s ON oi.service_id = s.id WHERE oi.order_id = o.id LIMIT 1) AS service_time_hours,
-              (SELECT string_agg(DISTINCT service_type, ', ') FROM order_items WHERE order_id = o.id) AS service_types
+              (SELECT string_agg(DISTINCT service_type, ', ') FROM order_items WHERE order_id = o.id) AS service_types,
+              (SELECT voucher_name FROM vouchers WHERE code = o.voucher_code LIMIT 1) AS voucher_name
        FROM orders o
        LEFT JOIN users u ON o.courier_id = u.id
        LEFT JOIN payments p ON p.order_id = o.id

@@ -57,6 +57,9 @@ const Receipt = forwardRef(({ order }, ref) => {
           <tr><td style={{ padding: '2px 0' }}>Tanggal</td><td style={{ padding: '2px 0' }}>: {new Date(order.created_at).toLocaleString('id-ID', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })}</td></tr>
           <tr><td style={{ padding: '2px 0' }}>Pelanggan</td><td style={{ padding: '2px 0' }}>: {order.customer_name}</td></tr>
           <tr><td style={{ padding: '2px 0' }}>Layanan</td><td style={{ padding: '2px 0' }}>: {formatServiceLabel(order)}</td></tr>
+          {order.voucher_name && (
+            <tr><td style={{ padding: '2px 0' }}>Voucher</td><td style={{ padding: '2px 0', color: '#10b981', fontWeight: 'bold' }}>: {order.voucher_name}</td></tr>
+          )}
           <tr><td style={{ padding: '2px 0' }}>Status</td><td style={{ padding: '2px 0', fontWeight: 'bold' }}>: {statusLabels[order.status] || order.status}</td></tr>
         </tbody>
       </table>
@@ -89,10 +92,12 @@ const Receipt = forwardRef(({ order }, ref) => {
             <td style={{ padding: '2px 0' }}>Subtotal</td>
             <td style={{ textAlign: 'right', padding: '2px 0' }}>{formatRupiah(order.total_price - (order.additional_charge || 0))}</td>
           </tr>
-          {order.additional_charge > 0 && (
+          {order.additional_charge !== 0 && (
             <tr>
-              <td style={{ padding: '2px 0' }}>Biaya Tambahan</td>
-              <td style={{ textAlign: 'right', padding: '2px 0' }}>{formatRupiah(order.additional_charge)}</td>
+              <td style={{ padding: '2px 0' }}>{order.additional_charge < 0 ? 'Potongan / Diskon' : 'Biaya Tambahan'}</td>
+              <td style={{ textAlign: 'right', padding: '2px 0', color: order.additional_charge < 0 ? '#ef4444' : 'inherit' }}>
+                {order.additional_charge < 0 ? `-${formatRupiah(Math.abs(order.additional_charge))}` : formatRupiah(order.additional_charge)}
+              </td>
             </tr>
           )}
           <tr>

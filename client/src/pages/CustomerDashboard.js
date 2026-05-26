@@ -709,10 +709,14 @@ const CustomerDashboard = ({ user: propUser }) => {
                       })}
                     </tbody>
                     <tfoot>
-                      {detailModal.additional_charge > 0 && (
+                      {detailModal.additional_charge !== 0 && (
                         <tr>
-                          <td colSpan="5" style={{ textAlign: 'right', fontWeight: 600 }}>Biaya Tambahan</td>
-                          <td style={{ textAlign: 'right' }}>{formatRupiah(detailModal.additional_charge)}</td>
+                          <td colSpan="5" style={{ textAlign: 'right', fontWeight: 600, color: detailModal.additional_charge < 0 ? '#ef4444' : 'inherit' }}>
+                            {detailModal.additional_charge < 0 ? 'Potongan / Diskon' : 'Biaya Tambahan'}
+                          </td>
+                          <td style={{ textAlign: 'right', color: detailModal.additional_charge < 0 ? '#ef4444' : 'inherit' }}>
+                            {detailModal.additional_charge < 0 ? `-${formatRupiah(Math.abs(detailModal.additional_charge))}` : formatRupiah(detailModal.additional_charge)}
+                          </td>
                         </tr>
                       )}
                       {detailModal.express_fee > 0 && (
@@ -721,10 +725,10 @@ const CustomerDashboard = ({ user: propUser }) => {
                           <td style={{ textAlign: 'right' }}>{formatRupiah(detailModal.express_fee)}</td>
                         </tr>
                       )}
-                      {detailModal.discount > 0 && (
+                      {detailModal.voucher_name && (
                         <tr>
-                          <td colSpan="5" style={{ textAlign: 'right', fontWeight: 600, color: '#ef4444' }}>Diskon (Voucher)</td>
-                          <td style={{ textAlign: 'right', color: '#ef4444' }}>-{formatRupiah(detailModal.discount)}</td>
+                          <td colSpan="5" style={{ textAlign: 'right', fontWeight: 600, color: '#10b981' }}>Voucher Terpakai</td>
+                          <td style={{ textAlign: 'right', color: '#10b981', fontWeight: 600 }}>{detailModal.voucher_name}</td>
                         </tr>
                       )}
                       <tr>

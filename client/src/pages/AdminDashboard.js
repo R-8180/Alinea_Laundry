@@ -1895,7 +1895,7 @@ const AdminDashboard = () => {
               {detailModal.voucher_code && (
                 <div style={{ marginTop: 12, padding: '8px 12px', background: '#fef3c7', borderRadius: 8, display: 'flex', alignItems: 'center', gap: 8, fontSize: '0.85rem', border: '1px solid #fde68a' }}>
                   <FiTag style={{ color: '#b45309' }} />
-                  <span>Menggunakan Voucher: <strong style={{ color: '#b45309' }}>{detailModal.voucher_code}</strong></span>
+                  <span>Menggunakan Voucher: <strong style={{ color: '#b45309' }}>{detailModal.voucher_name ? `${detailModal.voucher_name} (${detailModal.voucher_code})` : detailModal.voucher_code}</strong></span>
                 </div>
               )}
               {/* Catatan Pelanggan untuk Admin */}
@@ -1945,8 +1945,34 @@ const AdminDashboard = () => {
                     </tbody>
                     <tfoot>
                       <tr>
-                        <td colSpan="6" style={{ textAlign: 'right', fontWeight: 700 }}>Total</td>
-                        <td style={{ fontWeight: 700, color: 'var(--blue)' }}>{formatRupiah(detailModal.total_price)}</td>
+                        <td colSpan="6" style={{ textAlign: 'right', fontWeight: 600 }}>Subtotal</td>
+                        <td>{formatRupiah(detailModal.total_price - (detailModal.additional_charge || 0) - (detailModal.express_fee || 0))}</td>
+                      </tr>
+                      {detailModal.additional_charge !== 0 && (
+                        <tr>
+                          <td colSpan="6" style={{ textAlign: 'right', fontWeight: 600, color: detailModal.additional_charge < 0 ? '#ef4444' : 'inherit' }}>
+                            {detailModal.additional_charge < 0 ? 'Potongan / Diskon' : 'Biaya Tambahan'}
+                          </td>
+                          <td style={{ color: detailModal.additional_charge < 0 ? '#ef4444' : 'inherit', fontWeight: 600 }}>
+                            {detailModal.additional_charge < 0 ? `-${formatRupiah(Math.abs(detailModal.additional_charge))}` : formatRupiah(detailModal.additional_charge)}
+                          </td>
+                        </tr>
+                      )}
+                      {detailModal.express_fee > 0 && (
+                        <tr>
+                          <td colSpan="6" style={{ textAlign: 'right', fontWeight: 600 }}>Biaya Express</td>
+                          <td>{formatRupiah(detailModal.express_fee)}</td>
+                        </tr>
+                      )}
+                      {detailModal.voucher_name && (
+                        <tr>
+                          <td colSpan="6" style={{ textAlign: 'right', fontWeight: 600, color: '#10b981' }}>Voucher Terpakai</td>
+                          <td style={{ color: '#10b981', fontWeight: 600 }}>{detailModal.voucher_name}</td>
+                        </tr>
+                      )}
+                      <tr>
+                        <td colSpan="6" style={{ textAlign: 'right', fontWeight: 800, fontSize: '1rem', color: 'var(--navy)' }}>Total Akhir</td>
+                        <td style={{ fontWeight: 800, fontSize: '1rem', color: 'var(--navy)' }}>{formatRupiah(detailModal.total_price)}</td>
                       </tr>
                     </tfoot>
                   </table>
@@ -1999,7 +2025,7 @@ const AdminDashboard = () => {
               Order: <strong>{validateModal.order_code}</strong><br />
               Layanan: <strong>{formatServiceLabel(validateModal)}</strong>
               {validateModal.voucher_code && (
-                <><br />Voucher: <strong style={{ color: '#10b981' }}>{validateModal.voucher_code} (Diskon Rp {(validateModal.discount || 0).toLocaleString('id-ID')})</strong></>
+                <><br />Voucher: <strong style={{ color: '#10b981' }}>{validateModal.voucher_name ? `${validateModal.voucher_name} (${validateModal.voucher_code})` : validateModal.voucher_code}</strong></>
               )}
             </p>
             <div style={{ overflowX: 'auto' }}>
@@ -2070,13 +2096,13 @@ const AdminDashboard = () => {
               <div>
                 <div style={{ fontSize: '0.83rem', fontWeight: 600, color: 'var(--text-3)', marginBottom: 6 }}>Biaya Tambahan (Opsional)</div>
                 <input
-                  type="number" min="0"
+                  type="number"
                   value={validateModal.additional_charge || ''}
-                  placeholder="Contoh: 5000"
+                  placeholder="Contoh: -5000"
                   onFocus={e => e.target.select()}
                   onChange={e => {
                     const val = e.target.value;
-                    setValidateModal(prev => ({ ...prev, additional_charge: parseInt(val) || 0 }));
+                    setValidateModal(prev => ({ ...prev, additional_charge: val }));
                   }}
                   style={{ width: '100%', padding: '8px 12px', borderRadius: 8, border: '1px solid var(--border)', fontSize: '0.85rem', boxSizing: 'border-box' }}
                 />

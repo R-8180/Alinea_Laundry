@@ -5480,20 +5480,47 @@ body.admin-mode {
 
 @media (max-width: 768px) {
   .dashboard-points-card {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 14px;
-    width: 100%;
+    flex-direction: row !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    gap: 8px !important;
+    width: 100% !important;
+    padding: 10px 14px !important;
   }
   
   .dashboard-points-info {
-    border-right: none;
-    padding-right: 0;
-    width: 100%;
+    border-right: none !important;
+    padding-right: 0 !important;
+    gap: 8px !important;
+    width: auto !important;
+  }
+  
+  .dashboard-points-icon-wrapper {
+    width: 36px !important;
+    height: 36px !important;
+  }
+  
+  .dashboard-points-icon-wrapper svg {
+    font-size: 1.1rem !important;
+  }
+
+  .dashboard-points-text span {
+    font-size: 0.72rem !important;
+  }
+  
+  .dashboard-points-text strong {
+    font-size: 1.1rem !important;
   }
   
   .dashboard-points-button {
-    align-self: flex-start;
+    padding: 8px 12px !important;
+    font-size: 0.8rem !important;
+    gap: 4px !important;
+    align-self: center !important;
+  }
+  
+  .dashboard-points-button svg {
+    font-size: 0.95rem !important;
   }
 }
 

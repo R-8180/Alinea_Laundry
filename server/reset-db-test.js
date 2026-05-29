@@ -25,7 +25,8 @@ const resetData = async () => {
         feedback_saran, 
         vouchers, 
         order_items, 
-        orders 
+        orders,
+        financial_records
       CASCADE;
     `);
 

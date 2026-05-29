@@ -143,7 +143,31 @@ function App() {
     subscribeUserToPush(token);
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    const token = localStorage.getItem('token');
+    if (token && 'serviceWorker' in navigator && 'PushManager' in window) {
+      try {
+        const registration = await navigator.serviceWorker.ready;
+        const subscription = await registration.pushManager.getSubscription();
+        if (subscription) {
+          const apiBase = process.env.REACT_APP_API_URL || '';
+          // Hapus di backend secara asinkron
+          await fetch(`${apiBase}/api/notifications/unsubscribe`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({ endpoint: subscription.endpoint })
+          }).catch(e => console.error('Unsubscribe API error:', e));
+
+          // Unsubscribe di browser
+          await subscription.unsubscribe().catch(e => console.error('Browser unsubscribe error:', e));
+        }
+      } catch (err) {
+        console.error('Logout push cleanup failed:', err);
+      }
+    }
     localStorage.clear();
     setUser(null);
   };

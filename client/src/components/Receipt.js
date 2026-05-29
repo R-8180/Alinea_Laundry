@@ -13,6 +13,7 @@ const statusLabels = {
   pickup: 'Dijemput',
   proses: 'Diproses',
   antar: 'Diantar',
+  sedang_diantar: 'Sedang Diantar',
   selesai: 'Selesai',
   batal: 'Dibatalkan',
 };

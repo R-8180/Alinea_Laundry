@@ -49,7 +49,7 @@ const addressValidation = [
 const updateStatusValidation = [
   param('id').isInt({ min: 1 }).toInt().withMessage('ID order tidak valid'),
   body('status')
-    .isIn(['menunggu', 'pickup', 'proses', 'antar', 'selesai', 'batal'])
+    .isIn(['menunggu', 'pickup', 'proses', 'antar', 'sedang_diantar', 'selesai', 'batal'])
     .withMessage('Status order tidak valid'),
   body('courier_id').optional().isInt({ min: 1 }).toInt(),
   body('total_price').optional().isInt({ min: 0 }).toInt(),
@@ -69,7 +69,7 @@ const serviceValidation = [
 /** Validator untuk query params pencarian di admin dashboard */
 const searchValidation = [
   query('search').optional().trim().isLength({ max: 100 }).escape(),
-  query('status').optional().isIn(['menunggu', 'pickup', 'proses', 'antar', 'selesai', 'batal', '']),
+  query('status').optional().isIn(['menunggu', 'pickup', 'proses', 'antar', 'sedang_diantar', 'selesai', 'batal', '']),
   query('page').optional().isInt({ min: 1 }).toInt(),
   query('limit').optional().isInt({ min: 1, max: 100 }).toInt(),
 ];

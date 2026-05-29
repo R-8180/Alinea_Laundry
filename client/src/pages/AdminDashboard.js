@@ -284,7 +284,7 @@ const FeedbackTab = ({ feedbacks, loading, onRefresh, onDeleteAll, onDeleteOne }
 };
 
 /* ---------- KONSTANTA ---------- */
-const statusLabels = { menunggu: 'Menunggu', pickup: 'Dijemput', proses: 'Diproses', antar: 'Diantar', selesai: 'Selesai', batal: 'Dibatalkan' };
+const statusLabels = { menunggu: 'Menunggu', pickup: 'Dijemput', proses: 'Diproses', antar: 'Diantar', sedang_diantar: 'Sedang Diantar', selesai: 'Selesai', batal: 'Dibatalkan' };
 
 // Helper: resolve file URL for both old local paths and new Supabase URLs
 const resolveFileUrl = (url) => {
@@ -297,7 +297,7 @@ const resolveFileUrl = (url) => {
   return `${base}${url}`;
 };
 
-const statusOptions = ['menunggu', 'pickup', 'proses', 'antar', 'selesai', 'batal'];
+const statusOptions = ['menunggu', 'pickup', 'proses', 'antar', 'sedang_diantar', 'selesai', 'batal'];
 // Tambah 'all_active' di paling depan
 
 const formatWA = (phone) => {
@@ -327,6 +327,8 @@ const getDynamicWAMessage = (order) => {
       return `Halo Kak ${name}, kami menginformasikan bahwa pesanan laundry Anda dengan kode *${code}* saat ini sudah berada di cabang laundry dan sedang dalam *proses pencucian/pengerjaan* higienis oleh tim kami. Kami akan memberi kabar kembali jika sudah selesai. Terima kasih ya Kak!`;
     case 'antar':
       return `Halo Kak ${name}, kabar baik! Pakaian bersih Anda untuk pesanan *${code}* saat ini *sedang dalam proses pengantaran* oleh kurir kembali ke alamat Anda. Mohon bersiap untuk menerima pakaian bersih Anda ya Kak. Terima kasih!`;
+    case 'sedang_diantar':
+      return `Halo Kak ${name}, kabar baik! Kurir kami saat ini *sedang dalam perjalanan* mengantarkan laundry wangi Anda #${code} kembali ke alamat tujuan. Mohon bersiap untuk menerima pakaian bersih Anda ya Kak. Terima kasih!`;
     case 'selesai':
       return `Halo Kak ${name}, pesanan laundry Anda dengan kode *${code}* telah dinyatakan *Selesai dan Diterima* dengan baik. Terima kasih banyak telah mempercayakan laundry Anda kepada Alinea Laundry! Semoga Kakak puas dengan layanan kami.`;
     case 'batal':

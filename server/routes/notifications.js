@@ -12,7 +12,6 @@ if (process.env.VAPID_PUBLIC_KEY && process.env.VAPID_PRIVATE_KEY) {
   );
 }
 
-
 // 1. GET /api/notifications - Get all notifications for logged in customer
 router.get('/', auth, async (req, res) => {
   const userId = req.user.id;
@@ -88,6 +87,12 @@ router.post('/subscribe', auth, async (req, res) => {
   }
 
   try {
+    // Bersihkan endpoint subscription yang sama untuk user lain (mencegah notifikasi silang di browser/device yang sama)
+    await pool.query(
+      "DELETE FROM push_subscriptions WHERE subscription->>'endpoint' = $1 AND user_id != $2",
+      [subscription.endpoint, userId]
+    );
+
     // Check if subscription already exists for this user
     const exist = await pool.query(
       'SELECT id FROM push_subscriptions WHERE user_id = $1 AND subscription::text = $2::text',
@@ -101,6 +106,26 @@ router.post('/subscribe', auth, async (req, res) => {
       );
     }
     res.status(201).json({ success: true, message: 'Push subscription saved.' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// 7. POST /api/notifications/unsubscribe - Delete push subscription on logout
+router.post('/unsubscribe', auth, async (req, res) => {
+  const userId = req.user.id;
+  const { endpoint } = req.body;
+
+  if (!endpoint) {
+    return res.status(400).json({ error: 'Format unsubscription tidak valid.' });
+  }
+
+  try {
+    await pool.query(
+      "DELETE FROM push_subscriptions WHERE user_id = $1 AND subscription->>'endpoint' = $2",
+      [userId, endpoint]
+    );
+    res.json({ success: true, message: 'Push subscription removed.' });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

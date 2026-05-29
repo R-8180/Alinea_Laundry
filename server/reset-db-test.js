@@ -4,7 +4,7 @@ const fs = require('fs');
 const path = require('path');
 const { createClient } = require('@supabase/supabase-js');
 
-const isVercel = process.env.VERCEL === '1' || !!process.env.VERCEL;
+const isVercel = process.env.VERCEL === '1' || process.env.VERCEL === 'true';
 const useSupabase = isVercel || (process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_KEY);
 
 const resetData = async () => {

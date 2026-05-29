@@ -3,7 +3,7 @@ const path = require('path');
 const crypto = require('crypto');
 const fs = require('fs');
 
-const isVercel = process.env.VERCEL === '1' || !!process.env.VERCEL;
+const isVercel = process.env.VERCEL === '1' || process.env.VERCEL === 'true';
 
 // Whitelist MIME types
 const ALLOWED_MIME_TYPES = [

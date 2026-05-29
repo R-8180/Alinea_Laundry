@@ -192,7 +192,7 @@ app.use(express.urlencoded({ extended: true, limit: '100kb' }));
 // ==========================================
 // 6. SISTEM LOGGING (AKSES DAN AKTIVITAS)
 // ==========================================
-const isVercel = process.env.VERCEL === '1' || !!process.env.VERCEL;
+const isVercel = process.env.VERCEL === '1' || process.env.VERCEL === 'true';
 if (isVercel) {
   // Menggunakan log standar Vercel untuk environment serverless
   app.use(morgan('common'));

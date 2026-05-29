@@ -2,7 +2,7 @@ const winston = require('winston');
 const path = require('path');
 const fs = require('fs');
 
-const isVercel = process.env.VERCEL === '1' || !!process.env.VERCEL;
+const isVercel = process.env.VERCEL === '1' || process.env.VERCEL === 'true';
 const transports = [];
 
 if (isVercel) {

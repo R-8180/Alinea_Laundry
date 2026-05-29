@@ -54,8 +54,18 @@ pool.query(`
     subscription JSONB NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
   );
-`).then(() => {
+`).then(async () => {
   console.log('✅ Push subscriptions table verified/created');
+  // Membuat unique index untuk endpoint agar tidak ada duplikasi subscription
+  try {
+    await pool.query(`
+      CREATE UNIQUE INDEX IF NOT EXISTS unique_push_subscription_endpoint 
+      ON push_subscriptions ((subscription->>'endpoint'));
+    `);
+    console.log('✅ Unique index on push_subscriptions endpoint verified/created');
+  } catch (indexErr) {
+    console.error('❌ Error creating unique index on push_subscriptions:', indexErr);
+  }
 }).catch(err => {
   console.error('❌ Error verifying push_subscriptions table:', err);
 });

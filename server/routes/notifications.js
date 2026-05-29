@@ -87,24 +87,16 @@ router.post('/subscribe', auth, async (req, res) => {
   }
 
   try {
-    // Bersihkan endpoint subscription yang sama untuk user lain (mencegah notifikasi silang di browser/device yang sama)
+    // Simpan atau update subscription jika endpoint-nya sudah ada (UPSERT).
+    // Ini menjamin 100% tidak ada duplikasi endpoint di database dan aman dari race conditions.
     await pool.query(
-      "DELETE FROM push_subscriptions WHERE subscription->>'endpoint' = $1 AND user_id != $2",
-      [subscription.endpoint, userId]
+      `INSERT INTO push_subscriptions (user_id, subscription) 
+       VALUES ($1, $2)
+       ON CONFLICT ((subscription->>'endpoint')) 
+       DO UPDATE SET user_id = EXCLUDED.user_id, subscription = EXCLUDED.subscription`,
+      [userId, subscription]
     );
 
-    // Check if subscription already exists for this user
-    const exist = await pool.query(
-      'SELECT id FROM push_subscriptions WHERE user_id = $1 AND subscription::text = $2::text',
-      [userId, JSON.stringify(subscription)]
-    );
-
-    if (exist.rows.length === 0) {
-      await pool.query(
-        'INSERT INTO push_subscriptions (user_id, subscription) VALUES ($1, $2)',
-        [userId, subscription]
-      );
-    }
     res.status(201).json({ success: true, message: 'Push subscription saved.' });
   } catch (err) {
     res.status(500).json({ error: err.message });

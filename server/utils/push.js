@@ -33,7 +33,7 @@ const sendWebPush = async (userId, payload) => {
         .catch(err => {
           // Jika 404/410 berarti user mencabut izin atau token kedaluwarsa, jadi kita hapus dari DB
           if (err.statusCode === 404 || err.statusCode === 410) {
-            return pool.query('DELETE FROM push_subscriptions WHERE subscription::text = $1::text', [JSON.stringify(sub.subscription)]);
+            return pool.query("DELETE FROM push_subscriptions WHERE subscription->>'endpoint' = $1", [sub.subscription.endpoint]);
           } else {
             console.error('Error sending web push to device:', err);
           }

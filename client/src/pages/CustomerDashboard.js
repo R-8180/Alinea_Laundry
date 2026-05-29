@@ -73,10 +73,11 @@ const formatWA = (phone) => {
 };
 
 const statusLabels = {
-  menunggu: 'Menunggu',
-  pickup: 'Dijemput',
+  menunggu: 'Menunggu Jemput',
+  pickup: 'Sedang Dijemput',
   proses: 'Diproses',
-  antar: 'Diantar',
+  antar: 'Menunggu Diantar',
+  sedang_diantar: 'Sedang Diantar',
   selesai: 'Selesai',
   batal: 'Dibatalkan',
 };
@@ -88,6 +89,7 @@ const stepIcons = {
   pickup: <FiTruck />,
   proses: <FiDroplet />,
   antar: <FiPackage />,
+  sedang_diantar: <FiPackage />,
   selesai: <FiCheckCircle />,
   batal: <FiXCircle />,
 };
@@ -105,6 +107,72 @@ const CustomerDashboard = ({ user: propUser }) => {
   const [orders, setOrders] = useState([]);
   const [paymentModal, setPaymentModal] = useState(null);
   const [detailModal, setDetailModal] = useState(null);
+
+  const renderDynamicSubtext = (order) => {
+    let msg = '';
+    let iconColor = 'var(--blue)';
+    let bgColor = 'var(--sky-pale)';
+    let borderColor = 'var(--sky)';
+    
+    switch (order.status) {
+      case 'menunggu':
+        msg = 'Laundry Anda sedang dalam antrean penjemputan oleh kurir kami. Mohon ditunggu ya! 😊';
+        break;
+      case 'pickup':
+        msg = 'Kurir kami sedang meluncur ke lokasi Anda untuk menjemput laundry. Mohon bersiap ya! 🛵';
+        iconColor = '#10b981';
+        bgColor = '#e6fcf0';
+        borderColor = '#a7f3d0';
+        break;
+      case 'proses':
+        msg = 'Laundry Anda sudah tiba di outlet dan sedang diproses dengan higienis oleh tim kami. 🧼';
+        break;
+      case 'antar':
+        msg = 'Laundry Anda telah selesai dicuci bersih & rapi! Sekarang sedang menunggu giliran pengantaran oleh kurir. 📦';
+        break;
+      case 'sedang_diantar':
+        msg = 'Kabar baik! Laundry Anda sedang dalam perjalanan diantarkan kembali ke lokasi Anda oleh kurir. Siap-siap menerima ya! 🛵✨';
+        iconColor = '#10b981';
+        bgColor = '#e6fcf0';
+        borderColor = '#a7f3d0';
+        break;
+      case 'selesai':
+        msg = 'Laundry Anda telah sukses diterima dengan bersih dan wangi. Terima kasih telah mempercayakan Alinea Laundry! 🥰';
+        iconColor = '#10b981';
+        bgColor = '#e6fcf0';
+        borderColor = '#a7f3d0';
+        break;
+      case 'batal':
+        msg = 'Pesanan ini telah dibatalkan. Hubungi admin jika terdapat kendala.';
+        iconColor = '#ef4444';
+        bgColor = '#fee2e2';
+        borderColor = '#fca5a5';
+        break;
+      default:
+        return null;
+    }
+    
+    return (
+      <div style={{
+        marginTop: 16,
+        padding: '12px 16px',
+        borderRadius: 12,
+        background: bgColor,
+        border: `1px solid ${borderColor}`,
+        display: 'flex',
+        alignItems: 'center',
+        gap: 12,
+        boxShadow: 'var(--sh-sm)'
+      }}>
+        <div style={{ fontSize: '1.2rem', display: 'flex', alignItems: 'center', color: iconColor }}>
+          {order.status === 'proses' ? <FiDroplet /> : (order.status === 'selesai' ? <FiCheckCircle /> : (order.status === 'batal' ? <FiXCircle /> : <FiTruck />))}
+        </div>
+        <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--navy)', fontWeight: 500, lineHeight: 1.4 }}>
+          {msg}
+        </p>
+      </div>
+    );
+  };
   const [voucherStatus, setVoucherStatus] = useState(null);
   const [activeTab, setActiveTab] = useState('orders');
   const [showVoucherModal, setShowVoucherModal] = useState(false);
@@ -207,17 +275,23 @@ const CustomerDashboard = ({ user: propUser }) => {
     : '-';
 
   const renderProgressBar = (order) => {
-    const currentIdx = statusOrder.indexOf(order.status);
+    const activeStatus = order.status === 'sedang_diantar' ? 'antar' : order.status;
+    const currentIdx = statusOrder.indexOf(activeStatus);
     const percent = ((currentIdx + 1) / statusOrder.length) * 100;
     return (
       <div className="progress-container">
         <div className="progress-steps">
-          {statusOrder.map((step, idx) => (
-            <div key={step} className={`progress-step ${idx <= currentIdx ? 'active' : ''} ${idx === currentIdx ? 'current' : ''}`}>
-              <div className="progress-dot">{stepIcons[step]}</div>
-              <span className="progress-label">{statusLabels[step]}</span>
-            </div>
-          ))}
+          {statusOrder.map((step, idx) => {
+            const isActive = idx <= currentIdx;
+            const isCurrent = idx === currentIdx;
+            const label = isCurrent && step === 'antar' ? statusLabels[order.status] : statusLabels[step];
+            return (
+              <div key={step} className={`progress-step ${isActive ? 'active' : ''} ${isCurrent ? 'current' : ''}`}>
+                <div className="progress-dot">{stepIcons[step]}</div>
+                <span className="progress-label">{label}</span>
+              </div>
+            );
+          })}
         </div>
         <div className="progress-bar-bg">
           <div className="progress-bar-fill" style={{ width: `${percent}%` }} />
@@ -285,7 +359,7 @@ const CustomerDashboard = ({ user: propUser }) => {
           </div>
         </div>
 
-        {(order.status === 'antar' || order.status === 'pickup') && order.courier_name && order.courier_phone && (
+        {(order.status === 'antar' || order.status === 'pickup' || order.status === 'sedang_diantar') && order.courier_name && order.courier_phone && (
           <div style={{
             marginBottom: 20, padding: '12px 16px',
             background: '#e6fcf0', borderRadius: 12,
@@ -316,6 +390,7 @@ const CustomerDashboard = ({ user: propUser }) => {
         )}
 
         {renderProgressBar(order)}
+        {renderDynamicSubtext(order)}
 
         {(order.estimated_days > 0 || order.estimated_hours > 0) && (
           <div style={{ 

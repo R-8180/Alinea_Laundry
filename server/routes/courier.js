@@ -123,7 +123,7 @@ router.get('/orders/:id', async (req, res) => {
 router.put('/orders/:id/status', async (req, res) => {
   const { status } = req.body;
   const orderId = req.params.id;
-  const allowedStatuses = ['menunggu', 'pickup', 'proses', 'antar'];
+  const allowedStatuses = ['menunggu', 'pickup', 'proses', 'antar', 'sedang_diantar'];
 
   if (!allowedStatuses.includes(status)) {
     return res.status(400).json({ message: 'Status tidak valid. Gunakan endpoint deliver untuk menyelesaikan.' });
@@ -139,17 +139,30 @@ router.put('/orders/:id/status', async (req, res) => {
     if (orderInfo.rows.length > 0 && orderInfo.rows[0].user_id) {
       const { user_id, order_code } = orderInfo.rows[0];
       let msg = `Pesanan Anda #${order_code} sekarang berstatus: ${status.toUpperCase()}.`;
-      if (status === 'pickup') {
-        msg = `Kurir sedang menuju ke lokasi Anda untuk menjemput pakaian pada pesanan #${order_code}.`;
+      let title = 'Update Status Pesanan 🧺';
+      
+      if (status === 'menunggu') {
+        title = 'Menunggu Penjemputan ⏳';
+        msg = `Laundry Anda #${order_code} sedang dalam antrean penjemputan oleh kurir kami. Mohon ditunggu ya! 😊`;
+      } else if (status === 'pickup') {
+        title = 'Kurir Menuju Lokasi 🛵';
+        msg = `Kurir sedang menuju lokasi Anda untuk menjemput laundry #${order_code}. Mohon bersiap ya! 🛵`;
+      } else if (status === 'proses') {
+        title = 'Laundry Sedang Diproses 🧼';
+        msg = `Laundry Anda #${order_code} sudah tiba di outlet dan sedang diproses higienis oleh tim kami. 🧼`;
       } else if (status === 'antar') {
-        msg = `Pakaian bersih Anda pada pesanan #${order_code} sedang diantar oleh kurir menuju lokasi Anda.`;
+        title = 'Menunggu Pengantaran 📦';
+        msg = `Laundry Anda #${order_code} sudah selesai diproses bersih & wangi, dan sedang mengantre untuk diantarkan kembali. 📦`;
+      } else if (status === 'sedang_diantar') {
+        title = 'Laundry Sedang Diantar 🛵';
+        msg = `Kabar baik! Kurir sedang dalam perjalanan mengantarkan laundry wangi Anda #${order_code} kembali ke alamat tujuan. Siap-siap ya! 🛵✨`;
       }
       
       await pool.query(
         'INSERT INTO notifications (user_id, order_id, title, message) VALUES ($1, $2, $3, $4)',
-        [user_id, orderId, 'Update Status oleh Kurir', msg]
+        [user_id, orderId, title, msg]
       );
-      sendWebPush(user_id, { title: 'Update Status oleh Kurir', body: msg });
+      sendWebPush(user_id, { title, body: msg });
     }
     
     res.json({ message: 'Status diupdate' });

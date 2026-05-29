@@ -116,10 +116,11 @@ const HeroWithTrack = () => {
   };
 
   const statusMap = {
-    menunggu: <><FiClock /> Menunggu dipickup</>,
-    pickup: <><FiTruck /> Sedang dipickup</>,
-    proses: <><FiSettings /> Sedang diproses</>,
-    antar: <><FiPackage /> Sedang diantar</>,
+    menunggu: <><FiClock /> Menunggu Dijemput</>,
+    pickup: <><FiTruck /> Sedang Dijemput</>,
+    proses: <><FiSettings /> Sedang Diproses</>,
+    antar: <><FiPackage /> Menunggu Diantar</>,
+    sedang_diantar: <><FiPackage /> Sedang Diantar</>,
     selesai: <><FiCheckCircle /> Selesai</>,
   };
 

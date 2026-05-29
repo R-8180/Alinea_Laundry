@@ -36,7 +36,9 @@ const getDynamicWAMessage = (order) => {
     case 'proses':
       return `Halo Kak ${name}, kami menginformasikan bahwa pesanan laundry Anda dengan kode *${code}* saat ini sudah berada di cabang laundry dan sedang dalam *proses pencucian/pengerjaan* higienis oleh tim kami. Kami akan memberi kabar kembali jika sudah selesai. Terima kasih ya Kak!`;
     case 'antar':
-      return `Halo Kak ${name}, kabar baik! Pakaian bersih Anda untuk pesanan *${code}* saat ini *sedang dalam proses pengantaran* oleh kurir kembali ke alamat Anda. Mohon bersiap untuk menerima pakaian bersih Anda ya Kak. Terima kasih!`;
+      return `Halo Kak ${name}, kabar baik! Pakaian bersih Anda untuk pesanan *${code}* saat ini sudah siap diantarkan dan masuk antrean pengantaran. Kurir kami segera mengantarkannya kembali ke lokasi Kakak. Terima kasih!`;
+    case 'sedang_diantar':
+      return `Halo Kak ${name}, kurir kami saat ini *sedang dalam perjalanan* mengantarkan pakaian bersih Anda untuk pesanan *${code}*. Mohon bersiap untuk menerima laundry wangi Anda ya Kak. Terima kasih banyak!`;
     case 'selesai':
       return `Halo Kak ${name}, pesanan laundry Anda dengan kode *${code}* telah dinyatakan *Selesai dan Diterima* dengan baik. Terima kasih banyak telah mempercayakan laundry Anda kepada Alinea Laundry! Semoga Kakak puas dengan layanan kami.`;
     case 'batal':
@@ -276,16 +278,26 @@ const CourierDashboard = () => {
                         <td>
                           <div style={{ display: 'flex', gap: 8 }}>
                             <button className="btn-detail" onClick={() => openDetail(order)}><FiInfo /> Detail</button>
-                            <button 
-                              className="btn btn-sm" 
-                              style={{ background: '#10b981', color: 'white', padding: '4px 10px', fontSize: '0.75rem' }}
-                              onClick={async () => {
-                                const confirmRes = await showConfirm('Konfirmasi Jemput', 'Apakah Anda yakin pesanan laundry ini sudah dijemput?');
-                                if (confirmRes.isConfirmed) updateStatus(order.id, 'proses');
-                              }}
-                            >
-                              <FiCheckCircle /> Sudah Dijemput
-                            </button>
+                            {order.status === 'menunggu' ? (
+                              <button 
+                                className="btn btn-sm" 
+                                style={{ background: '#3b82f6', color: 'white', padding: '4px 10px', fontSize: '0.75rem' }}
+                                onClick={() => updateStatus(order.id, 'pickup')}
+                              >
+                                <FiTruck /> Mulai Jemput
+                              </button>
+                            ) : (
+                              <button 
+                                className="btn btn-sm" 
+                                style={{ background: '#10b981', color: 'white', padding: '4px 10px', fontSize: '0.75rem' }}
+                                onClick={async () => {
+                                  const confirmRes = await showConfirm('Konfirmasi Jemput', 'Apakah Anda yakin pesanan laundry ini sudah dijemput?');
+                                  if (confirmRes.isConfirmed) updateStatus(order.id, 'proses');
+                                }}
+                              >
+                                <FiCheckCircle /> Sudah Dijemput
+                              </button>
+                            )}
                           </div>
                         </td>
                       </tr>
@@ -316,7 +328,11 @@ const CourierDashboard = () => {
                 <div style={{ fontSize: '0.82rem', color: 'var(--text-3)', marginBottom: 12 }}><FiMapPin /> {order.address}</div>
                 <div style={{ display: 'flex', gap: 10 }}>
                   <button className="btn btn-detail" onClick={() => openDetail(order)} style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}><FiInfo /> Detail</button>
-                  <button className="btn" style={{ flex: 1.5, background: '#10b981', color: 'white', justifyContent: 'center', alignItems: 'center' }} onClick={async () => { const confirmRes = await showConfirm('Konfirmasi Jemput', 'Apakah Anda yakin pesanan laundry ini sudah dijemput?'); if (confirmRes.isConfirmed) updateStatus(order.id, 'proses'); }}><FiCheckCircle /> Dijemput</button>
+                  {order.status === 'menunggu' ? (
+                    <button className="btn" style={{ flex: 1.5, background: '#3b82f6', color: 'white', justifyContent: 'center', alignItems: 'center' }} onClick={() => updateStatus(order.id, 'pickup')}><FiTruck /> Mulai Jemput</button>
+                  ) : (
+                    <button className="btn" style={{ flex: 1.5, background: '#10b981', color: 'white', justifyContent: 'center', alignItems: 'center' }} onClick={async () => { const confirmRes = await showConfirm('Konfirmasi Jemput', 'Apakah Anda yakin pesanan laundry ini sudah dijemput?'); if (confirmRes.isConfirmed) updateStatus(order.id, 'proses'); }}><FiCheckCircle /> Dijemput</button>
+                  )}
                 </div>
               </div>
             ))}
@@ -329,12 +345,11 @@ const CourierDashboard = () => {
             <div className="section-icon-bg" style={{ background: '#D1FAE5', color: '#065F46', width: 40, height: 40, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.2rem' }}>
               <FiPackage />
             </div>
-            <h3 style={{ fontSize: '1.2rem', fontWeight: 700, color: 'var(--navy)' }}>Pengiriman Laundry</h3>
-            <span style={{ marginLeft: 'auto', background: '#065F46', color: 'white', padding: '2px 10px', borderRadius: 20, fontSize: '0.8rem', fontWeight: 700 }}>
-              {orders.filter(o => o.status === 'antar' || o.status === 'proses').length} Pesanan
+            <h3 style={{ fontSize: '1.2rem', fontWeight: 700, color: 'var(--navy)' }}>Pengiriman Laundry</h3>            <span style={{ marginLeft: 'auto', background: '#065F46', color: 'white', padding: '2px 10px', borderRadius: 20, fontSize: '0.8rem', fontWeight: 700 }}>
+              {orders.filter(o => o.status === 'antar' || o.status === 'proses' || o.status === 'sedang_diantar').length} Pesanan
             </span>
           </div>
-
+ 
           <div className="admin-table-card desktop-only">
             <div className="table-responsive">
               <table className="admin-order-table">
@@ -342,10 +357,10 @@ const CourierDashboard = () => {
                   <tr><th>Order</th><th>Pelanggan</th><th>Alamat</th><th>Aksi</th></tr>
                 </thead>
                 <tbody>
-                  {orders.filter(o => o.status === 'antar' || o.status === 'proses').length === 0 ? (
+                  {orders.filter(o => o.status === 'antar' || o.status === 'proses' || o.status === 'sedang_diantar').length === 0 ? (
                     <tr><td colSpan="4" className="empty-cell">Tidak ada pengiriman saat ini</td></tr>
                   ) : (
-                    orders.filter(o => o.status === 'antar' || o.status === 'proses')
+                    orders.filter(o => o.status === 'antar' || o.status === 'proses' || o.status === 'sedang_diantar')
                       .sort((a, b) => getRemainingMs(a) - getRemainingMs(b))
                       .map(order => (
                       <tr key={order.id}>
@@ -355,8 +370,13 @@ const CourierDashboard = () => {
                             <span style={{ fontSize: '0.65rem', padding: '2px 6px', background: 'var(--slate-100)', color: 'var(--navy)', borderRadius: 4, fontWeight: 700 }}>Cabang {order.branch_name || 'Utama'}</span>
                           </div>
                           <div style={{ marginTop: 4, display: 'flex', flexWrap: 'wrap', gap: 6, alignItems: 'center' }}>
-                            <span style={{ fontSize: '0.7rem', padding: '2px 6px', borderRadius: 4, background: order.status === 'antar' ? '#d1fae5' : '#fee2e2', color: order.status === 'antar' ? '#065f46' : '#991b1b', fontWeight: 600 }}>
-                              {order.status === 'antar' ? 'Siap Antar' : 'Proses Cuci'}
+                            <span style={{ 
+                              fontSize: '0.7rem', padding: '2px 6px', borderRadius: 4, 
+                              background: order.status === 'sedang_diantar' ? '#dbeafe' : (order.status === 'antar' ? '#d1fae5' : '#fee2e2'), 
+                              color: order.status === 'sedang_diantar' ? '#1e40af' : (order.status === 'antar' ? '#065f46' : '#991b1b'), 
+                              fontWeight: 600 
+                            }}>
+                              {order.status === 'sedang_diantar' ? 'Sedang Diantar' : (order.status === 'antar' ? 'Siap Antar' : 'Proses Cuci')}
                             </span>
                             <CountdownBadge order={order} />
                           </div>
@@ -366,13 +386,21 @@ const CourierDashboard = () => {
                         <td>
                           <div style={{ display: 'flex', gap: 8 }}>
                             <button className="btn-detail" onClick={() => openDetail(order)}><FiInfo /> Detail</button>
-                            {order.status === 'antar' ? (
+                            {order.status === 'sedang_diantar' ? (
                               <button 
                                 className="btn btn-sm" 
                                 style={{ background: '#10b981', color: 'white', padding: '4px 10px', fontSize: '0.75rem' }}
                                 onClick={() => openDelivery(order)}
                               >
                                 <FiCheckCircle /> Selesaikan & Upload Foto
+                              </button>
+                            ) : order.status === 'antar' ? (
+                              <button 
+                                className="btn btn-sm" 
+                                style={{ background: '#3b82f6', color: 'white', padding: '4px 10px', fontSize: '0.75rem' }}
+                                onClick={() => updateStatus(order.id, 'sedang_diantar')}
+                              >
+                                <FiTruck /> Mulai Antar
                               </button>
                             ) : (
                               <button className="btn btn-sm" disabled style={{ background: '#e2e8f0', color: '#94a3b8', cursor: 'not-allowed', padding: '4px 10px', fontSize: '0.75rem' }}>
@@ -390,9 +418,9 @@ const CourierDashboard = () => {
           </div>
 
           <div className="mobile-order-list mobile-only">
-            {orders.filter(o => o.status === 'antar' || o.status === 'proses').length === 0 ? (
+            {orders.filter(o => o.status === 'antar' || o.status === 'proses' || o.status === 'sedang_diantar').length === 0 ? (
               <div style={{ textAlign: 'center', padding: 24, color: 'var(--text-4)', background: 'white', borderRadius: 12, border: '1px dashed var(--border)' }}>Tidak ada pengiriman</div>
-            ) : orders.filter(o => o.status === 'antar' || o.status === 'proses')
+            ) : orders.filter(o => o.status === 'antar' || o.status === 'proses' || o.status === 'sedang_diantar')
                 .sort((a, b) => getRemainingMs(a) - getRemainingMs(b))
                 .map(order => (
               <div key={order.id} className="mobile-order-card" style={{ position: 'relative', overflow: 'hidden' }}>
@@ -404,8 +432,13 @@ const CourierDashboard = () => {
                     </div>
                     <div className="customer-name">{order.customer_name}</div>
                     <div style={{ marginTop: 6, display: 'flex', flexWrap: 'wrap', gap: 6, alignItems: 'center' }}>
-                      <span style={{ fontSize: '0.7rem', padding: '2px 6px', borderRadius: 4, background: order.status === 'antar' ? '#d1fae5' : '#fee2e2', color: order.status === 'antar' ? '#065f46' : '#991b1b', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-                        {order.status === 'antar' ? <><FiCheckCircle /> SIAP ANTAR</> : <><FiClock /> PROSES CUCI</>}
+                      <span style={{ 
+                        fontSize: '0.7rem', padding: '2px 6px', borderRadius: 4, 
+                        background: order.status === 'sedang_diantar' ? '#dbeafe' : (order.status === 'antar' ? '#d1fae5' : '#fee2e2'), 
+                        color: order.status === 'sedang_diantar' ? '#1e40af' : (order.status === 'antar' ? '#065f46' : '#991b1b'), 
+                        fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: 4 
+                      }}>
+                        {order.status === 'sedang_diantar' ? <><FiTruck /> DIANTAR</> : (order.status === 'antar' ? <><FiCheckCircle /> SIAP ANTAR</> : <><FiClock /> PROSES CUCI</>)}
                       </span>
                       <CountdownBadge order={order} />
                     </div>
@@ -417,13 +450,21 @@ const CourierDashboard = () => {
                 <div style={{ fontSize: '0.82rem', color: 'var(--text-3)', marginBottom: 12 }}><FiMapPin /> {order.address}</div>
                 <div style={{ display: 'flex', gap: 10 }}>
                   <button className="btn btn-detail" onClick={() => openDetail(order)} style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}><FiInfo /> Detail</button>
-                  {order.status === 'antar' ? (
+                  {order.status === 'sedang_diantar' ? (
                     <button 
                       className="btn" 
                       style={{ flex: 1.5, background: '#10b981', color: 'white', justifyContent: 'center', alignItems: 'center' }}
                       onClick={() => openDelivery(order)}
                     >
                       <FiCheckCircle /> Selesaikan
+                    </button>
+                  ) : order.status === 'antar' ? (
+                    <button 
+                      className="btn" 
+                      style={{ flex: 1.5, background: '#3b82f6', color: 'white', justifyContent: 'center', alignItems: 'center' }}
+                      onClick={() => updateStatus(order.id, 'sedang_diantar')}
+                    >
+                      <FiTruck /> Mulai Antar
                     </button>
                   ) : (
                     <button className="btn" disabled style={{ flex: 1.5, background: '#e2e8f0', color: '#94a3b8', cursor: 'not-allowed', justifyContent: 'center', alignItems: 'center' }}>

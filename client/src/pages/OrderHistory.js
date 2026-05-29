@@ -30,10 +30,11 @@ const formatServiceLabel = (order) => {
 };
 
 const statusLabels = {
-  menunggu: 'Menunggu',
-  pickup: 'Dijemput',
+  menunggu: 'Menunggu Jemput',
+  pickup: 'Sedang Dijemput',
   proses: 'Diproses',
-  antar: 'Diantar',
+  antar: 'Menunggu Diantar',
+  sedang_diantar: 'Sedang Diantar',
   selesai: 'Selesai',
   batal: 'Dibatalkan'
 };

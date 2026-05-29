@@ -47,6 +47,8 @@ self.addEventListener('push', (event) => {
         icon: '/images/logoalinea.png',
         badge: '/images/logoalinea.png',
         vibrate: [200, 100, 200, 100, 200, 100, 200],
+        tag: payload.tag || undefined,
+        renotify: payload.tag ? true : false,
         data: {
           url: payload.url || '/'
         }

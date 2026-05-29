@@ -446,19 +446,36 @@ router.put('/orders/:id/assign', idParamValidation, validate, async (req, res) =
           'INSERT INTO notifications (user_id, order_id, title, message) VALUES ($1, $2, $3, $4)',
           [oldCourierId, orderId, 'Pesanan Dialihkan', `Pesanan #${orderCode} telah dialihkan ke kurir lain.`]
         );
+        sendWebPush(oldCourierId, {
+          title: 'Pesanan Dialihkan',
+          body: `Pesanan #${orderCode} telah dialihkan ke kurir lain.`,
+          tag: `order-${orderId}`,
+          url: '/courier'
+        }).catch(e => console.error('Courier shift push error:', e));
       }
       // Assignment (New or Reassigned)
       await client.query(
         'INSERT INTO notifications (user_id, order_id, title, message) VALUES ($1, $2, $3, $4)',
         [courier_id, orderId, 'Penugasan Baru', `Kamu ditugaskan untuk pesanan #${orderCode} (${layananStr}).`]
       );
-      sendWebPush(courier_id, { title: 'Penugasan Baru', body: `Kamu ditugaskan untuk pesanan #${orderCode} (${layananStr}).` });
+      sendWebPush(courier_id, {
+        title: 'Penugasan Baru',
+        body: `Kamu ditugaskan untuk pesanan #${orderCode} (${layananStr}).`,
+        tag: `order-${orderId}`,
+        url: '/courier'
+      }).catch(e => console.error('Courier assignment push error:', e));
     } else if ((estimated_days !== undefined || estimated_hours !== undefined) && oldCourierId) {
       // Estimation update
       await client.query(
         'INSERT INTO notifications (user_id, order_id, title, message) VALUES ($1, $2, $3, $4)',
         [oldCourierId, orderId, 'Update Estimasi', `Admin telah memperbarui estimasi waktu untuk pesanan #${orderCode}.`]
       );
+      sendWebPush(oldCourierId, {
+        title: 'Update Estimasi',
+        body: `Admin telah memperbarui estimasi waktu untuk pesanan #${orderCode}.`,
+        tag: `order-${orderId}`,
+        url: '/courier'
+      }).catch(e => console.error('Courier estimation push error:', e));
     }
 
     // Notify Customer
@@ -473,7 +490,12 @@ router.put('/orders/:id/assign', idParamValidation, validate, async (req, res) =
         'INSERT INTO notifications (user_id, order_id, title, message) VALUES ($1, $2, $3, $4)',
         [customerId, orderId, 'Update Pesanan', msg]
       );
-      sendWebPush(customerId, { title: 'Update Pesanan', body: msg });
+      sendWebPush(customerId, {
+        title: 'Update Pesanan',
+        body: msg,
+        tag: `order-${orderId}`,
+        url: '/dashboard'
+      }).catch(e => console.error('Customer assign update push error:', e));
     }
 
     if (express_fee !== undefined) {
@@ -601,7 +623,12 @@ router.put('/orders/:id/validate-items', idParamValidation, validate, async (req
         'INSERT INTO notifications (user_id, order_id, title, message) VALUES ($1, $2, $3, $4)',
         [user_id, orderId, 'Menunggu Pembayaran 💳', msg]
       );
-      sendWebPush(user_id, { title: 'Menunggu Pembayaran 💳', body: msg });
+      sendWebPush(user_id, {
+        title: 'Menunggu Pembayaran 💳',
+        body: msg,
+        tag: `order-${orderId}`,
+        url: '/dashboard'
+      }).catch(e => console.error('Validate items push error:', e));
     }
 
     await client.query('COMMIT');
@@ -660,7 +687,12 @@ router.put('/orders/:id/status', updateStatusValidation, validate, async (req, r
         'INSERT INTO notifications (user_id, order_id, title, message) VALUES ($1, $2, $3, $4)',
         [user_id, orderId, title, msg]
       );
-      sendWebPush(user_id, { title, body: msg });
+      sendWebPush(user_id, {
+        title,
+        body: msg,
+        tag: `order-${orderId}`,
+        url: '/dashboard'
+      }).catch(e => console.error('Status update push error:', e));
     }
 
     if (status === 'selesai') {
@@ -723,7 +755,12 @@ router.put('/orders/:id/complete', uploadDelivery.single('photo'), idParamValida
         'INSERT INTO notifications (user_id, order_id, title, message) VALUES ($1, $2, $3, $4)',
         [user_id, orderId, 'Pesanan Selesai! 🎉', `Pesanan Anda #${order_code} telah selesai diproses oleh Admin. Terima kasih. (+10 Poin)`]
       );
-      sendWebPush(user_id, { title: 'Pesanan Selesai! 🎉', body: `Pesanan Anda #${order_code} telah selesai diproses oleh Admin. Terima kasih. (+10 Poin)` });
+      sendWebPush(user_id, {
+        title: 'Pesanan Selesai! 🎉',
+        body: `Pesanan Anda #${order_code} telah selesai diproses oleh Admin. Terima kasih. (+10 Poin)`,
+        tag: `order-${orderId}`,
+        url: '/dashboard'
+      }).catch(e => console.error('Complete order push error:', e));
     }
 
     // Notify admins that the order is completed
@@ -753,7 +790,12 @@ router.put('/payments/validate/:id', idParamValidation, validate, async (req, re
         'INSERT INTO notifications (user_id, order_id, title, message) VALUES ($1, $2, $3, $4)',
         [user_id, orderId, 'Pembayaran Diterima ✅', `Pembayaran untuk pesanan Anda #${order_code} telah divalidasi dan diterima. Terima kasih!`]
       );
-      sendWebPush(user_id, { title: 'Pembayaran Diterima ✅', body: `Pembayaran untuk pesanan Anda #${order_code} telah divalidasi dan diterima. Terima kasih!` });
+      sendWebPush(user_id, {
+        title: 'Pembayaran Diterima ✅',
+        body: `Pembayaran untuk pesanan Anda #${order_code} telah divalidasi dan diterima. Terima kasih!`,
+        tag: `order-${orderId}`,
+        url: '/dashboard'
+      }).catch(e => console.error('Validate payment push error:', e));
     }
 
     await client.query('COMMIT');
@@ -1114,7 +1156,12 @@ router.post('/notifications/broadcast', async (req, res) => {
       );
       // Fail silently for push if not configured
       try {
-        sendWebPush(u.id, { title: 'Pengumuman Admin', body: message });
+        sendWebPush(u.id, {
+          title: 'Pengumuman Admin',
+          body: message,
+          tag: 'broadcast-admin',
+          url: '/dashboard'
+        });
       } catch (pushErr) {
         // ignore
       }

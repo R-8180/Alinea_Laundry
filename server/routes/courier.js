@@ -52,7 +52,18 @@ router.get('/orders', async (req, res) => {
             WHERE NOT EXISTS (
               SELECT 1 FROM notifications WHERE user_id = $1 AND order_id = $2 AND title = 'Pesanan Overdue ⚠️'
             )
-          `, [req.user.id, order.id, `Pesanan #${order.order_code} telah melewati batas waktu estimasi. Mohon segera diselesaikan.`]).catch(e => console.error('Overdue notif error:', e));
+          `, [req.user.id, order.id, `Pesanan #${order.order_code} telah melewati batas waktu estimasi. Mohon segera diselesaikan.`])
+          .then((resDb) => {
+            if (resDb.rowCount > 0) {
+              sendWebPush(req.user.id, {
+                title: 'Pesanan Overdue ⚠️',
+                body: `Pesanan #${order.order_code} telah melewati batas waktu estimasi. Mohon segera diselesaikan.`,
+                tag: `order-overdue-${order.id}`,
+                url: '/courier'
+              }).catch(e => console.error('Overdue web push error:', e));
+            }
+          })
+          .catch(e => console.error('Overdue notif error:', e));
         }
       }
     }
@@ -162,7 +173,7 @@ router.put('/orders/:id/status', async (req, res) => {
         'INSERT INTO notifications (user_id, order_id, title, message) VALUES ($1, $2, $3, $4)',
         [user_id, orderId, title, msg]
       );
-      sendWebPush(user_id, { title, body: msg });
+      sendWebPush(user_id, { title, body: msg, tag: `order-${orderId}`, url: '/dashboard' });
     }
     
     res.json({ message: 'Status diupdate' });
@@ -198,7 +209,12 @@ router.post('/orders/:id/deliver', uploadDelivery.single('photo'), async (req, r
         'INSERT INTO notifications (user_id, order_id, title, message) VALUES ($1, $2, $3, $4)',
         [user_id, orderId, 'Pesanan Selesai! 🎉', `Pesanan Anda #${order_code} telah berhasil diantar dan selesai. Terima kasih.`]
       );
-      sendWebPush(user_id, { title: 'Pesanan Selesai! 🎉', body: `Pesanan Anda #${order_code} telah berhasil diantar dan selesai. Terima kasih.` });
+      sendWebPush(user_id, { 
+        title: 'Pesanan Selesai! 🎉', 
+        body: `Pesanan Anda #${order_code} telah berhasil diantar dan selesai. Terima kasih.`,
+        tag: `order-${orderId}`,
+        url: '/dashboard'
+      });
     }
 
     // Notify admins that the order is completed

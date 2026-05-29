@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const pool = require('../db');
 const auth = require('../middleware/auth');
+const { sendWebPush } = require('../utils/push');
 
 // POST /api/feedback - Customer mengirim kritik & saran (Protected)
 router.post('/', auth, async (req, res) => {
@@ -80,6 +81,12 @@ router.post('/', auth, async (req, res) => {
       for (const admin of admins) {
         valuePlaceholders.push(`($${paramIndex++}, $${paramIndex++}, $${paramIndex++})`);
         insertValues.push(admin.id, title, message);
+        sendWebPush(admin.id, {
+          title,
+          body: message,
+          tag: 'admin-feedback',
+          url: '/admin'
+        }).catch(err => console.error('Feedback admin push error:', err));
       }
 
       const sql = `INSERT INTO notifications (user_id, title, message) VALUES ${valuePlaceholders.join(', ')}`;

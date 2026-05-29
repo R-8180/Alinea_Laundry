@@ -1,4 +1,5 @@
 const pool = require('../db');
+const { sendWebPush } = require('./push');
 
 /**
  * Helper to notify admins (both global and specific branch admins) about order events.
@@ -53,9 +54,21 @@ async function notifyAdmins(orderId, eventType) {
       if (isGlobalAdmin) {
         valuePlaceholders.push(`($${paramIndex++}, $${paramIndex++}, $${paramIndex++}, $${paramIndex++})`);
         insertValues.push(admin.id, orderId, title, msgGlobal);
+        sendWebPush(admin.id, {
+          title,
+          body: msgGlobal,
+          tag: `order-${orderId}`,
+          url: '/admin'
+        }).catch(err => console.error('Admin push notification error:', err));
       } else if (isMatchingBranchAdmin) {
         valuePlaceholders.push(`($${paramIndex++}, $${paramIndex++}, $${paramIndex++}, $${paramIndex++})`);
         insertValues.push(admin.id, orderId, title, msgBranch);
+        sendWebPush(admin.id, {
+          title,
+          body: msgBranch,
+          tag: `order-${orderId}`,
+          url: '/admin'
+        }).catch(err => console.error('Admin push notification error:', err));
       }
     }
 

@@ -278,26 +278,34 @@ const CourierDashboard = () => {
                         <td>
                           <div style={{ display: 'flex', gap: 8 }}>
                             <button className="btn-detail" onClick={() => openDetail(order)}><FiInfo /> Detail</button>
-                            {order.status === 'menunggu' ? (
-                              <button 
-                                className="btn btn-sm" 
-                                style={{ background: '#3b82f6', color: 'white', padding: '4px 10px', fontSize: '0.75rem' }}
-                                onClick={() => updateStatus(order.id, 'pickup')}
-                              >
-                                <FiTruck /> Mulai Jemput
-                              </button>
-                            ) : (
-                              <button 
-                                className="btn btn-sm" 
-                                style={{ background: '#10b981', color: 'white', padding: '4px 10px', fontSize: '0.75rem' }}
-                                onClick={async () => {
+                            <select
+                              value={order.status}
+                              onChange={async (e) => {
+                                const nextStatus = e.target.value;
+                                if (nextStatus === 'proses') {
                                   const confirmRes = await showConfirm('Konfirmasi Jemput', 'Apakah Anda yakin pesanan laundry ini sudah dijemput?');
                                   if (confirmRes.isConfirmed) updateStatus(order.id, 'proses');
-                                }}
-                              >
-                                <FiCheckCircle /> Sudah Dijemput
-                              </button>
-                            )}
+                                } else {
+                                  updateStatus(order.id, nextStatus);
+                                }
+                              }}
+                              style={{
+                                padding: '6px 12px',
+                                borderRadius: '8px',
+                                border: '1px solid var(--border)',
+                                fontSize: '0.75rem',
+                                fontWeight: '600',
+                                color: 'var(--navy)',
+                                background: '#f8fafc',
+                                cursor: 'pointer',
+                                outline: 'none',
+                                boxShadow: 'var(--sh-sm)'
+                              }}
+                            >
+                              <option value="menunggu">Menunggu Dijemput</option>
+                              <option value="pickup">Sedang Dijemput</option>
+                              <option value="proses">Sudah Dijemput</option>
+                            </select>
                           </div>
                         </td>
                       </tr>
@@ -328,11 +336,35 @@ const CourierDashboard = () => {
                 <div style={{ fontSize: '0.82rem', color: 'var(--text-3)', marginBottom: 12 }}><FiMapPin /> {order.address}</div>
                 <div style={{ display: 'flex', gap: 10 }}>
                   <button className="btn btn-detail" onClick={() => openDetail(order)} style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}><FiInfo /> Detail</button>
-                  {order.status === 'menunggu' ? (
-                    <button className="btn" style={{ flex: 1.5, background: '#3b82f6', color: 'white', justifyContent: 'center', alignItems: 'center' }} onClick={() => updateStatus(order.id, 'pickup')}><FiTruck /> Mulai Jemput</button>
-                  ) : (
-                    <button className="btn" style={{ flex: 1.5, background: '#10b981', color: 'white', justifyContent: 'center', alignItems: 'center' }} onClick={async () => { const confirmRes = await showConfirm('Konfirmasi Jemput', 'Apakah Anda yakin pesanan laundry ini sudah dijemput?'); if (confirmRes.isConfirmed) updateStatus(order.id, 'proses'); }}><FiCheckCircle /> Dijemput</button>
-                  )}
+                  <select
+                    value={order.status}
+                    onChange={async (e) => {
+                      const nextStatus = e.target.value;
+                      if (nextStatus === 'proses') {
+                        const confirmRes = await showConfirm('Konfirmasi Jemput', 'Apakah Anda yakin pesanan laundry ini sudah dijemput?');
+                        if (confirmRes.isConfirmed) updateStatus(order.id, 'proses');
+                      } else {
+                        updateStatus(order.id, nextStatus);
+                      }
+                    }}
+                    style={{
+                      flex: 1.5,
+                      padding: '8px 12px',
+                      borderRadius: '8px',
+                      border: '1px solid var(--border)',
+                      fontSize: '0.8rem',
+                      fontWeight: '600',
+                      color: 'var(--navy)',
+                      background: '#f8fafc',
+                      cursor: 'pointer',
+                      outline: 'none',
+                      boxShadow: 'var(--sh-sm)'
+                    }}
+                  >
+                    <option value="menunggu">Menunggu Dijemput</option>
+                    <option value="pickup">Sedang Dijemput</option>
+                    <option value="proses">Sudah Dijemput</option>
+                  </select>
                 </div>
               </div>
             ))}
@@ -386,26 +418,48 @@ const CourierDashboard = () => {
                         <td>
                           <div style={{ display: 'flex', gap: 8 }}>
                             <button className="btn-detail" onClick={() => openDetail(order)}><FiInfo /> Detail</button>
-                            {order.status === 'sedang_diantar' ? (
-                              <button 
-                                className="btn btn-sm" 
-                                style={{ background: '#10b981', color: 'white', padding: '4px 10px', fontSize: '0.75rem' }}
-                                onClick={() => openDelivery(order)}
-                              >
-                                <FiCheckCircle /> Selesaikan & Upload Foto
-                              </button>
-                            ) : order.status === 'antar' ? (
-                              <button 
-                                className="btn btn-sm" 
-                                style={{ background: '#3b82f6', color: 'white', padding: '4px 10px', fontSize: '0.75rem' }}
-                                onClick={() => updateStatus(order.id, 'sedang_diantar')}
-                              >
-                                <FiTruck /> Mulai Antar
-                              </button>
+                            {order.status === 'proses' ? (
+                              <select disabled style={{
+                                padding: '6px 12px',
+                                borderRadius: '8px',
+                                border: '1px solid var(--border)',
+                                fontSize: '0.75rem',
+                                fontWeight: '600',
+                                color: '#94a3b8',
+                                background: '#f1f5f9',
+                                cursor: 'not-allowed',
+                                outline: 'none'
+                              }} value="proses">
+                                <option value="proses">Proses Cuci</option>
+                              </select>
                             ) : (
-                              <button className="btn btn-sm" disabled style={{ background: '#e2e8f0', color: '#94a3b8', cursor: 'not-allowed', padding: '4px 10px', fontSize: '0.75rem' }}>
-                                Menunggu Admin
-                              </button>
+                              <select
+                                value={order.status}
+                                onChange={async (e) => {
+                                  const nextStatus = e.target.value;
+                                  if (nextStatus === 'selesai') {
+                                    openDelivery(order);
+                                  } else {
+                                    updateStatus(order.id, nextStatus);
+                                  }
+                                }}
+                                style={{
+                                  padding: '6px 12px',
+                                  borderRadius: '8px',
+                                  border: '1px solid var(--border)',
+                                  fontSize: '0.75rem',
+                                  fontWeight: '600',
+                                  color: 'var(--navy)',
+                                  background: '#f8fafc',
+                                  cursor: 'pointer',
+                                  outline: 'none',
+                                  boxShadow: 'var(--sh-sm)'
+                                }}
+                              >
+                                <option value="antar">Menunggu Diantar</option>
+                                <option value="sedang_diantar">Sedang Diantar</option>
+                                <option value="selesai">Selesai (Kirim Bukti)</option>
+                              </select>
                             )}
                           </div>
                         </td>
@@ -450,26 +504,50 @@ const CourierDashboard = () => {
                 <div style={{ fontSize: '0.82rem', color: 'var(--text-3)', marginBottom: 12 }}><FiMapPin /> {order.address}</div>
                 <div style={{ display: 'flex', gap: 10 }}>
                   <button className="btn btn-detail" onClick={() => openDetail(order)} style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}><FiInfo /> Detail</button>
-                  {order.status === 'sedang_diantar' ? (
-                    <button 
-                      className="btn" 
-                      style={{ flex: 1.5, background: '#10b981', color: 'white', justifyContent: 'center', alignItems: 'center' }}
-                      onClick={() => openDelivery(order)}
-                    >
-                      <FiCheckCircle /> Selesaikan
-                    </button>
-                  ) : order.status === 'antar' ? (
-                    <button 
-                      className="btn" 
-                      style={{ flex: 1.5, background: '#3b82f6', color: 'white', justifyContent: 'center', alignItems: 'center' }}
-                      onClick={() => updateStatus(order.id, 'sedang_diantar')}
-                    >
-                      <FiTruck /> Mulai Antar
-                    </button>
+                  {order.status === 'proses' ? (
+                    <select disabled style={{
+                      flex: 1.5,
+                      padding: '8px 12px',
+                      borderRadius: '8px',
+                      border: '1px solid var(--border)',
+                      fontSize: '0.8rem',
+                      fontWeight: '600',
+                      color: '#94a3b8',
+                      background: '#f1f5f9',
+                      cursor: 'not-allowed',
+                      outline: 'none'
+                    }} value="proses">
+                      <option value="proses">Proses Cuci</option>
+                    </select>
                   ) : (
-                    <button className="btn" disabled style={{ flex: 1.5, background: '#e2e8f0', color: '#94a3b8', cursor: 'not-allowed', justifyContent: 'center', alignItems: 'center' }}>
-                      Menunggu
-                    </button>
+                    <select
+                      value={order.status}
+                      onChange={async (e) => {
+                        const nextStatus = e.target.value;
+                        if (nextStatus === 'selesai') {
+                          openDelivery(order);
+                        } else {
+                          updateStatus(order.id, nextStatus);
+                        }
+                      }}
+                      style={{
+                        flex: 1.5,
+                        padding: '8px 12px',
+                        borderRadius: '8px',
+                        border: '1px solid var(--border)',
+                        fontSize: '0.8rem',
+                        fontWeight: '600',
+                        color: 'var(--navy)',
+                        background: '#f8fafc',
+                        cursor: 'pointer',
+                        outline: 'none',
+                        boxShadow: 'var(--sh-sm)'
+                      }}
+                    >
+                      <option value="antar">Menunggu Diantar</option>
+                      <option value="sedang_diantar">Sedang Diantar</option>
+                      <option value="selesai">Selesai (Kirim Bukti)</option>
+                    </select>
                   )}
                 </div>
               </div>

@@ -723,6 +723,7 @@ router.put('/orders/:id/complete', uploadDelivery.single('photo'), idParamValida
         'INSERT INTO notifications (user_id, order_id, title, message) VALUES ($1, $2, $3, $4)',
         [user_id, orderId, 'Pesanan Selesai! 🎉', `Pesanan Anda #${order_code} telah selesai diproses oleh Admin. Terima kasih. (+10 Poin)`]
       );
+      sendWebPush(user_id, { title: 'Pesanan Selesai! 🎉', body: `Pesanan Anda #${order_code} telah selesai diproses oleh Admin. Terima kasih. (+10 Poin)` });
     }
 
     // Notify admins that the order is completed
@@ -752,6 +753,7 @@ router.put('/payments/validate/:id', idParamValidation, validate, async (req, re
         'INSERT INTO notifications (user_id, order_id, title, message) VALUES ($1, $2, $3, $4)',
         [user_id, orderId, 'Pembayaran Diterima ✅', `Pembayaran untuk pesanan Anda #${order_code} telah divalidasi dan diterima. Terima kasih!`]
       );
+      sendWebPush(user_id, { title: 'Pembayaran Diterima ✅', body: `Pembayaran untuk pesanan Anda #${order_code} telah divalidasi dan diterima. Terima kasih!` });
     }
 
     await client.query('COMMIT');

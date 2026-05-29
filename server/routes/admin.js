@@ -601,6 +601,7 @@ router.put('/orders/:id/validate-items', idParamValidation, validate, async (req
         'INSERT INTO notifications (user_id, order_id, title, message) VALUES ($1, $2, $3, $4)',
         [user_id, orderId, 'Menunggu Pembayaran 💳', msg]
       );
+      sendWebPush(user_id, { title: 'Menunggu Pembayaran 💳', body: msg });
     }
 
     await client.query('COMMIT');

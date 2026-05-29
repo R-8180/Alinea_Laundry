@@ -4876,6 +4876,18 @@ body.admin-mode {
   transition: all 0.5s ease;
 }
 
+.wa-frame .socmed-bg {
+  background: linear-gradient(135deg, #075e54 0%, #128c7e 40%, #25d366 100%);
+}
+
+.ig-frame .socmed-bg {
+  background: radial-gradient(circle at 30% 107%, #fdf497 0%, #fd5949 45%, #d6249f 70%, #285aeb 90%);
+}
+
+.tiktok-frame .socmed-bg {
+  background: linear-gradient(135deg, #010101 0%, #0c0c0c 45%, #fe2c55 80%, #25f4ee 100%);
+}
+
 .socmed-frame:hover .socmed-bg {
   filter: blur(6px) brightness(0.6);
   transform: scale(1.05);
@@ -5280,6 +5292,29 @@ body.admin-mode {
   color: #ef4444;
   background: rgba(239, 68, 68, 0.1);
 }
+
+.notif-item-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  font-size: 0.95rem;
+  align-self: flex-start;
+  margin-top: 2px;
+}
+
+@media (max-width: 768px) {
+  .notif-item-icon {
+    width: 36px;
+    height: 36px;
+    font-size: 1.05rem;
+    margin-top: 3px;
+  }
+}
+
 
 @media (max-width: 768px) {
   .notif-delete-btn {

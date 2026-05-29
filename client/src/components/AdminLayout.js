@@ -4,9 +4,23 @@ import axios from 'axios';
 import {
   FiHome, FiGrid, FiBarChart2, FiRotateCcw,
   FiLogOut, FiMenu, FiX, FiUsers, FiChevronDown, FiStar, FiTruck, FiBell, FiTrash2, FiHelpCircle, FiUser,
-  FiMessageCircle
+  FiMessageCircle, FiCheckCircle, FiCreditCard, FiClock, FiAlertCircle, FiPackage, FiInfo
 } from 'react-icons/fi';
 import { GiWashingMachine } from 'react-icons/gi';
+
+const getNotifIcon = (title = '') => {
+  const t = title.toLowerCase();
+  if (t.includes('selesai') || t.includes('diterima')) return { icon: <FiCheckCircle />, color: '#10b981' };
+  if (t.includes('diantar') || t.includes('kurir') || t.includes('pickup') || t.includes('jemput')) return { icon: <FiTruck />, color: '#3b82f6' };
+  if (t.includes('pembayaran') || t.includes('bayar') || t.includes('tagihan')) return { icon: <FiCreditCard />, color: '#6366f1' };
+  if (t.includes('menunggu') || t.includes('antre') || t.includes('estimasi')) return { icon: <FiClock />, color: '#f59e0b' };
+  if (t.includes('batal') || t.includes('overdue') || t.includes('gagal')) return { icon: <FiAlertCircle />, color: '#ef4444' };
+  if (t.includes('diproses') || t.includes('proses')) return { icon: <FiPackage />, color: '#8b5cf6' };
+  if (t.includes('pengumuman') || t.includes('broadcast')) return { icon: <FiInfo />, color: '#0ea5e9' };
+  if (t.includes('saran') || t.includes('kritik') || t.includes('feedback')) return { icon: <FiMessageCircle />, color: '#f59e0b' };
+  return { icon: <FiBell />, color: '#6366f1' };
+};
+
 
 const AdminLayout = ({ user, onLogout, children }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -329,81 +343,98 @@ const AdminLayout = ({ user, onLogout, children }) => {
                             Belum ada notifikasi baru
                           </div>
                         ) : (
-                          notifications.map(n => (
-                            <div
-                              key={n.id}
-                              className={`notif-item ${!n.is_read ? 'unread' : ''}`}
-                              style={{
-                                display: 'flex',
-                                justifyContent: 'space-between',
-                                alignItems: 'flex-start',
-                                padding: '12px 16px',
-                                borderBottom: '1px solid var(--border-light)',
-                                background: !n.is_read ? 'var(--sky-faint)' : 'transparent',
-                                transition: 'background 0.2s',
-                                position: 'relative'
-                              }}
-                            >
-                              <div className="notif-item-content" style={{ flex: 1, paddingRight: 10, textAlign: 'left' }}>
-                                <span className="notif-item-title" style={{
-                                  display: 'block',
-                                  fontSize: '0.85rem',
-                                  fontWeight: 700,
-                                  color: 'var(--navy)',
-                                  marginBottom: 2
-                                }}>
-                                  {n.title}
-                                </span>
-                                <p className="notif-item-msg" style={{
-                                  margin: 0,
-                                  fontSize: '0.78rem',
-                                  color: 'var(--text-2)',
-                                  lineHeight: 1.4
-                                }}>
-                                  {n.message}
-                                </p>
-                                <span className="notif-item-time" style={{
-                                  display: 'block',
-                                  fontSize: '0.68rem',
-                                  color: 'var(--text-3)',
-                                  marginTop: 4
-                                }}>
-                                  {new Date(n.created_at).toLocaleString('id-ID', {
-                                    day: 'numeric',
-                                    month: 'short',
-                                    hour: '2-digit',
-                                    minute: '2-digit'
-                                  })}
-                                </span>
-                              </div>
-                              <button
-                                onClick={(e) => deleteNotification(n.id, e)}
+                          notifications.map(n => {
+                            const notifIcon = getNotifIcon(n.title);
+                            return (
+                              <div
+                                key={n.id}
+                                className={`notif-item ${!n.is_read ? 'unread' : ''}`}
                                 style={{
-                                  background: 'none',
-                                  border: 'none',
-                                  color: 'var(--text-3)',
-                                  cursor: 'pointer',
-                                  padding: 4,
                                   display: 'flex',
-                                  alignItems: 'center',
-                                  justifyContent: 'center',
-                                  borderRadius: 4,
-                                  transition: 'all 0.2s'
+                                  justifyContent: 'space-between',
+                                  alignItems: 'flex-start',
+                                  padding: '12px 16px',
+                                  borderBottom: '1px solid var(--border-light)',
+                                  background: !n.is_read ? 'var(--sky-faint)' : 'transparent',
+                                  transition: 'background 0.2s',
+                                  position: 'relative',
+                                  gap: '12px'
                                 }}
-                                onMouseEnter={e => {
-                                  e.currentTarget.style.background = 'rgba(239, 68, 68, 0.1)';
-                                  e.currentTarget.style.color = 'var(--red)';
-                                }}
-                                onMouseLeave={e => {
-                                  e.currentTarget.style.background = 'none';
-                                  e.currentTarget.style.color = 'var(--text-3)';
-                                }}
-                                title="Hapus Notifikasi"
                               >
-                                <FiTrash2 size={13} />
-                              </button>
-                            </div>
-                          ))
+                                <div 
+                                  className="notif-item-icon" 
+                                  style={{ 
+                                    backgroundColor: `${notifIcon.color}15`, 
+                                    color: notifIcon.color,
+                                    marginTop: 0,
+                                    width: '28px',
+                                    height: '28px',
+                                    fontSize: '0.85rem'
+                                  }}
+                                >
+                                  {notifIcon.icon}
+                                </div>
+                                <div className="notif-item-content" style={{ flex: 1, paddingRight: 10, textAlign: 'left' }}>
+                                  <span className="notif-item-title" style={{
+                                    display: 'block',
+                                    fontSize: '0.85rem',
+                                    fontWeight: 700,
+                                    color: 'var(--navy)',
+                                    marginBottom: 2
+                                  }}>
+                                    {n.title}
+                                  </span>
+                                  <p className="notif-item-msg" style={{
+                                    margin: 0,
+                                    fontSize: '0.78rem',
+                                    color: 'var(--text-2)',
+                                    lineHeight: 1.4
+                                  }}>
+                                    {n.message}
+                                  </p>
+                                  <span className="notif-item-time" style={{
+                                    display: 'block',
+                                    fontSize: '0.68rem',
+                                    color: 'var(--text-3)',
+                                    marginTop: 4
+                                  }}>
+                                    {new Date(n.created_at).toLocaleString('id-ID', {
+                                      day: 'numeric',
+                                      month: 'short',
+                                      hour: '2-digit',
+                                      minute: '2-digit'
+                                    })}
+                                  </span>
+                                </div>
+                                <button
+                                  onClick={(e) => deleteNotification(n.id, e)}
+                                  style={{
+                                    background: 'none',
+                                    border: 'none',
+                                    color: 'var(--text-3)',
+                                    cursor: 'pointer',
+                                    padding: 4,
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    borderRadius: 4,
+                                    transition: 'all 0.2s'
+                                  }}
+                                  onMouseEnter={e => {
+                                    e.currentTarget.style.background = 'rgba(239, 68, 68, 0.1)';
+                                    e.currentTarget.style.color = 'var(--red)';
+                                  }}
+                                  onMouseLeave={e => {
+                                    e.currentTarget.style.background = 'none';
+                                    e.currentTarget.style.color = 'var(--text-3)';
+                                  }}
+                                  title="Hapus Notifikasi"
+                                >
+                                  <FiTrash2 size={13} />
+                                </button>
+                              </div>
+                            );
+                          })
                         )}
                       </div>
                     </div>

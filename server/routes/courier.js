@@ -48,15 +48,15 @@ router.get('/orders', async (req, res) => {
         if (nowMs > start.getTime() + ms) {
           pool.query(`
             INSERT INTO notifications (user_id, order_id, title, message)
-            SELECT $1, $2, 'Pesanan Overdue ⚠️', $3
+            SELECT $1, $2, 'Pesanan Overdue', $3
             WHERE NOT EXISTS (
-              SELECT 1 FROM notifications WHERE user_id = $1 AND order_id = $2 AND title = 'Pesanan Overdue ⚠️'
+              SELECT 1 FROM notifications WHERE user_id = $1 AND order_id = $2 AND title = 'Pesanan Overdue'
             )
           `, [req.user.id, order.id, `Pesanan #${order.order_code} telah melewati batas waktu estimasi. Mohon segera diselesaikan.`])
           .then((resDb) => {
             if (resDb.rowCount > 0) {
               sendWebPush(req.user.id, {
-                title: 'Pesanan Overdue ⚠️',
+                title: 'Pesanan Overdue',
                 body: `Pesanan #${order.order_code} telah melewati batas waktu estimasi. Mohon segera diselesaikan.`,
                 tag: `order-overdue-${order.id}`,
                 url: '/courier'
@@ -150,23 +150,23 @@ router.put('/orders/:id/status', async (req, res) => {
     if (orderInfo.rows.length > 0 && orderInfo.rows[0].user_id) {
       const { user_id, order_code } = orderInfo.rows[0];
       let msg = `Pesanan Anda #${order_code} sekarang berstatus: ${status.toUpperCase()}.`;
-      let title = 'Update Status Pesanan 🧺';
+      let title = 'Update Status Pesanan';
       
       if (status === 'menunggu') {
-        title = 'Menunggu Penjemputan ⏳';
-        msg = `Laundry Anda #${order_code} sedang dalam antrean penjemputan oleh kurir kami. Mohon ditunggu ya! 😊`;
+        title = 'Menunggu Penjemputan';
+        msg = `Laundry Anda #${order_code} sedang dalam antrean penjemputan oleh kurir kami. Mohon ditunggu ya!`;
       } else if (status === 'pickup') {
-        title = 'Kurir Menuju Lokasi 🛵';
-        msg = `Kurir sedang menuju lokasi Anda untuk menjemput laundry #${order_code}. Mohon bersiap ya! 🛵`;
+        title = 'Kurir Menuju Lokasi';
+        msg = `Kurir sedang menuju lokasi Anda untuk menjemput laundry #${order_code}. Mohon bersiap ya!`;
       } else if (status === 'proses') {
-        title = 'Laundry Sedang Diproses 🧼';
-        msg = `Laundry Anda #${order_code} sudah tiba di outlet dan sedang diproses higienis oleh tim kami. 🧼`;
+        title = 'Laundry Sedang Diproses';
+        msg = `Laundry Anda #${order_code} sudah tiba di outlet dan sedang diproses higienis oleh tim kami.`;
       } else if (status === 'antar') {
-        title = 'Menunggu Pengantaran 📦';
-        msg = `Laundry Anda #${order_code} sudah selesai diproses bersih & wangi, dan sedang mengantre untuk diantarkan kembali. 📦`;
+        title = 'Menunggu Pengantaran';
+        msg = `Laundry Anda #${order_code} sudah selesai diproses bersih & wangi, dan sedang mengantre untuk diantarkan kembali.`;
       } else if (status === 'sedang_diantar') {
-        title = 'Laundry Sedang Diantar 🛵';
-        msg = `Kabar baik! Kurir sedang dalam perjalanan mengantarkan laundry wangi Anda #${order_code} kembali ke alamat tujuan. Siap-siap ya! 🛵✨`;
+        title = 'Laundry Sedang Diantar';
+        msg = `Kabar baik! Kurir sedang dalam perjalanan mengantarkan laundry wangi Anda #${order_code} kembali ke alamat tujuan. Siap-siap ya!`;
       }
       
       await pool.query(
@@ -207,10 +207,10 @@ router.post('/orders/:id/deliver', uploadDelivery.single('photo'), async (req, r
       const { user_id, order_code } = orderInfo.rows[0];
       await pool.query(
         'INSERT INTO notifications (user_id, order_id, title, message) VALUES ($1, $2, $3, $4)',
-        [user_id, orderId, 'Pesanan Selesai! 🎉', `Pesanan Anda #${order_code} telah berhasil diantar dan selesai. Terima kasih.`]
+        [user_id, orderId, 'Pesanan Selesai', `Pesanan Anda #${order_code} telah berhasil diantar dan selesai. Terima kasih.`]
       );
       sendWebPush(user_id, { 
-        title: 'Pesanan Selesai! 🎉', 
+        title: 'Pesanan Selesai', 
         body: `Pesanan Anda #${order_code} telah berhasil diantar dan selesai. Terima kasih.`,
         tag: `order-${orderId}`,
         url: '/dashboard'

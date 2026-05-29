@@ -31,11 +31,11 @@ async function notifyAdmins(orderId, eventType) {
     let msgGlobal = '';
 
     if (eventType === 'new_order') {
-      title = 'Pesanan Baru 🆕';
+      title = 'Pesanan Baru';
       msgBranch = `Ada pesanan baru masuk #${order_code}`;
       msgGlobal = `Cabang ${bName} ada pesanan baru #${order_code}`;
     } else if (eventType === 'completed') {
-      title = 'Pesanan Selesai 🎉';
+      title = 'Pesanan Selesai';
       msgBranch = `Pesanan #${order_code} telah selesai`;
       msgGlobal = `Cabang ${bName} - Pesanan #${order_code} telah selesai`;
     } else {

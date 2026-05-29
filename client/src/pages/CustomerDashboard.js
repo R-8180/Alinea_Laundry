@@ -111,42 +111,32 @@ const CustomerDashboard = ({ user: propUser }) => {
   const renderDynamicSubtext = (order) => {
     let msg = '';
     let iconColor = 'var(--blue)';
-    let bgColor = 'var(--sky-pale)';
-    let borderColor = 'var(--sky)';
     
     switch (order.status) {
       case 'menunggu':
-        msg = 'Laundry Anda sedang dalam antrean penjemputan oleh kurir kami. Mohon ditunggu ya! 😊';
+        msg = 'Laundry Anda sedang dalam antrean penjemputan oleh kurir kami. Mohon ditunggu ya!';
         break;
       case 'pickup':
-        msg = 'Kurir kami sedang meluncur ke lokasi Anda untuk menjemput laundry. Mohon bersiap ya! 🛵';
+        msg = 'Kurir kami sedang meluncur ke lokasi Anda untuk menjemput laundry. Mohon bersiap ya!';
         iconColor = '#10b981';
-        bgColor = '#e6fcf0';
-        borderColor = '#a7f3d0';
         break;
       case 'proses':
-        msg = 'Laundry Anda sudah tiba di outlet dan sedang diproses dengan higienis oleh tim kami. 🧼';
+        msg = 'Laundry Anda sudah tiba di outlet dan sedang diproses dengan higienis oleh tim kami.';
         break;
       case 'antar':
-        msg = 'Laundry Anda telah selesai dicuci bersih & rapi! Sekarang sedang menunggu giliran pengantaran oleh kurir. 📦';
+        msg = 'Laundry Anda telah selesai dicuci bersih & rapi! Sekarang sedang menunggu giliran pengantaran oleh kurir.';
         break;
       case 'sedang_diantar':
-        msg = 'Kabar baik! Laundry Anda sedang dalam perjalanan diantarkan kembali ke lokasi Anda oleh kurir. Siap-siap menerima ya! 🛵✨';
+        msg = 'Kabar baik! Laundry Anda sedang dalam perjalanan diantarkan kembali ke lokasi Anda oleh kurir. Siap-siap menerima ya!';
         iconColor = '#10b981';
-        bgColor = '#e6fcf0';
-        borderColor = '#a7f3d0';
         break;
       case 'selesai':
-        msg = 'Laundry Anda telah sukses diterima dengan bersih dan wangi. Terima kasih telah mempercayakan Alinea Laundry! 🥰';
+        msg = 'Laundry Anda telah sukses diterima dengan bersih dan wangi. Terima kasih telah mempercayakan Alinea Laundry!';
         iconColor = '#10b981';
-        bgColor = '#e6fcf0';
-        borderColor = '#a7f3d0';
         break;
       case 'batal':
         msg = 'Pesanan ini telah dibatalkan. Hubungi admin jika terdapat kendala.';
         iconColor = '#ef4444';
-        bgColor = '#fee2e2';
-        borderColor = '#fca5a5';
         break;
       default:
         return null;
@@ -155,19 +145,16 @@ const CustomerDashboard = ({ user: propUser }) => {
     return (
       <div style={{
         marginTop: 16,
-        padding: '12px 16px',
-        borderRadius: 12,
-        background: bgColor,
-        border: `1px solid ${borderColor}`,
         display: 'flex',
-        alignItems: 'center',
-        gap: 12,
-        boxShadow: 'var(--sh-sm)'
+        alignItems: 'flex-start',
+        gap: 8,
+        fontSize: '0.85rem',
+        lineHeight: 1.4
       }}>
-        <div style={{ fontSize: '1.2rem', display: 'flex', alignItems: 'center', color: iconColor }}>
+        <div style={{ fontSize: '1.1rem', display: 'flex', alignItems: 'center', color: iconColor, marginTop: 2 }}>
           {order.status === 'proses' ? <FiDroplet /> : (order.status === 'selesai' ? <FiCheckCircle /> : (order.status === 'batal' ? <FiXCircle /> : <FiTruck />))}
         </div>
-        <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--navy)', fontWeight: 500, lineHeight: 1.4 }}>
+        <p style={{ margin: 0, color: 'var(--navy)', fontWeight: 500 }}>
           {msg}
         </p>
       </div>

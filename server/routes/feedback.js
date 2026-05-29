@@ -75,8 +75,8 @@ router.post('/', auth, async (req, res) => {
       const insertValues = [];
       const valuePlaceholders = [];
       let paramIndex = 1;
-      const title = 'Kritik & Saran Baru 💬';
-      const message = `${customerName} mengirim kritik & saran dengan rata-rata rating ${avgRating}⭐`;
+      const title = 'Kritik & Saran Baru';
+      const message = `${customerName} mengirim kritik & saran dengan rata-rata rating ${avgRating}`;
 
       for (const admin of admins) {
         valuePlaceholders.push(`($${paramIndex++}, $${paramIndex++}, $${paramIndex++})`);

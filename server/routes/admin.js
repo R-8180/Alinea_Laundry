@@ -621,10 +621,10 @@ router.put('/orders/:id/validate-items', idParamValidation, validate, async (req
       const msg = `Pesanan Anda #${order_code} telah divalidasi oleh Admin. Total tagihan: Rp ${total.toLocaleString('id-ID')}. Silakan segera lakukan pembayaran.`;
       await client.query(
         'INSERT INTO notifications (user_id, order_id, title, message) VALUES ($1, $2, $3, $4)',
-        [user_id, orderId, 'Menunggu Pembayaran 💳', msg]
+        [user_id, orderId, 'Menunggu Pembayaran', msg]
       );
       sendWebPush(user_id, {
-        title: 'Menunggu Pembayaran 💳',
+        title: 'Menunggu Pembayaran',
         body: msg,
         tag: `order-${orderId}`,
         url: '/dashboard'
@@ -658,28 +658,28 @@ router.put('/orders/:id/status', updateStatusValidation, validate, async (req, r
     if (orderInfo.rows.length > 0 && orderInfo.rows[0].user_id) {
       const { user_id, order_code } = orderInfo.rows[0];
       let msg = `Pesanan Anda #${order_code} sekarang berstatus: ${status.toUpperCase()}.`;
-      let title = 'Update Status Pesanan 🧺';
+      let title = 'Update Status Pesanan';
       
       if (status === 'menunggu') {
-        title = 'Menunggu Penjemputan ⏳';
-        msg = `Laundry Anda #${order_code} sedang dalam antrean penjemputan oleh kurir kami. Mohon ditunggu ya! 😊`;
+        title = 'Menunggu Penjemputan';
+        msg = `Laundry Anda #${order_code} sedang dalam antrean penjemputan oleh kurir kami. Mohon ditunggu ya!`;
       } else if (status === 'pickup') {
-        title = 'Kurir Menuju Lokasi 🛵';
-        msg = `Kurir sedang menuju lokasi Anda untuk menjemput laundry #${order_code}. Mohon bersiap ya! 🛵`;
+        title = 'Kurir Menuju Lokasi';
+        msg = `Kurir sedang menuju lokasi Anda untuk menjemput laundry #${order_code}. Mohon bersiap ya!`;
       } else if (status === 'proses') {
-        title = 'Laundry Sedang Diproses 🧼';
-        msg = `Laundry Anda #${order_code} sudah tiba di outlet dan sedang diproses higienis oleh tim kami. 🧼`;
+        title = 'Laundry Sedang Diproses';
+        msg = `Laundry Anda #${order_code} sudah tiba di outlet dan sedang diproses higienis oleh tim kami.`;
       } else if (status === 'antar') {
-        title = 'Menunggu Pengantaran 📦';
-        msg = `Laundry Anda #${order_code} sudah selesai diproses bersih & wangi, dan sedang mengantre untuk diantarkan kembali. 📦`;
+        title = 'Menunggu Pengantaran';
+        msg = `Laundry Anda #${order_code} sudah selesai diproses bersih & wangi, dan sedang mengantre untuk diantarkan kembali.`;
       } else if (status === 'sedang_diantar') {
-        title = 'Laundry Sedang Diantar 🛵';
-        msg = `Kabar baik! Kurir sedang dalam perjalanan mengantarkan laundry wangi Anda #${order_code} kembali ke alamat tujuan. Siap-siap ya! 🛵✨`;
+        title = 'Laundry Sedang Diantar';
+        msg = `Kabar baik! Kurir sedang dalam perjalanan mengantarkan laundry wangi Anda #${order_code} kembali ke alamat tujuan. Siap-siap ya!`;
       } else if (status === 'selesai') {
-        title = 'Laundry Selesai 🎉';
-        msg = `Laundry Anda #${order_code} telah sukses diterima dengan bersih dan wangi. Terima kasih! 🥰`;
+        title = 'Laundry Selesai';
+        msg = `Laundry Anda #${order_code} telah sukses diterima dengan bersih dan wangi. Terima kasih!`;
       } else if (status === 'batal') {
-        title = 'Pesanan Dibatalkan ❌';
+        title = 'Pesanan Dibatalkan';
         msg = `Pesanan Anda #${order_code} telah dibatalkan. Silakan hubungi admin jika terdapat kekeliruan.`;
       }
       
@@ -753,11 +753,12 @@ router.put('/orders/:id/complete', uploadDelivery.single('photo'), idParamValida
       await db.query('UPDATE users SET points = COALESCE(points, 0) + 10 WHERE id = $1', [user_id]);
       await db.query(
         'INSERT INTO notifications (user_id, order_id, title, message) VALUES ($1, $2, $3, $4)',
-        [user_id, orderId, 'Pesanan Selesai! 🎉', `Pesanan Anda #${order_code} telah selesai diproses oleh Admin. Terima kasih. (+10 Poin)`]
+        [user_id, orderId, 'Pesanan Selesai', `Pesanan Anda #${order_code} telah selesai diproses oleh Admin. Terima kasih. (+10 Poin)`]
       );
       sendWebPush(user_id, {
-        title: 'Pesanan Selesai! 🎉',
+        title: 'Pesanan Selesai',
         body: `Pesanan Anda #${order_code} telah selesai diproses oleh Admin. Terima kasih. (+10 Poin)`,
+
         tag: `order-${orderId}`,
         url: '/dashboard'
       }).catch(e => console.error('Complete order push error:', e));
@@ -788,11 +789,12 @@ router.put('/payments/validate/:id', idParamValidation, validate, async (req, re
       const { user_id, order_code } = orderInfo.rows[0];
       await client.query(
         'INSERT INTO notifications (user_id, order_id, title, message) VALUES ($1, $2, $3, $4)',
-        [user_id, orderId, 'Pembayaran Diterima ✅', `Pembayaran untuk pesanan Anda #${order_code} telah divalidasi dan diterima. Terima kasih!`]
+        [user_id, orderId, 'Pembayaran Diterima', `Pembayaran untuk pesanan Anda #${order_code} telah divalidasi dan diterima. Terima kasih!`]
       );
       sendWebPush(user_id, {
-        title: 'Pembayaran Diterima ✅',
+        title: 'Pembayaran Diterima',
         body: `Pembayaran untuk pesanan Anda #${order_code} telah divalidasi dan diterima. Terima kasih!`,
+
         tag: `order-${orderId}`,
         url: '/dashboard'
       }).catch(e => console.error('Validate payment push error:', e));

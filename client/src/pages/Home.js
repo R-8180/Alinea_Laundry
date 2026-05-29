@@ -595,7 +595,7 @@ const SocialMediaSection = () => {
 
     <div className="social-media-grid-new">
       <a href={`https://wa.me/${wa}`} target="_blank" rel="noreferrer" className="socmed-frame wa-frame">
-        <div className="socmed-bg" style={{ backgroundImage: "url('/images/socmed-wa.png')" }}></div>
+        <div className="socmed-bg"></div>
         <div className="socmed-overlay">
           <FaWhatsapp className="socmed-main-icon" style={{ color: '#25D366' }} />
           <div className="socmed-text">
@@ -607,7 +607,7 @@ const SocialMediaSection = () => {
       </a>
       
       <a href={ig} target="_blank" rel="noreferrer" className="socmed-frame ig-frame">
-        <div className="socmed-bg" style={{ backgroundImage: "url('/images/socmed-ig.png')" }}></div>
+        <div className="socmed-bg"></div>
         <div className="socmed-overlay">
           <div className="socmed-main-icon instagram-gradient-icon">
             <FaInstagram style={{ fill: 'url(#ig-grad)' }} />
@@ -621,7 +621,7 @@ const SocialMediaSection = () => {
       </a>
       
       <a href={tiktok} target="_blank" rel="noreferrer" className="socmed-frame tiktok-frame">
-        <div className="socmed-bg" style={{ backgroundImage: "url('/images/socmed-tiktok.png')" }}></div>
+        <div className="socmed-bg"></div>
         <div className="socmed-overlay">
           <FaTiktok className="socmed-main-icon" style={{ color: '#fff', filter: 'drop-shadow(2px 2px 0px #ff0050) drop-shadow(-2px -2px 0px #00f2fe)' }} />
           <div className="socmed-text">

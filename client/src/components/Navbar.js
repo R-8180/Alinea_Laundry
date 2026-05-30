@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
+import Swal from 'sweetalert2';
 import {
   FiHome, FiGrid, FiLogOut, FiLogIn, FiUserPlus,
   FiSearch, FiStar, FiMessageCircle, FiClipboard, FiMapPin,
@@ -57,6 +58,33 @@ const Navbar = ({ user, onLogout }) => {
   const navigate = useNavigate();
   const location = useLocation();
 
+  const seenNotifIds = useRef(new Set());
+  const initialLoadDone = useRef(false);
+
+  // Audio synthesizer chime helper
+  const playNotificationChime = () => {
+    try {
+      const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      const playTone = (freq, startTime, duration) => {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, startTime);
+        gain.gain.setValueAtTime(0.15, startTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start(startTime);
+        osc.stop(startTime + duration);
+      };
+      const now = audioCtx.currentTime;
+      playTone(698.46, now, 0.15); // F5
+      playTone(880.00, now + 0.12, 0.3); // A5
+    } catch (err) {
+      console.error('Failed to play synthesized notification chime:', err);
+    }
+  };
+
   const isPublicPage = ['/', '/login', '/register'].includes(location.pathname);
 
   const isActive = (path, tabName = null) => {
@@ -79,7 +107,56 @@ const Navbar = ({ user, onLogout }) => {
       const res = await axios.get('/api/notifications', {
         headers: { Authorization: `Bearer ${token}` }
       });
-      setNotifications(res.data);
+
+      const fetchedNotifs = res.data || [];
+      
+      // If this is not the first load, check for newly added unread notifications
+      if (initialLoadDone.current) {
+        let hasNewUnread = false;
+        
+        fetchedNotifs.forEach(n => {
+          if (!n.is_read && !seenNotifIds.current.has(n.id)) {
+            hasNewUnread = true;
+            
+            // Show premium SweetAlert2 Toast alert
+            const Toast = Swal.mixin({
+              toast: true,
+              position: 'top-end',
+              showConfirmButton: false,
+              timer: 4500,
+              timerProgressBar: true,
+              didOpen: (toast) => {
+                toast.addEventListener('mouseenter', Swal.stopTimer);
+                toast.addEventListener('mouseleave', Swal.resumeTimer);
+              }
+            });
+
+            Toast.fire({
+              icon: 'info',
+              title: `<span style="font-family: 'Outfit', sans-serif; font-weight: 700; color: var(--navy);">${n.title || 'Notifikasi Baru'}</span>`,
+              html: `<span style="font-family: 'Inter', sans-serif; font-size: 0.85rem; color: var(--text-3);">${n.message}</span>`,
+              background: '#ffffff',
+              iconColor: 'var(--blue)',
+              customClass: {
+                popup: 'swal-premium-popup-toast'
+              }
+            });
+          }
+        });
+
+        if (hasNewUnread) {
+          playNotificationChime();
+        }
+      } else {
+        initialLoadDone.current = true;
+      }
+
+      // Sync seen IDs
+      fetchedNotifs.forEach(n => {
+        seenNotifIds.current.add(n.id);
+      });
+
+      setNotifications(fetchedNotifs);
     } catch (err) {
       console.error('Fetch notifications error:', err);
     }
@@ -134,7 +211,11 @@ const Navbar = ({ user, onLogout }) => {
       return () => clearInterval(interval);
     } else {
       setNotifications([]);
+      // Reset tracker on logout/role change
+      seenNotifIds.current = new Set();
+      initialLoadDone.current = false;
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
   const renderBellDropdown = (isMobile) => {

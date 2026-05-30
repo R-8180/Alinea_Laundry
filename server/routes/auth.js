@@ -188,6 +188,7 @@ router.post('/forgot-password', async (req, res) => {
     `;
 
     // Kirim email menggunakan Resend API via fetch (Node 18+ global fetch)
+    const fromEmail = process.env.RESEND_FROM_EMAIL || 'no-reply@alinealaundry.web.id';
     try {
       const response = await fetch('https://api.resend.com/emails', {
         method: 'POST',
@@ -196,7 +197,7 @@ router.post('/forgot-password', async (req, res) => {
           'Authorization': `Bearer ${resendApiKey}`
         },
         body: JSON.stringify({
-          from: 'Alinea Laundry <no-reply@alinealaundry.web.id>',
+          from: `Alinea Laundry <${fromEmail}>`,
           to: [email],
           subject: 'Atur Ulang Kata Sandi - Alinea Laundry',
           html: emailHtml

@@ -20,7 +20,14 @@ const ForgotPassword = () => {
     } catch (err) {
       closeLoading();
       const data = err.response?.data;
-      const msg = data?.message || data?.error || 'Terjadi kesalahan. Silakan coba lagi.';
+      let msg = 'Terjadi kesalahan. Silakan coba lagi.';
+      if (data) {
+        if (typeof data.message === 'string') msg = data.message;
+        else if (data.message && typeof data.message.message === 'string') msg = data.message.message;
+        else if (typeof data.error === 'string') msg = data.error;
+        else if (data.error && typeof data.error.message === 'string') msg = data.error.message;
+        else if (typeof data === 'string') msg = data;
+      }
       showError('Gagal Meminta Reset', msg);
     }
   };

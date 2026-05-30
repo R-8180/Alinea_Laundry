@@ -63,8 +63,16 @@ pool.query(`
       ON push_subscriptions ((subscription->>'endpoint'));
     `);
     console.log('✅ Unique index on push_subscriptions endpoint verified/created');
+
+    // Auto-migration untuk fitur Lupa Sandi
+    await pool.query(`
+      ALTER TABLE users 
+      ADD COLUMN IF NOT EXISTS reset_token VARCHAR(255),
+      ADD COLUMN IF NOT EXISTS reset_token_expires TIMESTAMP;
+    `);
+    console.log('✅ Users table extended with reset token columns');
   } catch (indexErr) {
-    console.error('❌ Error creating unique index on push_subscriptions:', indexErr);
+    console.error('❌ Error running database startup migrations:', indexErr);
   }
 }).catch(err => {
   console.error('❌ Error verifying push_subscriptions table:', err);

@@ -21,6 +21,8 @@ const CourierDashboard   = lazy(() => import('./pages/CourierDashboard'));
 const OrderHistory       = lazy(() => import('./pages/OrderHistory'));
 const CourierHistory     = lazy(() => import('./pages/CourierHistory'));
 const ServicesManagement = lazy(() => import('./pages/ServicesManagement'));
+const ForgotPassword     = lazy(() => import('./pages/ForgotPassword'));
+const ResetPassword      = lazy(() => import('./pages/ResetPassword'));
 
 // Fallback saat chunk sedang di-download
 const PageLoader = () => (
@@ -203,6 +205,8 @@ function App() {
         <Route path="/" element={<Home />} />
         <Route path="/login" element={!user ? <Login onLogin={handleLogin} /> : <Navigate to="/dashboard" />} />
         <Route path="/register" element={!user ? <Register /> : <Navigate to="/dashboard" />} />
+        <Route path="/forgot-password" element={!user ? <Suspense fallback={<PageLoader />}><ForgotPassword /></Suspense> : <Navigate to="/dashboard" />} />
+        <Route path="/reset-password" element={!user ? <Suspense fallback={<PageLoader />}><ResetPassword /></Suspense> : <Navigate to="/dashboard" />} />
         
         <Route path="/history" element={user ? <Suspense fallback={<PageLoader />}><OrderHistory /></Suspense> : <Navigate to="/login" />} />
         <Route path="/courier/history" element={user?.role === 'courier' ? <AdminLayout user={user} onLogout={handleLogout}><Suspense fallback={<PageLoader />}><CourierHistory /></Suspense></AdminLayout> : <Navigate to="/login" />} />

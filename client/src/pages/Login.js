@@ -5,8 +5,6 @@ import { FiMail, FiLock, FiEye, FiEyeOff, FiArrowLeft } from 'react-icons/fi';
 import { showError, showLoading, closeLoading } from '../utils/swal';
 import { FcGoogle } from 'react-icons/fc';
 
-const ADMIN_WA_NUMBER = '6281234567890'; // Ganti dengan nomor WA admin yang sebenarnya
-
 const Login = ({ onLogin }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -35,10 +33,7 @@ const Login = ({ onLogin }) => {
   };
 
   const handleForgotPassword = () => {
-    const waMessage = encodeURIComponent(
-      `Halo Admin Alinea Laundry,\n\nSaya lupa password akun saya.\nEmail: ${email || '(belum diisi)'}\n\nMohon bantu reset password saya. Terima kasih.`
-    );
-    window.open(`https://wa.me/${ADMIN_WA_NUMBER}?text=${waMessage}`, '_blank');
+    navigate('/forgot-password');
   };
 
   return (

@@ -6,6 +6,7 @@ const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const { registerValidation, loginValidation, validate } = require('../utils/validators');
 const authMiddleware = require('../middleware/auth');
+const { loginLimiter, registerLimiter } = require('../middleware/rateLimiter');
 
 if (!process.env.JWT_SECRET) {
   throw new Error('JWT_SECRET must be defined');
@@ -14,7 +15,7 @@ if (!process.env.JWT_SECRET) {
 const SECRET = process.env.JWT_SECRET;
 
 // Register
-router.post('/register', registerValidation, validate, async (req, res) => {
+router.post('/register', registerLimiter, registerValidation, validate, async (req, res) => {
   const { name, email, password, address, address_note, phone, lat, lng, is_primary } = req.body;
   
   try {
@@ -64,7 +65,7 @@ router.post('/register', registerValidation, validate, async (req, res) => {
 });
 
 // Login
-router.post('/login', loginValidation, validate, async (req, res) => {
+router.post('/login', loginLimiter, loginValidation, validate, async (req, res) => {
   const { email, password } = req.body;
   
   try {
@@ -84,10 +85,11 @@ router.post('/login', loginValidation, validate, async (req, res) => {
       return res.status(401).json({ message: 'Email atau password salah' });
     }
     
+    const expiresIn = user.role === 'customer' ? '30d' : '8h';
     const token = jwt.sign(
       { id: user.id, email: user.email, role: user.role, branch_id: user.branch_id },
       SECRET,
-      { expiresIn: '2h' } // 2 hours
+      { expiresIn }
     );
     
     res.json({ token, user: { id: user.id, name: user.name, email: user.email, phone: user.phone, role: user.role, branch_id: user.branch_id } });

@@ -26,7 +26,7 @@ const apiLimiter = rateLimit({
 // ──────────────────────────────────────────────────────────────────────
 const loginLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 menit
-  max: 5, // Maks 5 percobaan login gagal per 15 menit
+  max: 30, // Maks 30 percobaan login gagal per 15 menit (lebih longgar untuk admin)
   skipSuccessfulRequests: true, // Tidak menghitung login yang berhasil
   message: { error: 'Terlalu banyak percobaan login gagal. Akun dikunci sementara selama 15 menit.' },
   standardHeaders: true,

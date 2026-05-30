@@ -20,7 +20,15 @@ router.post('/:orderId/upload', auth, uploadLimiter, uploadPayment.single('proof
   }
 
   try {
-    // Start transaction if needed, but here simple queries are fine
+    // Validasi kepemilikan order (Anti-IDOR)
+    const ownerCheck = await pool.query(
+      'SELECT id FROM orders WHERE id = $1 AND user_id = $2',
+      [orderId, req.user.id]
+    );
+    if (ownerCheck.rows.length === 0) {
+      return res.status(403).json({ message: 'Order tidak ditemukan atau bukan milik Anda ❌' });
+    }
+
     // PostgreSQL UPSERT equivalent
     await pool.query(
       `INSERT INTO payments (order_id, payment_proof) 

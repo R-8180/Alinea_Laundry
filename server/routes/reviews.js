@@ -6,6 +6,15 @@ const auth = require('../middleware/auth');
 router.post('/', auth, async (req, res) => {
   const { order_id, rating, comment } = req.body;
   try {
+    // Validasi kepemilikan order dan status 'selesai' (Anti-IDOR & Alur Bisnis)
+    const orderCheck = await pool.query(
+      `SELECT id FROM orders WHERE id = $1 AND user_id = $2 AND status = 'selesai'`,
+      [order_id, req.user.id]
+    );
+    if (orderCheck.rows.length === 0) {
+      return res.status(403).json({ message: 'Order tidak ditemukan, bukan milik Anda, atau belum selesai ❌' });
+    }
+
     await pool.query(
       `INSERT INTO reviews (order_id, rating, comment) 
        VALUES ($1, $2, $3) 
@@ -15,7 +24,8 @@ router.post('/', auth, async (req, res) => {
     );
     res.json({ message: 'Review disimpan' });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error('Review submission error:', err);
+    res.status(500).json({ error: 'Server error' });
   }
 });
 

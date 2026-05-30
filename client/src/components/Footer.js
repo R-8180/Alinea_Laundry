@@ -9,31 +9,31 @@ const Footer = () => {
     {
       name: 'Cabang Talangsari (Pusat)',
       address: 'Jl. Talangsari No.36A, Bendan Duwur, Kec. Gajahmungkur, Kota Semarang',
-      phone: '0812-2788-4654',
+      phone: '0878-3119-7676',
       mapLink: 'https://maps.app.goo.gl/wS7tWexyX48c66Q66',
       isMain: true
     },
     {
       name: 'Cabang Unnes (Gunungpati)',
       address: 'Jl. Sekarang No.10, Sekaran, Kec. Gunungpati, Kota Semarang',
-      phone: '0812-2788-4655',
+      phone: '0878-3119-7676',
       mapLink: 'https://maps.google.com/?q=Alinea+Laundry+Sekaran+Unnes',
       isMain: false
     },
     {
       name: 'Cabang Tlogosari (Pedurungan)',
       address: 'Jl. Tlogosari Raya No.24, Muktiharjo Kidul, Kec. Pedurungan, Kota Semarang',
-      phone: '0812-2788-4656',
+      phone: '0878-3119-7676',
       mapLink: 'https://maps.google.com/?q=Alinea+Laundry+Tlogosari+Pedurungan',
       isMain: false
     }
   ];
 
   const admins = [
-    { name: 'Admin 1 (Talangsari)', phone: '0812-2788-4654', waLink: 'https://wa.me/6281227884654' },
-    { name: 'Admin 2 (Unnes)', phone: '0812-2788-4655', waLink: 'https://wa.me/6281227884655' },
-    { name: 'Admin 3 (Tlogosari)', phone: '0812-2788-4656', waLink: 'https://wa.me/6281227884656' },
-    { name: 'Admin 4 (Express & Pickup)', phone: '0812-2788-4657', waLink: 'https://wa.me/6281227884657' },
+    { name: 'Admin Pusat (Talangsari)', phone: '0878-3119-7676', waLink: 'https://wa.me/6287831197676' },
+    { name: 'Admin Cabang (Unnes)', phone: '0878-3119-7676', waLink: 'https://wa.me/6287831197676' },
+    { name: 'Admin Cabang (Tlogosari)', phone: '0878-3119-7676', waLink: 'https://wa.me/6287831197676' },
+    { name: 'Layanan Express & Pickup', phone: '0878-3119-7676', waLink: 'https://wa.me/6287831197676' },
   ];
 
   return (

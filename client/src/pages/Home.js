@@ -335,7 +335,7 @@ const LayananSection = () => (
 const ParfumShop = () => {
   const cms = React.useContext(CMSContext);
   const currentParfums = cms?.parfumList?.length ? cms.parfumList : parfumList;
-  const waNumber = '6281234567890';
+  const waNumber = '6287831197676';
   const handleBuy = (parfum) => {
     const msg = `Halo, saya ingin beli parfum ${parfum.name}.`;
     window.open(`https://wa.me/${waNumber}?text=${encodeURIComponent(msg)}`, '_blank');
@@ -571,7 +571,7 @@ const HowToOrderSection = () => {
 
 const SocialMediaSection = () => {
   const cms = React.useContext(CMSContext);
-  const wa = cms?.waNumber || '6281234567890';
+  const wa = cms?.waNumber || '6287831197676';
   const ig = cms?.igLink || 'https://instagram.com/alinealaundry';
   const tiktok = cms?.tiktokLink || 'https://tiktok.com/@alinealaundry';
 

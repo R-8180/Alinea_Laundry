@@ -19,6 +19,9 @@ axios.defaults.baseURL = process.env.REACT_APP_API_URL || '';
 let activeRequests = 0;
 
 axios.interceptors.request.use(config => {
+  if (config.silent) {
+    return config;
+  }
   if (activeRequests === 0) {
     NProgress.start();
   }
@@ -29,6 +32,9 @@ axios.interceptors.request.use(config => {
 });
 
 axios.interceptors.response.use(response => {
+  if (response.config && response.config.silent) {
+    return response;
+  }
   activeRequests--;
   if (activeRequests <= 0) {
     activeRequests = 0;
@@ -36,10 +42,14 @@ axios.interceptors.response.use(response => {
   }
   return response;
 }, error => {
-  activeRequests--;
-  if (activeRequests <= 0) {
-    activeRequests = 0;
-    NProgress.done();
+  if (error.config && error.config.silent) {
+    // Skip decrementing activeRequests and calling NProgress.done()
+  } else {
+    activeRequests--;
+    if (activeRequests <= 0) {
+      activeRequests = 0;
+      NProgress.done();
+    }
   }
 
   // Tangani kedaluwarsa sesi global (401 / 403)

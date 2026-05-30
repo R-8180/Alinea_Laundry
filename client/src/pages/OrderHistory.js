@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { showSuccess, showError } from '../utils/swal';
 import {
-  FiPackage, FiCheckCircle, FiClock, FiFileText, FiCamera, FiCopy,
+  FiPackage, FiCheckCircle, FiFileText, FiCamera, FiCopy,
   FiTruck, FiChevronDown, FiArrowLeft, FiInfo, FiMessageCircle, FiZap, FiMapPin
 } from 'react-icons/fi';
 import { Link } from 'react-router-dom';
@@ -63,6 +63,23 @@ const AccordionItem = ({ icon, label, children, hasContent }) => {
   );
 };
 
+const HistoryCardSkeleton = () => (
+  <div className="skeleton-card" style={{ marginBottom: 12 }}>
+    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 12 }}>
+      <div className="skeleton" style={{ width: 130, height: 24 }} />
+      <div className="skeleton-text" style={{ width: 90 }} />
+    </div>
+    <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
+      <div className="skeleton" style={{ width: 110, height: 22 }} />
+      <div className="skeleton" style={{ width: 80, height: 22 }} />
+    </div>
+    <div style={{ display: 'flex', justifyContent: 'space-between', paddingTop: 12, borderTop: '1px dashed #e5e7eb' }}>
+      <div className="skeleton" style={{ width: 90, height: 24 }} />
+      <div className="skeleton" style={{ width: 70, height: 32 }} />
+    </div>
+  </div>
+);
+
 const OrderHistory = () => {
   const [orders, setOrders] = useState([]);
   const [showAll, setShowAll] = useState(false);
@@ -120,7 +137,11 @@ const OrderHistory = () => {
         </div>
 
         {loading ? (
-          <div style={{ textAlign: 'center', padding: 40, color: 'var(--text-4)' }}><FiClock style={{marginRight: 8}} />Memuat riwayat...</div>
+          <>
+            <HistoryCardSkeleton />
+            <HistoryCardSkeleton />
+            <HistoryCardSkeleton />
+          </>
         ) : visibleOrders.length === 0 ? (
           <div className="card" style={{ textAlign: 'center', padding: '40px 20px' }}>
             <FiCheckCircle style={{ fontSize: '3rem', color: '#cbd5e1', marginBottom: 12 }} />
@@ -128,7 +149,7 @@ const OrderHistory = () => {
             <Link to="/order" className="btn">Buat Pesanan Baru</Link>
           </div>
         ) : (
-          <div className="history-list" style={{ display: 'block' }}>
+          <div className="history-list content-fade-in" style={{ display: 'block' }}>
             {visibleOrders.map(order => (
               <div key={order.id} className="mobile-order-card" style={{ opacity: 0.9, position: 'relative', overflow: 'hidden' }}>
                 {/* Header */}

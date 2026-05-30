@@ -109,6 +109,7 @@ let cachedCustomerOrders = null;
 
 const CustomerDashboard = ({ user: propUser }) => {
   const [orders, setOrders] = useState(cachedCustomerOrders || []);
+  const [ordersLoading, setOrdersLoading] = useState(!cachedCustomerOrders);
   const [paymentModal, setPaymentModal] = useState(null);
   const [detailModal, setDetailModal] = useState(null);
 
@@ -258,6 +259,9 @@ const CustomerDashboard = ({ user: propUser }) => {
       setOrders(res.data);
       cachedCustomerOrders = res.data; // Simpan di cache
     } catch {}
+    finally {
+      setOrdersLoading(false);
+    }
   };
 
   const fetchVoucherStatus = async () => {
@@ -496,6 +500,44 @@ const CustomerDashboard = ({ user: propUser }) => {
     );
   };
 
+  const OrderCardSkeleton = () => (
+    <div className="skeleton-card">
+      {/* Header: kode order + tanggal */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16 }}>
+        <div className="skeleton" style={{ width: 120, height: 28 }} />
+        <div className="skeleton-text" style={{ width: 80 }} />
+      </div>
+      {/* Badge status + layanan */}
+      <div style={{ display: 'flex', gap: 8, marginBottom: 20 }}>
+        <div className="skeleton" style={{ width: 130, height: 26 }} />
+        <div className="skeleton" style={{ width: 160, height: 26 }} />
+      </div>
+      {/* Progress bar */}
+      <div style={{ marginBottom: 16 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+          {[...Array(5)].map((_, i) => (
+            <div key={i} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
+              <div className="skeleton" style={{ width: 28, height: 28, borderRadius: '50%' }} />
+              <div className="skeleton-text" style={{ width: 50 }} />
+            </div>
+          ))}
+        </div>
+        <div className="skeleton" style={{ width: '100%', height: 6, borderRadius: 99 }} />
+      </div>
+      {/* Footer: total + tombol */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 16, borderTop: '1px dashed #e5e7eb' }}>
+        <div>
+          <div className="skeleton-text" style={{ width: 60, marginBottom: 6 }} />
+          <div className="skeleton" style={{ width: 100, height: 24 }} />
+        </div>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <div className="skeleton" style={{ width: 80, height: 36 }} />
+          <div className="skeleton" style={{ width: 100, height: 36 }} />
+        </div>
+      </div>
+    </div>
+  );
+
   return (
     <div className="customer-dashboard">
       {/* Welcome Banner */}
@@ -505,7 +547,15 @@ const CustomerDashboard = ({ user: propUser }) => {
             <h2>Halo, <span className="highlight">{user.name || 'Customer'}! </span></h2>
             <p>Kelola pesanan laundry kamu dengan mudah di sini.</p>
           </div>
-          {voucherStatus && (
+          {voucherStatus === null ? (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, background: 'rgba(255,255,255,0.15)', borderRadius: 16, padding: '12px 16px' }}>
+              <div className="skeleton" style={{ width: 40, height: 40, borderRadius: '50%', opacity: 0.5 }} />
+              <div>
+                <div className="skeleton-text" style={{ width: 80, marginBottom: 6, background: 'rgba(255,255,255,0.3)' }} />
+                <div className="skeleton" style={{ width: 60, height: 20, background: 'rgba(255,255,255,0.3)' }} />
+              </div>
+            </div>
+          ) : (
             <div className="dashboard-points-card">
                <div className="dashboard-points-info">
                  <div className="dashboard-points-icon-wrapper">
@@ -613,17 +663,24 @@ const CustomerDashboard = ({ user: propUser }) => {
              </div>
 
             {/* Order List */}
-            {ongoing.length === 0 && (
-              <div className="card" style={{ textAlign: 'center', padding: '40px 20px' }}>
-                <FiPackage style={{ fontSize: '2.5rem', color: 'var(--text-4)', marginBottom: 12 }} />
-                <p style={{ color: 'var(--text-3)', marginBottom: 16 }}>Belum ada order aktif.</p>
-                <button className="btn" onClick={() => navigate('/order')}><FiPlus /> Buat Order Pertama</button>
-              </div>
-            )}
-
-            {ongoing.map(order => (
-              <OrderCard key={order.id} order={order} />
-            ))}
+            {ordersLoading ? (
+               <>
+                 <OrderCardSkeleton />
+                 <OrderCardSkeleton />
+               </>
+             ) : ongoing.length === 0 ? (
+               <div className="card" style={{ textAlign: 'center', padding: '40px 20px' }}>
+                 <FiPackage style={{ fontSize: '2.5rem', color: 'var(--text-4)', marginBottom: 12 }} />
+                 <p style={{ color: 'var(--text-3)', marginBottom: 16 }}>Belum ada order aktif.</p>
+                 <button className="btn" onClick={() => navigate('/order')}><FiPlus /> Buat Order Pertama</button>
+               </div>
+             ) : (
+               <div className="content-fade-in">
+                 {ongoing.map(order => (
+                   <OrderCard key={order.id} order={order} />
+                 ))}
+               </div>
+             )}
           </>
         ) : (
           <ProfileTab user={user} />

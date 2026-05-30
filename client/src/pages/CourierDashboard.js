@@ -128,8 +128,24 @@ const getRemainingMs = (order) => {
   return deadline - Date.now();
 };
 
+const CourierCardSkeleton = () => (
+  <div className="skeleton-card">
+    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 12 }}>
+      <div className="skeleton" style={{ width: 130, height: 26 }} />
+      <div className="skeleton" style={{ width: 80, height: 22, borderRadius: 99 }} />
+    </div>
+    <div className="skeleton-text" style={{ width: '70%', marginBottom: 8 }} />
+    <div className="skeleton-text" style={{ width: '50%', marginBottom: 16 }} />
+    <div style={{ display: 'flex', gap: 8 }}>
+      <div className="skeleton" style={{ flex: 1, height: 40 }} />
+      <div className="skeleton" style={{ flex: 1, height: 40 }} />
+    </div>
+  </div>
+);
+
 const CourierDashboard = () => {
   const [orders, setOrders] = useState([]);
+  const [ordersLoading, setOrdersLoading] = useState(true);
   const [detailModal, setDetailModal] = useState(null);
   const [pickupModal, setPickupModal] = useState(null);
   const [pickupPhoto, setPickupPhoto] = useState(null);
@@ -172,6 +188,8 @@ const CourierDashboard = () => {
       setOrders(res.data);
     } catch (err) {
       console.error('Gagal ambil order:', err);
+    } finally {
+      setOrdersLoading(false);
     }
   };
 
@@ -267,7 +285,9 @@ const CourierDashboard = () => {
                   <tr><th>Order</th><th>Pelanggan</th><th>Alamat</th><th>Aksi</th></tr>
                 </thead>
                 <tbody>
-                  {orders.filter(o => o.status === 'pickup' || o.status === 'menunggu').length === 0 ? (
+                  {ordersLoading ? (
+                    <tr><td colSpan="4" className="empty-cell"><div className="skeleton-text" style={{ width: '40%', margin: '0 auto' }} /></td></tr>
+                  ) : orders.filter(o => o.status === 'pickup' || o.status === 'menunggu').length === 0 ? (
                     <tr><td colSpan="4" className="empty-cell">Tidak ada jemputan saat ini</td></tr>
                   ) : (
                     orders.filter(o => o.status === 'pickup' || o.status === 'menunggu').map(order => (
@@ -317,9 +337,16 @@ const CourierDashboard = () => {
           </div>
 
           <div className="mobile-order-list mobile-only">
-            {orders.filter(o => o.status === 'pickup' || o.status === 'menunggu').length === 0 ? (
+            {ordersLoading ? (
+              <>
+                <CourierCardSkeleton />
+                <CourierCardSkeleton />
+              </>
+            ) : orders.filter(o => o.status === 'pickup' || o.status === 'menunggu').length === 0 ? (
               <div style={{ textAlign: 'center', padding: 24, color: 'var(--text-4)', background: 'white', borderRadius: 12, border: '1px dashed var(--border)' }}>Tidak ada jemputan</div>
-            ) : orders.filter(o => o.status === 'pickup' || o.status === 'menunggu').map(order => (
+            ) : (
+              <div className="content-fade-in">
+                {orders.filter(o => o.status === 'pickup' || o.status === 'menunggu').map(order => (
               <div key={order.id} className="mobile-order-card" style={{ position: 'relative', overflow: 'hidden' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10 }}>
                   <div>
@@ -368,6 +395,8 @@ const CourierDashboard = () => {
                 </div>
               </div>
             ))}
+            </div>
+            )}
           </div>
         </section>
 
@@ -389,7 +418,9 @@ const CourierDashboard = () => {
                   <tr><th>Order</th><th>Pelanggan</th><th>Alamat</th><th>Aksi</th></tr>
                 </thead>
                 <tbody>
-                  {orders.filter(o => o.status === 'antar' || o.status === 'proses' || o.status === 'sedang_diantar').length === 0 ? (
+                  {ordersLoading ? (
+                    <tr><td colSpan="4" className="empty-cell"><div className="skeleton-text" style={{ width: '40%', margin: '0 auto' }} /></td></tr>
+                  ) : orders.filter(o => o.status === 'antar' || o.status === 'proses' || o.status === 'sedang_diantar').length === 0 ? (
                     <tr><td colSpan="4" className="empty-cell">Tidak ada pengiriman saat ini</td></tr>
                   ) : (
                     orders.filter(o => o.status === 'antar' || o.status === 'proses' || o.status === 'sedang_diantar')
@@ -472,9 +503,16 @@ const CourierDashboard = () => {
           </div>
 
           <div className="mobile-order-list mobile-only">
-            {orders.filter(o => o.status === 'antar' || o.status === 'proses' || o.status === 'sedang_diantar').length === 0 ? (
+            {ordersLoading ? (
+              <>
+                <CourierCardSkeleton />
+                <CourierCardSkeleton />
+              </>
+            ) : orders.filter(o => o.status === 'antar' || o.status === 'proses' || o.status === 'sedang_diantar').length === 0 ? (
               <div style={{ textAlign: 'center', padding: 24, color: 'var(--text-4)', background: 'white', borderRadius: 12, border: '1px dashed var(--border)' }}>Tidak ada pengiriman</div>
-            ) : orders.filter(o => o.status === 'antar' || o.status === 'proses' || o.status === 'sedang_diantar')
+            ) : (
+              <div className="content-fade-in">
+                {orders.filter(o => o.status === 'antar' || o.status === 'proses' || o.status === 'sedang_diantar')
                 .sort((a, b) => getRemainingMs(a) - getRemainingMs(b))
                 .map(order => (
               <div key={order.id} className="mobile-order-card" style={{ position: 'relative', overflow: 'hidden' }}>
@@ -552,6 +590,8 @@ const CourierDashboard = () => {
                 </div>
               </div>
             ))}
+            </div>
+            )}
           </div>
         </section>
       </div>

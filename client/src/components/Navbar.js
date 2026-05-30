@@ -105,7 +105,8 @@ const Navbar = ({ user, onLogout }) => {
       const token = localStorage.getItem('token');
       if (!token) return;
       const res = await axios.get('/api/notifications', {
-        headers: { Authorization: `Bearer ${token}` }
+        headers: { Authorization: `Bearer ${token}` },
+        silent: true
       });
 
       const fetchedNotifs = res.data || [];
@@ -207,7 +208,7 @@ const Navbar = ({ user, onLogout }) => {
   useEffect(() => {
     if (user && user.role === 'customer') {
       fetchNotifications();
-      const interval = setInterval(fetchNotifications, 15000);
+      const interval = setInterval(fetchNotifications, 30000);
       return () => clearInterval(interval);
     } else {
       setNotifications([]);

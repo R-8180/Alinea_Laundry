@@ -424,6 +424,32 @@ const EstimasiCell = ({ order, onEdit, formatDateTime }) => {
 let cachedOrders = null;
 let cachedYesterdayStats = null;
 
+// Komponen skeleton tabel admin — tambahkan di atas AdminDashboard
+const TableSkeleton = ({ rows = 5 }) => (
+  <div style={{ background: 'white', borderRadius: 12, overflow: 'hidden', border: '1px solid var(--border)' }}>
+    {/* Header tabel skeleton */}
+    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr 1fr 1fr', gap: 12, padding: '14px 16px', background: '#f8fafc', borderBottom: '1px solid var(--border)' }}>
+      {['Kode', 'Customer', 'Layanan', 'Status', 'Total', 'Aksi'].map((_, i) => (
+        <div key={i} className="skeleton-text" style={{ width: '70%' }} />
+      ))}
+    </div>
+    {/* Rows skeleton */}
+    {[...Array(rows)].map((_, rowIdx) => (
+      <div key={rowIdx} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr 1fr 1fr', gap: 12, padding: '14px 16px', borderBottom: '1px solid #f1f5f9' }}>
+        <div className="skeleton" style={{ height: 22, width: '80%' }} />
+        <div className="skeleton-text" style={{ width: '60%' }} />
+        <div className="skeleton-text" style={{ width: '75%' }} />
+        <div className="skeleton" style={{ height: 24, width: 90, borderRadius: 99 }} />
+        <div className="skeleton-text" style={{ width: '65%' }} />
+        <div style={{ display: 'flex', gap: 6 }}>
+          <div className="skeleton" style={{ width: 32, height: 32 }} />
+          <div className="skeleton" style={{ width: 32, height: 32 }} />
+        </div>
+      </div>
+    ))}
+  </div>
+);
+
 const AdminDashboard = () => {
   const location = useLocation();
 
@@ -1131,25 +1157,27 @@ const AdminDashboard = () => {
       {/* ====== TABEL DESKTOP ====== */}
       {(tab === 'order' || tab === 'riwayat') && (
         <div className="admin-table-card" style={{ marginTop: 12 }}>
-          <div className="table-responsive">
-            <table className="admin-order-table">
-              <thead>
-                <tr>
-                  <th>Order</th>
-                  <th>Layanan</th>
-                  <th>Tanggal</th>
-                  <th>Status</th>
-                  <th>Pembayaran</th>
-                  <th>Total</th>
-                  <th>Validasi</th>
-                  <th>Kurir</th>
-                  <th>Aksi</th>
-                </tr>
-              </thead>
-              <tbody>
-                {loading ? (
-                  <tr><td colSpan="10" className="empty-cell"><FiClock style={{ marginRight: 4 }} /> Memuat data…</td></tr>
-                ) : visibleOrders.length === 0 ? (
+          {loading ? (
+            <TableSkeleton rows={6} />
+          ) : (
+            <div className="content-fade-in">
+              <div className="table-responsive">
+                <table className="admin-order-table">
+                  <thead>
+                    <tr>
+                      <th>Order</th>
+                      <th>Layanan</th>
+                      <th>Tanggal</th>
+                      <th>Status</th>
+                      <th>Pembayaran</th>
+                      <th>Total</th>
+                      <th>Validasi</th>
+                      <th>Kurir</th>
+                      <th>Aksi</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {visibleOrders.length === 0 ? (
                   <tr><td colSpan="10" className="empty-cell">Tidak ada order</td></tr>
                 ) : visibleOrders.map((order, idx) => {
                   return (
@@ -1432,6 +1460,8 @@ const AdminDashboard = () => {
               </button>
             </div>
           )}
+          </div>
+          )}
         </div>
       )}
 
@@ -1459,7 +1489,25 @@ const AdminDashboard = () => {
           )}
           <div className="mobile-order-list">
             {loading ? (
-              <div style={{ textAlign: 'center', padding: 32, color: 'var(--text-4)' }}><FiClock style={{ marginRight: 4 }} /> Memuat…</div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                {[...Array(4)].map((_, i) => (
+                  <div key={i} className="skeleton-card" style={{ background: 'white', border: '1px solid var(--border)', borderRadius: 16, padding: 20 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16 }}>
+                      <div className="skeleton" style={{ width: 120, height: 24 }} />
+                      <div className="skeleton-text" style={{ width: 80 }} />
+                    </div>
+                    <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
+                      <div className="skeleton" style={{ width: 100, height: 22, borderRadius: 20 }} />
+                      <div className="skeleton" style={{ width: 120, height: 22, borderRadius: 20 }} />
+                    </div>
+                    <div className="skeleton-text" style={{ width: '60%', marginBottom: 12 }} />
+                    <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '1px dashed #e5e7eb', paddingTop: 16 }}>
+                      <div className="skeleton" style={{ width: 90, height: 24 }} />
+                      <div className="skeleton" style={{ width: 70, height: 32 }} />
+                    </div>
+                  </div>
+                ))}
+              </div>
             ) : visibleOrders.length === 0 ? (
               <div style={{ textAlign: 'center', padding: 32, color: 'var(--text-4)' }}>Tidak ada order</div>
             ) : visibleOrders.map((order) => {

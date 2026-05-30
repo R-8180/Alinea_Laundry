@@ -40,41 +40,16 @@ const PageTransitionProgress = () => {
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
+    // Hanya trigger saat navigasi (pathname/search berubah)
     setVisible(true);
     setProgress(30);
-
     const t1 = setTimeout(() => setProgress(70), 80);
     const t2 = setTimeout(() => {
       setProgress(100);
-      setTimeout(() => {
-        setVisible(false);
-        setProgress(0);
-      }, 150);
+      setTimeout(() => { setVisible(false); setProgress(0); }, 150);
     }, 300);
-
-    return () => {
-      clearTimeout(t1);
-      clearTimeout(t2);
-    };
+    return () => { clearTimeout(t1); clearTimeout(t2); };
   }, [location.pathname, location.search]);
-
-  useEffect(() => {
-    window.triggerLoadingBar = () => {
-      setVisible(true);
-      setProgress(30);
-      setTimeout(() => setProgress(70), 80);
-      setTimeout(() => {
-        setProgress(100);
-        setTimeout(() => {
-          setVisible(false);
-          setProgress(0);
-        }, 150);
-      }, 300);
-    };
-    return () => {
-      delete window.triggerLoadingBar;
-    };
-  }, []);
 
   if (!visible) return null;
 
@@ -84,13 +59,10 @@ const PageTransitionProgress = () => {
       top: 0,
       left: 0,
       height: '3px',
-      width: '100%',
+      width: `${progress}%`,
       background: 'linear-gradient(90deg, #3b82f6 0%, #10b981 100%)',
-      boxShadow: '0 0 10px rgba(59, 130, 246, 0.5), 0 0 5px rgba(16, 185, 129, 0.5)',
       zIndex: 9999,
-      transformOrigin: 'left',
-      transform: `scaleX(${progress / 100})`,
-      transition: 'transform 0.2s ease-out, opacity 0.2s'
+      transition: 'width 0.2s ease-out'
     }} />
   );
 };

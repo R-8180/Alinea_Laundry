@@ -64,7 +64,8 @@ const AdminLayout = ({ user, onLogout, children }) => {
       const token = localStorage.getItem('token');
       if (!token) return;
       const res = await axios.get('/api/notifications', {
-        headers: { Authorization: `Bearer ${token}` }
+        headers: { Authorization: `Bearer ${token}` },
+        silent: true
       });
 
       const fetchedNotifs = res.data || [];
@@ -161,7 +162,7 @@ const AdminLayout = ({ user, onLogout, children }) => {
   useEffect(() => {
     if (user && (user.role === 'admin' || user.role === 'courier')) {
       fetchNotifications();
-      const interval = setInterval(fetchNotifications, 10000); // Check every 10s for admins/couriers
+      const interval = setInterval(fetchNotifications, 20000); // Check every 20s for admins/couriers
       return () => clearInterval(interval);
     } else {
       setNotifications([]);

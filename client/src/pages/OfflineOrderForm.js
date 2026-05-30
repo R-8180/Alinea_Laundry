@@ -135,8 +135,12 @@ const OfflineOrderForm = () => {
       formData.append('service_id', selectedService.id);
       
       let finalNotes = notes;
-      if (additionalFee > 0) {
-        finalNotes = finalNotes ? `${finalNotes}\n(Biaya Tambahan Admin: Rp${additionalFee.toLocaleString()})` : `(Biaya Tambahan Admin: Rp${additionalFee.toLocaleString()})`;
+      if (additionalFee !== 0) {
+        if (additionalFee > 0) {
+          finalNotes = finalNotes ? `${finalNotes}\n(Biaya Tambahan Admin: Rp${additionalFee.toLocaleString()})` : `(Biaya Tambahan Admin: Rp${additionalFee.toLocaleString()})`;
+        } else {
+          finalNotes = finalNotes ? `${finalNotes}\n(Potongan / Diskon Admin: -Rp${Math.abs(additionalFee).toLocaleString()})` : `(Potongan / Diskon Admin: -Rp${Math.abs(additionalFee).toLocaleString()})`;
+        }
       }
       formData.append('notes', finalNotes);
       formData.append('total_price', totalPrice);
@@ -435,8 +439,23 @@ const OfflineOrderForm = () => {
           <SectionCard icon={<FiDollarSign style={{ color: '#10b981' }} />} title="Pembayaran & Media">
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16, marginBottom: 16 }}>
               <div>
-                <label style={{ fontSize: '0.85rem', color: '#64748b', display: 'block', marginBottom: 6 }}>Biaya Tambahan Admin (Rp)</label>
-                <input type="number" style={{ width: '100%', padding: '10px 14px', borderRadius: 8, border: '1px solid #e2e8f0' }} value={additionalFee} onChange={e => setAdditionalFee(Number(e.target.value))} placeholder="Misal: 15000" />
+                <label style={{ fontSize: '0.85rem', color: additionalFee < 0 ? '#ef4444' : '#64748b', display: 'block', marginBottom: 6, fontWeight: additionalFee < 0 ? 600 : 400 }}>
+                  {additionalFee < 0 ? 'Potongan / Diskon Admin (Rp)' : 'Biaya Tambahan Admin (Rp)'}
+                </label>
+                <input 
+                  type="number" 
+                  style={{ 
+                    width: '100%', 
+                    padding: '10px 14px', 
+                    borderRadius: 8, 
+                    border: additionalFee < 0 ? '1px solid #fecaca' : '1px solid #e2e8f0',
+                    background: additionalFee < 0 ? '#fef2f2' : 'white',
+                    color: additionalFee < 0 ? '#991b1b' : 'inherit'
+                  }} 
+                  value={additionalFee} 
+                  onChange={e => setAdditionalFee(Number(e.target.value))} 
+                  placeholder="Misal: 15000 atau -5000" 
+                />
               </div>
               <div>
                 <label style={{ fontSize: '0.85rem', color: '#64748b', display: 'block', marginBottom: 6 }}>Status Pembayaran</label>

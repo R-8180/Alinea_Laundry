@@ -20,10 +20,15 @@ const cors = require('cors');
 const helmet = require('helmet');
 const path = require('path');
 const morgan = require('morgan');
+const compression = require('compression');
 const logger = require('./utils/logger');
 const { apiLimiter, speedLimiter } = require('./middleware/rateLimiter');
 const { startCleanupScheduler } = require('./utils/cleanup');
 const app = express();
+
+// Mengaktifkan kompresi Gzip/Brotli untuk seluruh response
+app.use(compression());
+
 const pool = require('./db');
 
 // ==========================================

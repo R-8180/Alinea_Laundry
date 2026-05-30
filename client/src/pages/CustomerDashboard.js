@@ -104,8 +104,11 @@ const getEstimatedDate = (order) => {
 };
 
 
+// Cache lokal untuk transisi page instan (SWR)
+let cachedCustomerOrders = null;
+
 const CustomerDashboard = ({ user: propUser }) => {
-  const [orders, setOrders] = useState([]);
+  const [orders, setOrders] = useState(cachedCustomerOrders || []);
   const [paymentModal, setPaymentModal] = useState(null);
   const [detailModal, setDetailModal] = useState(null);
 
@@ -253,6 +256,7 @@ const CustomerDashboard = ({ user: propUser }) => {
     try {
       const res = await axios.get('/api/orders', { headers: { Authorization: `Bearer ${token}` } });
       setOrders(res.data);
+      cachedCustomerOrders = res.data; // Simpan di cache
     } catch {}
   };
 

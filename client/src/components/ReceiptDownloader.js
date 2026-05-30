@@ -1,6 +1,4 @@
 import React, { useRef, useState } from 'react';
-import html2canvas from 'html2canvas';
-import jsPDF from 'jspdf';
 import { FiDownload, FiPrinter } from 'react-icons/fi';
 import Receipt from './Receipt';
 
@@ -13,6 +11,9 @@ const ReceiptDownloader = ({ order }) => {
     if (!receiptRef.current) return;
     setLoadingPng(true);
     try {
+      // Load html2canvas dynamically on demand
+      const { default: html2canvas } = await import('html2canvas');
+
       // Temporarily make it visible for capture (html2canvas requires element to be rendered in viewport/layout)
       const element = receiptRef.current;
       element.style.position = 'absolute';
@@ -44,6 +45,12 @@ const ReceiptDownloader = ({ order }) => {
     if (!receiptRef.current) return;
     setLoadingPdf(true);
     try {
+      // Load both html2canvas and jsPDF dynamically on demand
+      const [{ default: html2canvas }, { default: jsPDF }] = await Promise.all([
+        import('html2canvas'),
+        import('jspdf')
+      ]);
+
       const element = receiptRef.current;
       element.style.position = 'absolute';
       element.style.left = '0';

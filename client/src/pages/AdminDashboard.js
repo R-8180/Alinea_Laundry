@@ -13,8 +13,9 @@ import {
   FiStar, FiTrash2
 } from 'react-icons/fi';
 import { GiWeight } from 'react-icons/gi';
-import LaporanTab from './LaporanTab';
 import ReceiptDownloader from '../components/ReceiptDownloader';
+
+const LaporanTab = React.lazy(() => import('./LaporanTab'));
 
 /* ---------- COMPONENT: FEEDBACK TAB ---------- */
 const FeedbackTab = ({ feedbacks, loading, onRefresh, onDeleteAll, onDeleteOne }) => {
@@ -419,6 +420,10 @@ const EstimasiCell = ({ order, onEdit, formatDateTime }) => {
 /* ================================================================
    ADMIN DASHBOARD
    ================================================================ */
+// Cache lokal untuk transisi page instan (SWR)
+let cachedOrders = null;
+let cachedYesterdayStats = null;
+
 const AdminDashboard = () => {
   const location = useLocation();
 
@@ -433,11 +438,11 @@ const AdminDashboard = () => {
   };
 
   /* ---------- STATE ---------- */
-  const [orders, setOrders] = useState([]);
+  const [orders, setOrders] = useState(cachedOrders || []);
   const [tab, setTabState] = useState(getTabFromUrl);
   // Default subtab sekarang 'all_active'
   const [subTab, setSubTab] = useState('all_active');
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!cachedOrders);
   const [validateModal, setValidateModal] = useState(null);
   const [assignModal, setAssignModal] = useState(null);
   const [detailModal, setDetailModal] = useState(null);
@@ -448,7 +453,7 @@ const AdminDashboard = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const debouncedSearchTerm = useDebounce(searchTerm, 300);
   const [showAll, setShowAll] = useState(false);
-  const [yesterdayStats, setYesterdayStats] = useState(null);
+  const [yesterdayStats, setYesterdayStats] = useState(cachedYesterdayStats);
   // Users tab state
   const [customers, setCustomers] = useState([]);
   const [feedbacks, setFeedbacks] = useState([]);
@@ -493,6 +498,7 @@ const AdminDashboard = () => {
       const url = selectedBranchFilter ? `/api/admin/orders?branch_id=${selectedBranchFilter}` : '/api/admin/orders';
       const res = await axios.get(url, { headers: h });
       setOrders(res.data);
+      cachedOrders = res.data; // Simpan di cache
     } catch { showError('Gagal Memuat', 'Gagal memuat data order laundry.'); } finally { setLoading(false); }
   }, [selectedBranchFilter]); // eslint-disable-line
 
@@ -501,6 +507,7 @@ const AdminDashboard = () => {
       const url = selectedBranchFilter ? `/api/admin/stats/yesterday?branch_id=${selectedBranchFilter}` : '/api/admin/stats/yesterday';
       const res = await axios.get(url, { headers: h });
       setYesterdayStats(res.data);
+      cachedYesterdayStats = res.data; // Simpan di cache
     } catch { }
   }, [selectedBranchFilter]); // eslint-disable-line
 
@@ -1070,7 +1077,16 @@ const AdminDashboard = () => {
       </div>
 
       {/* TAB LAPORAN */}
-      {tab === 'laporan' && <LaporanTab activeBranchId={isSuperAdmin ? selectedBranchFilter : user.branch_id} />}
+      {tab === 'laporan' && (
+        <React.Suspense fallback={
+          <div style={{ textAlign: 'center', padding: '60px 0', color: 'var(--text-3)' }}>
+            <FiClock style={{ fontSize: '2rem', animation: 'spin 2s linear infinite', marginBottom: 12 }} />
+            <div style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 600 }}>Memuat Laporan Keuangan...</div>
+          </div>
+        }>
+          <LaporanTab activeBranchId={isSuperAdmin ? selectedBranchFilter : user.branch_id} />
+        </React.Suspense>
+      )}
 
       {/* TAB FEEDBACK */}
       {tab === 'feedback' && (

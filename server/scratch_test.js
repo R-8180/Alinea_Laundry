@@ -1,45 +1,41 @@
-const { Client } = require('pg');
+const pool = require('./db');
+const crypto = require('crypto');
 
-const indexes = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
-
-async function probeIndex(index) {
-  const host = `aws-${index}-ap-southeast-1.pooler.supabase.com`;
-  const client = new Client({
-    host,
-    port: 6543,
-    user: 'postgres.nmuxiduvphjfdmtpztzc',
-    password: 's8ZURDnpX0coSfcu',
-    database: 'postgres',
-    connectionTimeoutMillis: 2000,
-  });
-
+async function test() {
+  console.log('Testing forgot password query logic...');
   try {
-    await client.connect();
-    console.log(`🎉 SUCCESS! Connected to pooler: ${host}`);
-    await client.end();
-    return host;
-  } catch (err) {
-    const msg = err.message.toLowerCase();
-    if (msg.includes('tenant') || msg.includes('not found') || msg.includes('getaddrinfo')) {
-      // Ignored
-    } else {
-      console.log(`⭐ POSSIBLE SUCCESS ON ${host}: ${err.message}`);
-      return host;
+    // 1. Check database connection & select a test user
+    const userRes = await pool.query('SELECT id, name, email FROM users LIMIT 1');
+    if (userRes.rows.length === 0) {
+      console.log('❌ No users found in database to test.');
+      process.exit(1);
     }
+    const user = userRes.rows[0];
+    console.log(`Found test user: ${user.name} (${user.email})`);
+
+    // 2. Try generating token
+    const token = crypto.randomBytes(32).toString('hex');
+    const expires = new Date(Date.now() + 3600000);
+    console.log(`Generated token: ${token}, expires at: ${expires}`);
+
+    // 3. Try updating DB
+    const updateRes = await pool.query(
+      'UPDATE users SET reset_token = $1, reset_token_expires = $2 WHERE id = $3 RETURNING id',
+      [token, expires, user.id]
+    );
+    console.log(`✅ Update successful! Rows affected: ${updateRes.rowCount}, ID: ${updateRes.rows[0].id}`);
+    
+    // Clear it back
+    await pool.query(
+      'UPDATE users SET reset_token = NULL, reset_token_expires = NULL WHERE id = $1',
+      [user.id]
+    );
+    console.log('✅ Cleaned up test tokens. Success!');
+    process.exit(0);
+  } catch (err) {
+    console.error('❌ Error occurred during query test:', err);
+    process.exit(1);
   }
-  return null;
 }
 
-async function run() {
-  console.log('Probing Singapore poolers with different server indexes (aws-0 to aws-10)...');
-  const results = await Promise.all(indexes.map(i => probeIndex(i)));
-  const match = results.find(r => r !== null);
-  if (match) {
-    console.log(`\n\n🎯 MATCH FOUND: ${match}`);
-  } else {
-    console.log('\n\n❌ No match found on Singapore poolers aws-0 through aws-10.');
-  }
-  process.exit();
-}
-
-run();
+test();

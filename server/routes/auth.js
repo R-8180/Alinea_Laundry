@@ -113,6 +113,9 @@ router.get('/me', authMiddleware, async (req, res) => {
   } catch (err) {
     console.error('Get user error:', err);
     res.status(500).json({ error: 'Server error' });
+  }
+});
+
 // Forgot Password - Minta reset link
 router.post('/forgot-password', async (req, res) => {
   const { email } = req.body;

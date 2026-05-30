@@ -1,4 +1,5 @@
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&family=Outfit:wght@400;500;600;700;800&display=swap');
+/* Google Fonts loaded non-blocking via <link> in index.html (media=print trick) */
+/* font-display: swap is applied via the ?display=swap query param in the URL */
 @import '~leaflet/dist/leaflet.css';
 
 /* ===================================================================
@@ -929,6 +930,7 @@ label {
   background: rgba(56, 189, 248, 0.4);
   top: -100px;
   left: -100px;
+  will-change: transform;
 }
 
 .hero-shape-2 {
@@ -938,6 +940,7 @@ label {
   bottom: -150px;
   right: -100px;
   animation-delay: -5s;
+  will-change: transform;
 }
 
 @keyframes float {
@@ -982,9 +985,9 @@ label {
   margin-bottom: 24px;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  backdrop-filter: blur(12px);
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
   animation: fadeUp 1s ease-out;
+  will-change: transform, opacity;
 }
 
 .hero-title-new {
@@ -1042,13 +1045,13 @@ label {
   margin-top: 50px;
   width: 100%;
   max-width: 800px;
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.12);
   border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: var(--r-xl);
   padding: 30px;
-  backdrop-filter: blur(16px);
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
   animation: fadeUp 1s ease-out 1s both;
+  will-change: transform, opacity;
 }
 
 .hero-track-glass h3 {
@@ -2702,7 +2705,8 @@ label {
 .reveal {
   opacity: 0;
   transform: translateY(26px);
-  transition: all 0.55s ease;
+  transition: opacity 0.55s ease, transform 0.55s ease;
+  will-change: transform, opacity;
 }
 
 .reveal.active {

@@ -83,11 +83,13 @@ const PageTransitionProgress = () => {
       top: 0,
       left: 0,
       height: '3px',
-      width: `${progress}%`,
+      width: '100%',
       background: 'linear-gradient(90deg, #3b82f6 0%, #10b981 100%)',
       boxShadow: '0 0 10px rgba(59, 130, 246, 0.5), 0 0 5px rgba(16, 185, 129, 0.5)',
       zIndex: 9999,
-      transition: 'width 0.2s ease-out, opacity 0.2s'
+      transformOrigin: 'left',
+      transform: `scaleX(${progress / 100})`,
+      transition: 'transform 0.2s ease-out, opacity 0.2s'
     }} />
   );
 };

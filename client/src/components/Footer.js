@@ -61,31 +61,7 @@ const Footer = () => {
           </div>
         </div>
 
-        {/* Kolom 2 – 3 Cabang Kami */}
-        <div className="footer-col-branches">
-          <h4><FiMapPin className="icon-inline" /> Cabang Kami</h4>
-          <div className="branches-list">
-            {branches.map((branch, idx) => (
-              <div key={idx} className={`branch-card-box ${branch.isMain ? 'main-branch' : 'sub-branch'}`}>
-                <div className="branch-header-row">
-                  <h5>{branch.name}</h5>
-                  {branch.isMain && <span className="badge-main">Pusat</span>}
-                </div>
-                <p className="branch-address">
-                  <FiMapPin style={{ flexShrink: 0, marginTop: 3, marginRight: 6 }} />
-                  <span>{branch.address}</span>
-                </p>
-                {!branch.isMain ? (
-                  <a href={branch.mapLink} target="_blank" rel="noreferrer" className="btn-branch-map" aria-label={`Rute Maps menuju ${branch.name}`}>
-                    <FiNavigation style={{ marginRight: 4 }} /> Rute Maps
-                  </a>
-                ) : (
-                  <span className="text-map-active"><FiMapPin className="icon-inline text-sky" /> Map Aktif di Bawah</span>
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
+
 
         {/* Kolom 3 – 4 Admin WhatsApp */}
         <div className="footer-col-admins">
@@ -140,25 +116,29 @@ const Footer = () => {
           </div>
           
           <div className="map-quick-links">
-            <div className="map-quick-info">
-              <h5><FiMapPin className="icon-inline" /> Peta Lokasi Talangsari (Pusat)</h5>
-              <p>Mencakup area Semarang Barat, Gajahmungkur, Sampangan, dan sekitarnya.</p>
-            </div>
-            <div className="quick-buttons-row">
-              <a href="https://maps.google.com/?q=Alinea+Laundry+Sekaran+Unnes" target="_blank" rel="noreferrer" className="quick-route-btn" aria-label="Petunjuk Rute Maps Cabang Unnes">
-                <FiNavigation style={{ fontSize: '1.1rem' }} />
-                <div style={{ textAlign: 'left' }}>
-                  <span className="q-btn-title">Cabang Unnes (Gunungpati)</span>
-                  <span className="q-btn-sub">Petunjuk Rute Maps Cabang Unnes</span>
+            <h4 style={{ color: 'white', marginBottom: '18px', fontFamily: '"Plus Jakarta Sans", sans-serif', fontSize: '1.05rem', fontWeight: 700 }}>
+              <FiMapPin className="icon-inline" style={{ color: 'var(--sky)' }} /> Lokasi Cabang Kami
+            </h4>
+            <div className="branches-list">
+              {branches.map((branch, idx) => (
+                <div key={idx} className={`branch-card-box ${branch.isMain ? 'main-branch' : 'sub-branch'}`}>
+                  <div className="branch-header-row">
+                    <h5>{branch.name}</h5>
+                    {branch.isMain && <span className="badge-main">Pusat</span>}
+                  </div>
+                  <p className="branch-address">
+                    <FiMapPin style={{ flexShrink: 0, marginTop: 3, marginRight: 6 }} />
+                    <span>{branch.address}</span>
+                  </p>
+                  {!branch.isMain ? (
+                    <a href={branch.mapLink} target="_blank" rel="noreferrer" className="btn-branch-map" aria-label={`Rute Maps menuju ${branch.name}`}>
+                      <FiNavigation style={{ marginRight: 4 }} /> Rute Maps
+                    </a>
+                  ) : (
+                    <span className="text-map-active"><FiMapPin className="icon-inline text-sky" /> Map Aktif di Samping</span>
+                  )}
                 </div>
-              </a>
-              <a href="https://maps.google.com/?q=Alinea+Laundry+Tlogosari+Pedurungan" target="_blank" rel="noreferrer" className="quick-route-btn" aria-label="Petunjuk Rute Maps Cabang Tlogosari">
-                <FiNavigation style={{ fontSize: '1.1rem' }} />
-                <div style={{ textAlign: 'left' }}>
-                  <span className="q-btn-title">Cabang Tlogosari (Pedurungan)</span>
-                  <span className="q-btn-sub">Petunjuk Rute Maps Cabang Tlogosari</span>
-                </div>
-              </a>
+              ))}
             </div>
           </div>
         </div>

@@ -3,17 +3,18 @@ import imageCompression from 'browser-image-compression';
 import { FiCamera, FiUpload, FiX, FiCheckCircle, FiLoader, FiZap, FiAlertTriangle } from 'react-icons/fi';
 
 const COMPRESSION_OPTIONS = {
-  maxSizeMB: 0.5,           // max 500KB
-  maxWidthOrHeight: 1280,   // max resolusi 1280px
+  maxSizeMB: 0.05,          // max 50KB
+  maxWidthOrHeight: 800,    // max resolusi 800px agar kualitas tetap terjaga di ukuran kecil
   useWebWorker: true,
   fileType: 'image/jpeg',
+  initialQuality: 0.6,      // kualitas awal lebih rendah untuk mempermudah kompresi < 50KB
 };
 
 /**
  * PhotoUploader - komponen reusable untuk upload foto dengan:
  * - Pilih dari file / galeri
  * - Jepret langsung dari kamera (getUserMedia)
- * - Auto kompresi foto ke ≤ 500KB
+ * - Auto kompresi foto ke ≤ 50KB
  * - Preview foto setelah dipilih
  *
  * Props:
@@ -181,7 +182,7 @@ export default function PhotoUploader({ onPhoto, photo, label, required = false 
           <div style={{ textAlign: 'center' }}>
             <FiCamera style={{ fontSize: '1.8rem', color: '#94a3b8', marginBottom: 6 }} />
             <p style={{ fontSize: '0.78rem', color: '#64748b', marginBottom: 10 }}>
-              Foto dikompresi otomatis &lt; 500KB
+              Foto dikompresi otomatis &lt; 50KB
             </p>
             <div style={{ display: 'flex', gap: 8, justifyContent: 'center', flexWrap: 'wrap' }}>
               {/* Tombol Pilih File */}

@@ -1120,7 +1120,6 @@ const ServicesManagement = () => {
                     <div style={{ display: 'grid', gap: 12 }}>
                       <input type="text" className="form-input" value={editVoucherForm.name} onChange={e => setEditVoucherForm({...editVoucherForm, name: e.target.value})} placeholder="Nama Voucher" />
                       <input type="number" className="form-input" value={editVoucherForm.points_required} onChange={e => setEditVoucherForm({...editVoucherForm, points_required: e.target.value})} placeholder="Poin Dibutuhkan" />
-                      <input type="number" className="form-input" value={editVoucherForm.discount_amount} onChange={e => setEditVoucherForm({...editVoucherForm, discount_amount: e.target.value})} placeholder="Nominal Diskon (Rp)" />
                       <textarea className="form-input" value={editVoucherForm.description} onChange={e => setEditVoucherForm({...editVoucherForm, description: e.target.value})} placeholder="Deskripsi Voucher"></textarea>
                       <div style={{ display: 'flex', gap: 8 }}>
                         <button onClick={() => saveVoucherEdit(v.id)} className="btn btn-sm" style={{ background: '#10b981', color: 'white' }}><FiSave /> Simpan</button>
@@ -1131,7 +1130,6 @@ const ServicesManagement = () => {
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                       <div>
                         <h4 style={{ margin: 0 }}>{v.name} <span style={{ fontSize: '0.8rem', color: '#64748b' }}>({v.points_required} Poin)</span></h4>
-                        <p style={{ margin: '4px 0 0', fontSize: '0.85rem', color: '#475569' }}>Diskon Rp {v.discount_amount?.toLocaleString('id-ID')}</p>
                       </div>
                       <button onClick={() => {
                         setEditingVoucherId(v.id);

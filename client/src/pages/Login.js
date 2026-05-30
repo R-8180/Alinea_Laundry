@@ -33,7 +33,7 @@ const Login = ({ onLogin }) => {
 
   useEffect(() => {
     // Google Client ID Alinea Laundry
-    const googleClientId = process.env.REACT_APP_GOOGLE_CLIENT_ID || '1008719970978-hb24n2dstb40o45d4feuo2kt27y36fh1.apps.googleusercontent.com';
+    const googleClientId = process.env.REACT_APP_GOOGLE_CLIENT_ID || '1009613909182-8avsol1bd05n2nd8gk54fu85oh0sio6g.apps.googleusercontent.com';
 
     const initGoogle = () => {
       if (window.google && window.google.accounts) {

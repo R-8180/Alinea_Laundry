@@ -1,6 +1,7 @@
 import './App.css';
 import React, { useState, useEffect, lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import Swal from 'sweetalert2';
 import Navbar from './components/Navbar';
 import QuickAccessBar from './components/QuickAccessBar';
 import AdminLayout from './components/AdminLayout';
@@ -99,45 +100,77 @@ function App() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    const checkSession = () => {
+      const storedUser = localStorage.getItem('user');
+      const token = localStorage.getItem('token');
+      const apiBase = process.env.REACT_APP_API_URL || '';
+
+      if (storedUser && token) {
+        // Lakukan validasi token di latar belakang
+        fetch(`${apiBase}/api/auth/me`, {
+          headers: { Authorization: `Bearer ${token}` }
+        })
+          .then(res => {
+            if (res.status === 401 || res.status === 403) {
+              // Token kedaluwarsa atau tidak valid
+              localStorage.clear();
+              setUser(null);
+
+              // Tutup SweetAlert yang aktif agar layar tidak terkunci abu-abu
+              try {
+                Swal.close();
+              } catch (e) {
+                console.error('Error closing Swal on timeout:', e);
+              }
+
+              // Alihkan ke login jika sedang berada di rute terproteksi
+              const publicPaths = ['/login', '/register', '/forgot-password', '/reset-password', '/'];
+              if (!publicPaths.includes(window.location.pathname)) {
+                window.location.href = '/login?expired=true';
+              }
+              return null;
+            }
+            return res.json();
+          })
+          .then(data => {
+            if (data && data.id) {
+              setUser(data);
+              localStorage.setItem('user', JSON.stringify(data));
+              subscribeUserToPush(token);
+            }
+          })
+          .catch(err => {
+            console.error('Background session revalidation failed:', err);
+          });
+      }
+    };
+
+    // Render instan memakai data cache agar terasa cepat
     const storedUser = localStorage.getItem('user');
     const token = localStorage.getItem('token');
-    const apiBase = process.env.REACT_APP_API_URL || '';
-
     if (storedUser && token) {
       try {
-        // Render instantly using cached data from localStorage
         setUser(JSON.parse(storedUser));
       } catch (e) {
         console.error('Error parsing stored user data:', e);
       }
-      setLoading(false);
-
-      // Perform background revalidation
-      fetch(`${apiBase}/api/auth/me`, {
-        headers: { Authorization: `Bearer ${token}` }
-      })
-        .then(res => {
-          if (res.status === 401 || res.status === 403) {
-            // Token expired or invalid
-            localStorage.clear();
-            setUser(null);
-            return null;
-          }
-          return res.json();
-        })
-        .then(data => {
-          if (data && data.id) {
-            setUser(data);
-            localStorage.setItem('user', JSON.stringify(data));
-            subscribeUserToPush(token);
-          }
-        })
-        .catch(err => {
-          console.error('Background profile refresh failed:', err);
-        });
-    } else {
-      setLoading(false);
     }
+    setLoading(false);
+
+    // Jalankan validasi awal
+    checkSession();
+
+    // Jalankan validasi proaktif setiap kali tab difokuskan kembali
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        checkSession();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
   }, []);
 
   const handleLogin = (userData, token) => {

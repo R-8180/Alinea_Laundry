@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import { FiMail, FiLock, FiEye, FiEyeOff, FiArrowLeft } from 'react-icons/fi';
 import { showError, showLoading, closeLoading } from '../utils/swal';
@@ -10,6 +10,16 @@ const Login = ({ onLogin }) => {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    if (params.get('expired') === 'true') {
+      // Bersihkan URL parameter agar rapi dan tidak berulang kali memunculkan pesan saat direfresh
+      navigate('/login', { replace: true });
+      showError('Sesi Berakhir 🛡️', 'Sesi masuk Anda telah berakhir demi keamanan. Silakan masuk kembali.');
+    }
+  }, [location.search, navigate]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();

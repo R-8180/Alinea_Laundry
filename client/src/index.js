@@ -1,6 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import axios from 'axios';
+import Swal from 'sweetalert2';
 import NProgress from 'nprogress';
 import 'nprogress/nprogress.css';
 import './index.css';
@@ -40,6 +41,28 @@ axios.interceptors.response.use(response => {
     activeRequests = 0;
     NProgress.done();
   }
+
+  // Tangani kedaluwarsa sesi global (401 / 403)
+  if (error.response && (error.response.status === 401 || error.response.status === 403)) {
+    const publicPaths = ['/login', '/register', '/forgot-password', '/reset-password', '/'];
+    const currentPath = window.location.pathname;
+
+    // Hanya log out dan redirect jika di halaman terproteksi
+    if (!publicPaths.includes(currentPath)) {
+      localStorage.clear();
+
+      // Paksa tutup semua SweetAlert yang aktif agar layar tidak terkunci abu-abu
+      try {
+        Swal.close();
+      } catch (e) {
+        console.error('Error closing Swal:', e);
+      }
+
+      // Alihkan ke login dengan parameter
+      window.location.href = '/login?expired=true';
+    }
+  }
+
   return Promise.reject(error);
 });
 

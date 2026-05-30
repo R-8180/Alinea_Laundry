@@ -874,13 +874,50 @@ router.get('/financial', async (req, res) => {
 
     const ordersRevenue = parseInt(result.rows[0].total_pendapatan) || 0;
     
+    // Fetch branch performance if global admin (branch_id is null)
+    let branchPerf = [];
+    if (!req.user.branch_id) {
+      let branchQuery = `
+        SELECT 
+          b.id AS branch_id,
+          b.name AS branch_name,
+          COALESCE(COUNT(o.id), 0) AS total_order,
+          COALESCE(SUM(o.total_price), 0) AS total_pendapatan
+        FROM branches b
+        LEFT JOIN orders o ON o.branch_id = b.id AND o.payment_status = 'paid'
+      `;
+      const branchParams = [];
+      let bParamIdx = 1;
+      
+      if (start && end) {
+        branchQuery += ` AND o.created_at::date BETWEEN $${bParamIdx++} AND $${bParamIdx++}`;
+        branchParams.push(start, end);
+      } else if (year && month) {
+        branchQuery += ` AND EXTRACT(YEAR FROM o.created_at) = $${bParamIdx++} AND EXTRACT(MONTH FROM o.created_at) = $${bParamIdx++}`;
+        branchParams.push(parseInt(year), parseInt(month));
+      } else if (year) {
+        branchQuery += ` AND EXTRACT(YEAR FROM o.created_at) = $${bParamIdx++}`;
+        branchParams.push(parseInt(parseInt(year)));
+      }
+      
+      branchQuery += ` GROUP BY b.id, b.name ORDER BY b.id`;
+      const branchRes = await db.query(branchQuery, branchParams);
+      branchPerf = branchRes.rows.map(r => ({
+        branch_id: parseInt(r.branch_id),
+        branch_name: r.branch_name,
+        total_order: parseInt(r.total_order) || 0,
+        total_pendapatan: parseInt(r.total_pendapatan) || 0
+      }));
+    }
+    
     res.json({
       total_order: parseInt(result.rows[0].total_order) || 0,
       orders_revenue: ordersRevenue,
       manual_income,
       manual_expense,
       manual_debt,
-      net_revenue: (ordersRevenue + manual_income) - manual_expense
+      net_revenue: (ordersRevenue + manual_income) - manual_expense,
+      branch_performance: branchPerf
     });
   } catch (err) {
     console.error('Get financial stats error:', err);

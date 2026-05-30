@@ -7,9 +7,10 @@ import axios from 'axios';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { showSuccess, showError, showLoading } from '../utils/swal';
 import Swal from 'sweetalert2';
+import { subscribeUserToPush } from '../utils/push';
 import {
   FiClock, FiTruck, FiDroplet, FiPackage, FiCheckCircle,
-  FiPlus, FiGift, FiCopy, FiEye, FiDollarSign, FiXCircle, FiZap, FiCreditCard, FiDownload, FiUser, FiMapPin, FiClipboard, FiMessageCircle, FiStar, FiX
+  FiPlus, FiGift, FiCopy, FiEye, FiDollarSign, FiXCircle, FiZap, FiCreditCard, FiDownload, FiUser, FiMapPin, FiClipboard, FiMessageCircle, FiStar, FiX, FiBell
 } from 'react-icons/fi';
 
 const categoryLabels = { cuci_setrika: 'Cuci Setrika', cuci_lipat: 'Cuci Lipat', satuan: 'Satuan' };
@@ -163,9 +164,76 @@ const CustomerDashboard = ({ user: propUser }) => {
   const [voucherStatus, setVoucherStatus] = useState(null);
   const [activeTab, setActiveTab] = useState('orders');
   const [showVoucherModal, setShowVoucherModal] = useState(false);
+  const [showNotifPopup, setShowNotifPopup] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
   const token = localStorage.getItem('token');
+
+  // Efek untuk memicu popup kustom izin notifikasi setelah 3 detik
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      const isSupported = 'Notification' in window && 'serviceWorker' in navigator && 'PushManager' in window;
+      if (isSupported) {
+        const isDefault = Notification.permission === 'default';
+        const isDismissed = localStorage.getItem('alinea_notif_dismissed') === 'true';
+        if (isDefault && !isDismissed) {
+          setShowNotifPopup(true);
+        }
+      }
+    }, 3000);
+    return () => clearTimeout(timer);
+  }, []);
+
+  const handleEnableNotification = async () => {
+    setShowNotifPopup(false);
+    if (!('Notification' in window)) return;
+
+    try {
+      showLoading('Mengaktifkan Notifikasi', 'Meminta izin akses...');
+      const permission = await Notification.requestPermission();
+      if (permission === 'granted') {
+        await subscribeUserToPush(token);
+        Swal.close();
+        await Swal.fire({
+          icon: 'success',
+          title: 'Notifikasi Aktif!',
+          text: 'Anda akan menerima pemberitahuan real-time mengenai status laundry Anda.',
+          confirmButtonColor: 'var(--blue)',
+          customClass: {
+            popup: 'swal-premium-popup',
+            title: 'swal-premium-title',
+            htmlContainer: 'swal-premium-text',
+            confirmButton: 'swal-premium-btn'
+          }
+        });
+      } else if (permission === 'denied') {
+        Swal.close();
+        await Swal.fire({
+          icon: 'warning',
+          title: 'Akses Ditolak',
+          text: 'Izin notifikasi ditolak. Anda dapat mengaktifkannya secara manual melalui pengaturan browser jika berubah pikiran.',
+          confirmButtonColor: 'var(--blue)',
+          customClass: {
+            popup: 'swal-premium-popup',
+            title: 'swal-premium-title',
+            htmlContainer: 'swal-premium-text',
+            confirmButton: 'swal-premium-btn'
+          }
+        });
+      } else {
+        Swal.close();
+      }
+    } catch (err) {
+      console.error(err);
+      Swal.close();
+      showError('Gagal Mengaktifkan', 'Terjadi kesalahan saat mengaktifkan notifikasi.');
+    }
+  };
+
+  const handleDismissNotification = () => {
+    localStorage.setItem('alinea_notif_dismissed', 'true');
+    setShowNotifPopup(false);
+  };
   
   // Use the reactive user prop, or fall back to cached localStorage user details
   const localUser = JSON.parse(localStorage.getItem('user') || '{}');
@@ -855,6 +923,30 @@ const CustomerDashboard = ({ user: propUser }) => {
             <div style={{ marginTop: 20 }}>
               <button className="btn btn-secondary" style={{ width: '100%' }} onClick={() => setShowVoucherModal(false)}>Tutup</button>
             </div>
+          </div>
+        </div>
+      )}
+      {/* ====== POPUP IZIN NOTIFIKASI KUSTOM ====== */}
+      {showNotifPopup && (
+        <div className="notif-prompt-overlay">
+          <div className="notif-prompt-header">
+            <div className="notif-prompt-icon-wrapper">
+              <FiBell />
+            </div>
+            <div className="notif-prompt-content">
+              <h4 className="notif-prompt-title">Aktifkan Notifikasi Real-time</h4>
+              <p className="notif-prompt-desc">
+                Dapatkan info instan dan pembaruan langsung status laundry Anda secara otomatis!
+              </p>
+            </div>
+          </div>
+          <div className="notif-prompt-actions">
+            <button className="notif-prompt-btn-later" onClick={handleDismissNotification}>
+              Nanti Saja
+            </button>
+            <button className="notif-prompt-btn-allow" onClick={handleEnableNotification}>
+              Izinkan
+            </button>
           </div>
         </div>
       )}

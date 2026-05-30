@@ -834,8 +834,9 @@ label {
 .scroll-progress-fill {
   height: 100%;
   background: var(--blue-light);
-  transition: width 0.1s ease-out;
+  transition: transform 0.1s ease-out;
   box-shadow: 0 0 8px var(--blue-light);
+  transform-origin: left;
 }
 
 /* ===================================================================
@@ -1197,12 +1198,13 @@ label {
   border: none;
   background: var(--border-2);
   cursor: pointer;
-  transition: all 0.25s;
+  transform-origin: center;
+  transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.25s;
 }
 
 .promo-dot-custom.active {
   background: var(--blue);
-  width: 38px;
+  transform: scaleX(1.727);
 }
 
 .promo-coverflow {

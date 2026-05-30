@@ -73,7 +73,7 @@ const InstallPWA = ({ variant = 'mobile-banner' }) => {
         <button onClick={() => setShowGuide(false)} style={{
           position: 'absolute', top: 16, right: 16,
           background: 'none', border: 'none', cursor: 'pointer', color: '#64748b',
-        }}>
+        }} aria-label="Tutup Panduan">
           <FiX size={20} />
         </button>
         <FiSmartphone style={{ fontSize: '2rem', color: '#1e50a0', marginBottom: 12 }} />
@@ -131,7 +131,7 @@ const InstallPWA = ({ variant = 'mobile-banner' }) => {
           <button onClick={handleDismiss} style={{
             background: 'none', border: 'none', cursor: 'pointer',
             color: '#94a3b8', padding: 2, display: 'flex', alignItems: 'center',
-          }} title="Tutup">
+          }} aria-label="Tutup" title="Tutup">
             <FiX size={14} />
           </button>
         </div>
@@ -171,7 +171,7 @@ const InstallPWA = ({ variant = 'mobile-banner' }) => {
             position: 'absolute', top: 8, right: 8,
             background: 'none', border: 'none', cursor: 'pointer',
             color: 'rgba(255,255,255,0.5)', padding: 0,
-          }}>
+          }} aria-label="Tutup Banner">
             <FiX size={14} />
           </button>
         </div>

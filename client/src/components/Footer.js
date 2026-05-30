@@ -76,7 +76,7 @@ const Footer = () => {
                   <span>{branch.address}</span>
                 </p>
                 {!branch.isMain ? (
-                  <a href={branch.mapLink} target="_blank" rel="noreferrer" className="btn-branch-map">
+                  <a href={branch.mapLink} target="_blank" rel="noreferrer" className="btn-branch-map" aria-label={`Rute Maps menuju ${branch.name}`}>
                     <FiNavigation style={{ marginRight: 4 }} /> Rute Maps
                   </a>
                 ) : (
@@ -145,18 +145,18 @@ const Footer = () => {
               <p>Mencakup area Semarang Barat, Gajahmungkur, Sampangan, dan sekitarnya.</p>
             </div>
             <div className="quick-buttons-row">
-              <a href="https://maps.google.com/?q=Alinea+Laundry+Sekaran+Unnes" target="_blank" rel="noreferrer" className="quick-route-btn">
+              <a href="https://maps.google.com/?q=Alinea+Laundry+Sekaran+Unnes" target="_blank" rel="noreferrer" className="quick-route-btn" aria-label="Petunjuk Rute Maps Cabang Unnes">
                 <FiNavigation style={{ fontSize: '1.1rem' }} />
                 <div style={{ textAlign: 'left' }}>
                   <span className="q-btn-title">Cabang Unnes (Gunungpati)</span>
-                  <span className="q-btn-sub">Petunjuk Rute Maps</span>
+                  <span className="q-btn-sub">Petunjuk Rute Maps Cabang Unnes</span>
                 </div>
               </a>
-              <a href="https://maps.google.com/?q=Alinea+Laundry+Tlogosari+Pedurungan" target="_blank" rel="noreferrer" className="quick-route-btn">
+              <a href="https://maps.google.com/?q=Alinea+Laundry+Tlogosari+Pedurungan" target="_blank" rel="noreferrer" className="quick-route-btn" aria-label="Petunjuk Rute Maps Cabang Tlogosari">
                 <FiNavigation style={{ fontSize: '1.1rem' }} />
                 <div style={{ textAlign: 'left' }}>
                   <span className="q-btn-title">Cabang Tlogosari (Pedurungan)</span>
-                  <span className="q-btn-sub">Petunjuk Rute Maps</span>
+                  <span className="q-btn-sub">Petunjuk Rute Maps Cabang Tlogosari</span>
                 </div>
               </a>
             </div>

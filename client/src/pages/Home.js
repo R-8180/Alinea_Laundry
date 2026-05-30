@@ -62,7 +62,7 @@ export const CMSContext = React.createContext();
 
 /* ========== KOMPONEN ========== */
 const ScrollProgressBar = () => {
-  const [scrollW, setScrollW] = useState('0%');
+  const [scrollScale, setScrollScale] = useState(0);
 
   useEffect(() => {
     let rafId = null;
@@ -75,8 +75,8 @@ const ScrollProgressBar = () => {
         const totalScroll = document.documentElement.scrollTop;
         const windowHeight = document.documentElement.scrollHeight - document.documentElement.clientHeight;
         if (windowHeight <= 0) return;
-        const scroll = `${(totalScroll / windowHeight) * 100}%`;
-        setScrollW(scroll);
+        const scale = totalScroll / windowHeight;
+        setScrollScale(scale);
       });
     };
 
@@ -89,7 +89,7 @@ const ScrollProgressBar = () => {
 
   return (
     <div className="scroll-progress-container">
-      <div className="scroll-progress-fill" style={{ width: scrollW }}></div>
+      <div className="scroll-progress-fill" style={{ transform: `scaleX(${scrollScale})`, width: '100%' }}></div>
     </div>
   );
 };
@@ -313,7 +313,7 @@ const LayananSection = () => (
   <section className="section reveal" id="services">
     <div className="layanan-container-flex">
       <div className="layanan-photo-side">
-         <img src="/images/alineabanner.png" alt="Pricelist Alinea Laundry" className="pricelist-img-flex" />
+         <img src="/images/alineabanner.png" alt="Pricelist Alinea Laundry" className="pricelist-img-flex" width="330" height="330" />
       </div>
       <div className="layanan-content-side">
         <h2 className="section-title-left">Satu Tempat, Semua Kebutuhan Cuci Anda</h2>
@@ -669,26 +669,28 @@ const Home = () => {
     <CMSContext.Provider value={cms}>
       <div style={{ background: 'var(--bg)' }}>
         <ScrollProgressBar />
-        <HeroWithTrack />
-        <div className="home-content-bg">
-          <div className="container" style={{ paddingBottom: 0 }}>
-            {/* Mobile only: install banner above promo */}
-            <InstallPWA variant="mobile-banner" />
-            <PromoSlider />
-            <LayananSection />
+        <main>
+          <HeroWithTrack />
+          <div className="home-content-bg">
+            <div className="container" style={{ paddingBottom: 0 }}>
+              {/* Mobile only: install banner above promo */}
+              <InstallPWA variant="mobile-banner" />
+              <PromoSlider />
+              <LayananSection />
+            </div>
+            
+            <ParfumShop />
+            
+            <div className="container" style={{ paddingTop: 0 }}>
+              <HowToOrderSection />
+              <FAQSection />
+              <TestimoniSection />
+              <SocialMediaSection />
+              {/* Desktop only: install button below sosmed */}
+              <InstallPWA variant="desktop-banner" />
+            </div>
           </div>
-          
-          <ParfumShop />
-          
-          <div className="container" style={{ paddingTop: 0 }}>
-            <HowToOrderSection />
-            <FAQSection />
-            <TestimoniSection />
-            <SocialMediaSection />
-            {/* Desktop only: install button below sosmed */}
-            <InstallPWA variant="desktop-banner" />
-          </div>
-        </div>
+        </main>
         <Footer />
         <FloatingWA waNumber={cms?.waNumber} />
       </div>

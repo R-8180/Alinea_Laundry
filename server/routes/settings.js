@@ -13,7 +13,7 @@ router.get('/:key', async (req, res) => {
     if (result.rows.length > 0) {
       res.json(result.rows[0].setting_value);
     } else {
-      res.status(404).json({ message: 'Setting not found' });
+      res.json(null); // Return 200 with null to prevent browser console 404 errors
     }
   } catch (err) {
     console.error('Error fetching settings:', err);

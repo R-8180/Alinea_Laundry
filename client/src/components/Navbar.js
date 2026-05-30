@@ -476,7 +476,7 @@ const Navbar = ({ user, onLogout }) => {
         {/* RIGHT SIDE ACTIONS FOR MOBILE (Bell + Hamburger) */}
         <div className="mobile-nav-actions">
           {renderBellDropdown(true)}
-          <button className="hamburger" onClick={() => setOpen(!open)}>
+          <button className="hamburger" onClick={() => setOpen(!open)} aria-label="Buka Menu">
             {open ? <FiX /> : <FiMenu />}
           </button>
         </div>

@@ -253,6 +253,13 @@ router.post('/reset-password', async (req, res) => {
       [hash, userId]
     );
 
+    res.json({ message: 'Password berhasil diubah! Silakan login dengan password baru Anda. ✅' });
+  } catch (err) {
+    console.error('Reset password error:', err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
 // Google Login / Verification
 router.post('/google-login', async (req, res) => {
   const { credential } = req.body;

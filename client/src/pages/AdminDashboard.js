@@ -679,6 +679,7 @@ const AdminDashboard = () => {
     if (!addOrderModal || !newOrderForm.address || newOrderForm.items.length === 0) {
       return showWarning('Form Belum Lengkap', 'Silakan isi alamat penjemputan dan minimal tambahkan 1 item laundry.');
     }
+    showLoading('Membuat Pesanan', 'Sedang menyimpan pesanan baru...');
     try {
       const res = await axios.post('/api/admin/orders/create', {
         customer_id: addOrderModal.id,
@@ -695,14 +696,20 @@ const AdminDashboard = () => {
   };
 
   const validatePayment = async (oid) => {
-    await axios.put(`/api/admin/payments/validate/${oid}`, {}, { headers: h });
-    setOrders(prev => prev.map(o => o.id === oid ? { ...o, payment_status: 'paid' } : o));
-    setPaymentModal(null);
-    showSuccess('Validasi Berhasil', 'Bukti pembayaran pelanggan berhasil divalidasi!');
+    showLoading('Memvalidasi Pembayaran', 'Sedang memproses validasi bukti bayar...');
+    try {
+      await axios.put(`/api/admin/payments/validate/${oid}`, {}, { headers: h });
+      setOrders(prev => prev.map(o => o.id === oid ? { ...o, payment_status: 'paid' } : o));
+      setPaymentModal(null);
+      showSuccess('Validasi Berhasil', 'Bukti pembayaran pelanggan berhasil divalidasi!');
+    } catch (err) {
+      showError('Gagal Validasi', err.response?.data?.message || 'Gagal memvalidasi bukti bayar.');
+    }
   };
 
   const assignCourier = async () => {
     if (!assignModal || !selectedCourier) return;
+    showLoading('Menugaskan Kurir', 'Sedang memproses penugasan kurir...');
     try {
       await axios.put(`/api/admin/orders/${assignModal.orderId}/assign`, { courier_id: parseInt(selectedCourier) }, { headers: h });
       showSuccess('Penugasan Berhasil', 'Kurir operasional berhasil ditugaskan untuk pesanan ini!');
@@ -786,6 +793,7 @@ const AdminDashboard = () => {
         manual_price: item.manual_price,
       };
     });
+    showLoading('Menyimpan Validasi', 'Sedang memproses berat & harga...');
     try {
       const res = await axios.put(
         `/api/admin/orders/${validateModal.id}/validate-items`,

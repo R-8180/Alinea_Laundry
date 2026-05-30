@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
-import { showSuccess, showError, showWarning } from '../utils/swal';
+import { showSuccess, showError, showWarning, showLoading } from '../utils/swal';
 import {
   FiEdit2, FiPlus, FiCheck, FiX, FiSave, FiRefreshCw,
   FiClock, FiDollarSign, FiPackage, FiAlertCircle, FiEye, FiEyeOff, FiZap,
@@ -121,6 +121,7 @@ const ServicesManagement = () => {
 
   const handleBroadcast = async () => {
     if (!broadcastMsg) return;
+    showLoading('Mengirim Broadcast', 'Sedang mengirim notifikasi ke semua customer...');
     try {
       await axios.post('/api/admin/notifications/broadcast', { message: broadcastMsg }, { headers: { Authorization: `Bearer ${token}` } });
       showSuccess('Terkirim', 'Broadcast berhasil dikirim');

@@ -268,22 +268,13 @@ const CustomerDashboard = ({ user: propUser }) => {
   };
 
   const claimVoucher = async (templateId) => {
+    showLoading('Mengeklaim Voucher', 'Sedang memproses klaim voucher...');
     try {
       await axios.post('/api/orders/voucher/claim', { template_id: templateId }, { headers: { Authorization: `Bearer ${token}` } });
-      Swal.fire({
-        icon: 'success',
-        title: 'Berhasil!',
-        text: 'Voucher berhasil diklaim!',
-        confirmButtonColor: '#6366f1'
-      });
+      showSuccess('Berhasil!', 'Voucher berhasil diklaim!');
       fetchVoucherStatus();
     } catch (err) {
-      Swal.fire({
-        icon: 'error',
-        title: 'Gagal',
-        text: err.response?.data?.message || 'Gagal klaim voucher',
-        confirmButtonColor: '#6366f1'
-      });
+      showError('Gagal', err.response?.data?.message || 'Gagal klaim voucher');
     }
   };
 

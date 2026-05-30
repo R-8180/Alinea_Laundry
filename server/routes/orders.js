@@ -103,7 +103,6 @@ router.post('/', auth, orderLimiter, uploadImage.single('photo'), parseItems, cr
       await client.query(bulkSql, insertValues);
     }
 
-    await client.query('UPDATE users SET points = points + 10 WHERE id = $1', [userId]);
     await client.query('COMMIT');
     
     // Notify admins about the new order asynchronously

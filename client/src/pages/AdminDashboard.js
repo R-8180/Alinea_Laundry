@@ -1989,7 +1989,7 @@ const AdminDashboard = () => {
               {detailModal.voucher_code && (
                 <div style={{ marginTop: 12, padding: '8px 12px', background: '#fef3c7', borderRadius: 8, display: 'flex', alignItems: 'center', gap: 8, fontSize: '0.85rem', border: '1px solid #fde68a' }}>
                   <FiTag style={{ color: '#b45309' }} />
-                  <span>Menggunakan Voucher: <strong style={{ color: '#b45309' }}>{detailModal.voucher_name ? `${detailModal.voucher_name} (${detailModal.voucher_code})` : detailModal.voucher_code}</strong></span>
+                  <span>Menggunakan Voucher: <strong style={{ color: '#b45309' }}>{detailModal.voucher_name || detailModal.voucher_code}</strong></span>
                 </div>
               )}
               {/* Catatan Pelanggan untuk Admin */}
@@ -2119,7 +2119,7 @@ const AdminDashboard = () => {
               Order: <strong>{validateModal.order_code}</strong><br />
               Layanan: <strong>{formatServiceLabel(validateModal)}</strong>
               {validateModal.voucher_code && (
-                <><br />Voucher: <strong style={{ color: '#10b981' }}>{validateModal.voucher_name ? `${validateModal.voucher_name} (${validateModal.voucher_code})` : validateModal.voucher_code}</strong></>
+                <><br />Voucher: <strong style={{ color: '#10b981' }}>{validateModal.voucher_name || validateModal.voucher_code}</strong></>
               )}
             </p>
             <div style={{ overflowX: 'auto' }}>

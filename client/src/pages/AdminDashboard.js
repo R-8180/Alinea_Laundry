@@ -2140,10 +2140,10 @@ const AdminDashboard = () => {
                             onFocus={e => e.target.select()}
                             onChange={e => {
                               let val = e.target.value;
-                              if (val.length > 1 && val.startsWith('0') && !val.startsWith('0.')) val = val.substring(1);
+                              if (val.length > 1 && val.startsWith('0') && !val.startsWith('0.')) val = val.replace(/^0+/, '');
                               setValidateModal(prev => ({
                                 ...prev,
-                                items: prev.items.map(i => i.id === item.id ? { ...i, inputWeight: parseFloat(val) || 0 } : i),
+                                items: prev.items.map(i => i.id === item.id ? { ...i, inputWeight: val === '' ? '' : (parseFloat(val) || 0) } : i),
                               }));
                             }}
                             style={{ width: 80 }}
@@ -2155,10 +2155,10 @@ const AdminDashboard = () => {
                             onFocus={e => e.target.select()}
                             onChange={e => {
                               let val = e.target.value;
-                              if (val.length > 1 && val.startsWith('0')) val = val.substring(1);
+                              if (val.length > 1 && val.startsWith('0')) val = val.replace(/^0+/, '');
                               setValidateModal(prev => ({
                                 ...prev,
-                                items: prev.items.map(i => i.id === item.id ? { ...i, inputQty: parseInt(val) || 0 } : i),
+                                items: prev.items.map(i => i.id === item.id ? { ...i, inputQty: val === '' ? '' : (parseInt(val) || 0) } : i),
                               }));
                             }}
                             style={{ width: 80 }}
@@ -2172,10 +2172,10 @@ const AdminDashboard = () => {
                           onFocus={e => e.target.select()}
                           onChange={e => {
                             let val = e.target.value;
-                            if (val.length > 1 && val.startsWith('0')) val = val.substring(1);
+                            if (val.length > 1 && val.startsWith('0')) val = val.replace(/^0+/, '');
                             setValidateModal(prev => ({
                               ...prev,
-                              items: prev.items.map(i => i.id === item.id ? { ...i, manual_price: parseInt(val) || 0 } : i),
+                              items: prev.items.map(i => i.id === item.id ? { ...i, manual_price: val === '' ? '' : (parseInt(val) || 0) } : i),
                             }));
                           }}
                           style={{ width: 100 }}

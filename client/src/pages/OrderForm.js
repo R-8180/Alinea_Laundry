@@ -1064,7 +1064,7 @@ const OrderForm = () => {
                 <span style={{ textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', fontWeight: 500 }}>
                   {selectedVoucher ? (() => {
                      const sel = vouchers.find(v => v.code === selectedVoucher);
-                     return sel ? `${sel.voucher_name || sel.code} (-Rp ${sel.discount_amount?.toLocaleString('id-ID') || 0})` : selectedVoucher;
+                     return sel ? `${sel.voucher_name || sel.code}` : selectedVoucher;
                   })() : (vouchers.length > 0 ? 'Tanpa Voucher' : 'Tidak ada voucher tersedia')}
                 </span>
               </div>
@@ -1165,7 +1165,7 @@ const OrderForm = () => {
                         <div style={{ display: 'flex', flexDirection: 'column' }}>
                           <span style={{ fontWeight: 600 }}><FiTag className="icon-inline" style={{ marginRight: '4px' }}/> {v.voucher_name || 'Voucher Laundry'}</span>
                           <span style={{ fontSize: '0.75rem', color: isSelected ? 'rgba(255,255,255,0.9)' : '#64748b', marginTop: '2px' }}>
-                            Kode: {v.code} | Diskon: Rp {v.discount_amount?.toLocaleString('id-ID') || 0}
+                            Kode: {v.code}
                           </span>
                         </div>
                       </div>

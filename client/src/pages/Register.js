@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import { showSuccess, showError, showWarning, showLoading, closeLoading } from '../utils/swal';
 import { FiUser, FiMail, FiLock, FiPhone, FiMapPin, FiEye, FiEyeOff, FiCheck, FiX, FiArrowLeft } from 'react-icons/fi';
@@ -15,10 +15,12 @@ const Register = ({ onLogin }) => {
     address_note: '',
     lat: null,
     lng: null,
+    google_id: '',
   });
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
 
   const handleGoogleCallback = async (response) => {
     showLoading('Sedang Masuk', 'Menghubungkan ke Google...');
@@ -29,18 +31,41 @@ const Register = ({ onLogin }) => {
       });
       closeLoading();
       
-      showSuccess('Selamat Datang!', `Berhasil mendaftar & masuk sebagai ${res.data.user.name}!`);
-
-      if (onLogin) {
-        onLogin(res.data.user, res.data.token);
+      if (res.data.registered === false) {
+        // Belum terdaftar -> prefill langsung di halaman registrasi ini!
+        const { name, email, google_id } = res.data.googleData;
+        setForm(prev => ({
+          ...prev,
+          name: name || '',
+          email: email || '',
+          google_id: google_id || '',
+        }));
+        showSuccess('Akun Google Terhubung', 'Silakan lengkapi nomor WhatsApp dan alamat Anda untuk mendaftar.');
+      } else {
+        showSuccess('Selamat Datang!', `Berhasil masuk sebagai ${res.data.user.name}!`);
+        if (onLogin) {
+          onLogin(res.data.user, res.data.token);
+        }
+        navigate('/dashboard');
       }
-      navigate('/dashboard');
     } catch (err) {
       closeLoading();
       const msg = err.response?.data?.message || 'Registrasi dengan Google gagal.';
       showError('Google Registrasi Gagal', msg);
     }
   };
+
+  useEffect(() => {
+    if (location.state?.googleData) {
+      const { name, email, google_id } = location.state.googleData;
+      setForm(prev => ({
+        ...prev,
+        name: name || '',
+        email: email || '',
+        google_id: google_id || '',
+      }));
+    }
+  }, [location.state]);
 
   useEffect(() => {
     // Google Client ID Alinea Laundry
@@ -100,7 +125,7 @@ const Register = ({ onLogin }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!allPwValid) {
+    if (!form.google_id && !allPwValid) {
       showWarning('Password Kurang Kuat', 'Password Anda belum memenuhi semua persyaratan keamanan.');
       return;
     }
@@ -108,10 +133,21 @@ const Register = ({ onLogin }) => {
     showLoading('Sedang Mendaftar', 'Mohon tunggu sebentar...');
     try {
       const base = process.env.REACT_APP_API_URL || '';
-      await axios.post(`${base}/api/auth/register`, form);
-      await showSuccess('Registrasi Berhasil', 'Registrasi berhasil! Silakan masuk ke akun Anda.');
-      navigate('/login');
+      const res = await axios.post(`${base}/api/auth/register`, form);
+      closeLoading();
+      
+      if (res.data.token && res.data.user) {
+        showSuccess('Registrasi Berhasil', 'Akun Anda berhasil dibuat dan otomatis masuk! 🚀');
+        if (onLogin) {
+          onLogin(res.data.user, res.data.token);
+        }
+        navigate('/dashboard');
+      } else {
+        await showSuccess('Registrasi Berhasil', 'Registrasi berhasil! Silakan masuk ke akun Anda.');
+        navigate('/login');
+      }
     } catch (err) {
+      closeLoading();
       // Handle express-validator error array format
       const data = err.response?.data;
       if (data?.errors && Array.isArray(data.errors)) {
@@ -140,12 +176,37 @@ const Register = ({ onLogin }) => {
         </Link>
         <h2>Buat Akun Baru</h2>
         <p style={{ color: 'var(--navy-30)', fontSize: '0.9rem', marginBottom: 20 }}>
-          Daftar untuk mulai menggunakan layanan Alinea Laundry
+          {form.google_id 
+            ? 'Akun Google Anda berhasil terhubung! Tinggal selangkah lagi untuk menyelesaikan pendaftaran.' 
+            : 'Daftar untuk mulai menggunakan layanan Alinea Laundry'}
         </p>
 
-        <div style={{ display: 'flex', justifyContent: 'center', width: '100%', minHeight: '44px', marginBottom: '20px', borderBottom: '1px solid var(--border)', paddingBottom: '20px' }}>
-          <div id="googleButton"></div>
-        </div>
+        {!form.google_id && (
+          <div style={{ display: 'flex', justifyContent: 'center', width: '100%', minHeight: '44px', marginBottom: '20px', borderBottom: '1px solid var(--border)', paddingBottom: '20px' }}>
+            <div id="googleButton"></div>
+          </div>
+        )}
+
+        {form.google_id && (
+          <div style={{ 
+            background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.08) 0%, rgba(16, 185, 129, 0.08) 100%)', 
+            border: '1px solid rgba(59, 130, 246, 0.2)', 
+            borderRadius: '16px', 
+            padding: '12px 16px', 
+            marginBottom: '20px', 
+            display: 'flex', 
+            alignItems: 'center', 
+            gap: '12px',
+            fontSize: '0.85rem',
+            color: 'var(--navy-60)'
+          }}>
+            <img src="/images/logo-square.png" alt="Google Connected" style={{ width: '28px', height: '28px', borderRadius: '50%', background: '#fff', padding: '2px' }} onError={(e) => {e.target.style.display='none'}} />
+            <div>
+              <strong style={{ color: '#3b82f6', display: 'block' }}>Terhubung dengan Google OAuth2</strong>
+              Melanjutkan registrasi menggunakan email <strong>{form.email}</strong>.
+            </div>
+          </div>
+        )}
 
         <form onSubmit={handleSubmit}>
           <div className="input-group">
@@ -158,6 +219,8 @@ const Register = ({ onLogin }) => {
                 placeholder="Muhammad Saiful Robbani"
                 value={form.name}
                 onChange={handleChange}
+                disabled={!!form.google_id}
+                style={form.google_id ? { backgroundColor: '#f1f5f9', color: '#64748b', cursor: 'not-allowed' } : {}}
                 required
               />
             </div>
@@ -173,52 +236,56 @@ const Register = ({ onLogin }) => {
                 placeholder="saiful@gmail.com"
                 value={form.email}
                 onChange={handleChange}
+                disabled={!!form.google_id}
+                style={form.google_id ? { backgroundColor: '#f1f5f9', color: '#64748b', cursor: 'not-allowed' } : {}}
                 required
               />
             </div>
           </div>
 
-          <div className="input-group">
-            <label className="input-label">Password</label>
-            <div className="input-wrapper">
-              <FiLock className="input-icon" />
-              <input
-                name="password"
-                type={showPassword ? 'text' : 'password'}
-                placeholder="Buat password yang kuat"
-                value={form.password}
-                onChange={handleChange}
-                required
-              />
-              <span className="password-toggle" onClick={() => setShowPassword(!showPassword)}>
-                {showPassword ? <FiEyeOff /> : <FiEye />}
-              </span>
-            </div>
-            {/* Password strength indicator */}
-            {form.password.length > 0 && (
-              <div style={{ marginTop: 8, padding: '8px 12px', background: '#f8fafc', borderRadius: 8, border: '1px solid #e2e8f0' }}>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 4 }}>
-                  <PwCheck ok={pwChecks.minLength} label="Min. 8 karakter" />
-                  <PwCheck ok={pwChecks.hasUpper} label="Huruf besar (A-Z)" />
-                  <PwCheck ok={pwChecks.hasLower} label="Huruf kecil (a-z)" />
-                  <PwCheck ok={pwChecks.hasNumber} label="Angka (0-9)" />
-                </div>
-                {/* Strength bar */}
-                <div style={{ marginTop: 6, height: 4, borderRadius: 4, background: '#e5e7eb', overflow: 'hidden' }}>
-                  <div style={{
-                    height: '100%',
-                    borderRadius: 4,
-                    transition: 'width 0.3s, background 0.3s',
-                    width: `${Object.values(pwChecks).filter(Boolean).length * 25}%`,
-                    background: allPwValid ? '#16a34a' : Object.values(pwChecks).filter(Boolean).length >= 2 ? '#f59e0b' : '#ef4444',
-                  }} />
-                </div>
+          {!form.google_id && (
+            <div className="input-group">
+              <label className="input-label">Password</label>
+              <div className="input-wrapper">
+                <FiLock className="input-icon" />
+                <input
+                  name="password"
+                  type={showPassword ? 'text' : 'password'}
+                  placeholder="Buat password yang kuat"
+                  value={form.password}
+                  onChange={handleChange}
+                  required={!form.google_id}
+                />
+                <span className="password-toggle" onClick={() => setShowPassword(!showPassword)}>
+                  {showPassword ? <FiEyeOff /> : <FiEye />}
+                </span>
               </div>
-            )}
-          </div>
+              {/* Password strength indicator */}
+              {form.password.length > 0 && (
+                <div style={{ marginTop: 8, padding: '8px 12px', background: '#f8fafc', borderRadius: 8, border: '1px solid #e2e8f0' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 4 }}>
+                    <PwCheck ok={pwChecks.minLength} label="Min. 8 karakter" />
+                    <PwCheck ok={pwChecks.hasUpper} label="Huruf besar (A-Z)" />
+                    <PwCheck ok={pwChecks.hasLower} label="Huruf kecil (a-z)" />
+                    <PwCheck ok={pwChecks.hasNumber} label="Angka (0-9)" />
+                  </div>
+                  {/* Strength bar */}
+                  <div style={{ marginTop: 6, height: 4, borderRadius: 4, background: '#e5e7eb', overflow: 'hidden' }}>
+                    <div style={{
+                      height: '100%',
+                      borderRadius: 4,
+                      transition: 'width 0.3s, background 0.3s',
+                      width: `${Object.values(pwChecks).filter(Boolean).length * 25}%`,
+                      background: allPwValid ? '#16a34a' : Object.values(pwChecks).filter(Boolean).length >= 2 ? '#f59e0b' : '#ef4444',
+                    }} />
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
 
           <div className="input-group">
-            <label className="input-label">Nomor Telepon</label>
+            <label className="input-label">Nomor WhatsApp <span style={{ color: '#ef4444', fontSize: '0.8rem', fontWeight: 600 }}>(wajib)</span></label>
             <div className="input-wrapper">
               <FiPhone className="input-icon" />
               <input
@@ -227,6 +294,7 @@ const Register = ({ onLogin }) => {
                 placeholder="081234567890"
                 value={form.phone}
                 onChange={handleChange}
+                required
               />
             </div>
           </div>
@@ -268,9 +336,9 @@ const Register = ({ onLogin }) => {
             className="btn login-submit-btn"
             type="submit"
             style={{ marginTop: 16 }}
-            disabled={loading || !allPwValid}
+            disabled={loading || (!form.google_id && !allPwValid)}
           >
-            {loading ? 'Mendaftar...' : 'Daftar'}
+            {loading ? 'Mendaftar...' : 'Selesaikan Pendaftaran'}
           </button>
         </form>
 

@@ -6,6 +6,7 @@ const { body, param, query, validationResult } = require('express-validator');
 const registerValidation = [
   body('email').isEmail().normalizeEmail().withMessage('Email tidak valid'),
   body('password')
+    .if((value, { req }) => !req.body.google_id)
     .isLength({ min: 8 }).withMessage('Password minimal 8 karakter')
     .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/).withMessage('Password harus mengandung huruf besar, kecil, dan angka'),
   body('name').trim().isLength({ min: 2, max: 100 }).withMessage('Nama minimal 2 karakter').escape(),

@@ -16,7 +16,7 @@ const SECRET = process.env.JWT_SECRET;
 
 // Register
 router.post('/register', registerLimiter, registerValidation, validate, async (req, res) => {
-  const { name, email, password, address, address_note, phone, lat, lng, is_primary } = req.body;
+  const { name, email, password, address, address_note, phone, lat, lng, is_primary, google_id } = req.body;
   
   try {
     const checkEmail = await pool.query(
@@ -28,24 +28,35 @@ router.post('/register', registerLimiter, registerValidation, validate, async (r
       return res.status(400).json({ message: 'Email sudah terdaftar' });
     }
 
-    // Cek apakah nomor WA sudah digunakan oleh akun lain (hanya jika nomor diisi)
-    if (phone && phone.trim() !== '') {
-      const checkPhone = await pool.query(
-        'SELECT id FROM users WHERE phone = $1',
-        [phone]
-      );
-      
-      if (checkPhone.rows.length > 0) {
-        return res.status(400).json({ message: 'Nomor WhatsApp sudah digunakan oleh akun lain! ❌' });
-      }
+    // Cek apakah nomor WA diisi (kini wajib)
+    if (!phone || phone.trim() === '') {
+      return res.status(400).json({ message: 'Nomor WhatsApp wajib diisi! ❌' });
+    }
+
+    // Cek apakah nomor WA sudah digunakan oleh akun lain
+    const checkPhone = await pool.query(
+      'SELECT id FROM users WHERE phone = $1',
+      [phone]
+    );
+    
+    if (checkPhone.rows.length > 0) {
+      return res.status(400).json({ message: 'Nomor WhatsApp sudah digunakan oleh akun lain! ❌' });
     }
     
+    // Jika daftar lewat Google, password tidak harus diinput (kita generate random yang sangat aman)
+    let passToHash = password;
+    if (!passToHash && google_id) {
+      passToHash = crypto.randomBytes(32).toString('hex');
+    } else if (!passToHash) {
+      return res.status(400).json({ message: 'Password wajib diisi! ❌' });
+    }
+
     // Hash password 12 rounds
-    const hash = await bcrypt.hash(password, 12);
+    const hash = await bcrypt.hash(passToHash, 12);
     
     const result = await pool.query(
-      'INSERT INTO users (name, email, password, role, address, phone) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id',
-      [name, email, hash, 'customer', address || '', phone || null]
+      'INSERT INTO users (name, email, password, role, address, phone, google_id) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id',
+      [name, email, hash, 'customer', address || '', phone || null, google_id || null]
     );
     
     const userId = result.rows[0].id;
@@ -57,7 +68,18 @@ router.post('/register', registerLimiter, registerValidation, validate, async (r
       );
     }
     
-    res.status(201).json({ message: 'Registrasi berhasil' });
+    // Generate JWT token untuk auto-login agar UX premium & seamless!
+    const token = jwt.sign(
+      { id: userId, email, role: 'customer', branch_id: null },
+      SECRET,
+      { expiresIn: '30d' }
+    );
+
+    res.status(201).json({ 
+      message: 'Registrasi berhasil', 
+      token, 
+      user: { id: userId, name, email, phone, role: 'customer', branch_id: null } 
+    });
   } catch (err) {
     console.error('Registration error:', err);
     res.status(500).json({ error: 'Server error' });
@@ -295,16 +317,15 @@ router.post('/google-login', async (req, res) => {
 
     let user;
     if (userRes.rows.length === 0) {
-      // User belum terdaftar -> Daftarkan otomatis sebagai customer
-      // Buat password acak yang panjang & aman
-      const randomPassword = crypto.randomBytes(32).toString('hex');
-      const hash = await bcrypt.hash(randomPassword, 12);
-      
-      const insertRes = await pool.query(
-        'INSERT INTO users (name, email, password, role, google_id) VALUES ($1, $2, $3, $4, $5) RETURNING id, email, role, name, phone, branch_id',
-        [name, email, hash, 'customer', google_id]
-      );
-      user = insertRes.rows[0];
+      // User belum terdaftar -> Kembalikan flag registered: false agar diarahkan ke form lengkap
+      return res.json({ 
+        registered: false, 
+        googleData: { 
+          email, 
+          name, 
+          google_id 
+        } 
+      });
     } else {
       user = userRes.rows[0];
       // Jika user sudah ada tetapi google_id belum tersimpan, simpan google_id-nya
@@ -322,6 +343,7 @@ router.post('/google-login', async (req, res) => {
     );
     
     res.json({ 
+      registered: true,
       token, 
       user: { 
         id: user.id, 

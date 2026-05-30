@@ -20,10 +20,15 @@ const Login = ({ onLogin }) => {
       });
       closeLoading();
       
-      showSuccess('Selamat Datang!', `Berhasil masuk sebagai ${res.data.user.name}!`);
-
-      onLogin(res.data.user, res.data.token);
-      navigate('/dashboard');
+      if (res.data.registered === false) {
+        // User belum terdaftar -> Arahkan ke form registrasi lengkap
+        showSuccess('Langkah Terakhir!', 'Akun Google terhubung! Silakan lengkapi nomor WhatsApp dan alamat Anda untuk mendaftar.');
+        navigate('/register', { state: { googleData: res.data.googleData } });
+      } else {
+        showSuccess('Selamat Datang!', `Berhasil masuk sebagai ${res.data.user.name}!`);
+        onLogin(res.data.user, res.data.token);
+        navigate('/dashboard');
+      }
     } catch (err) {
       closeLoading();
       const msg = err.response?.data?.message || 'Login dengan Google gagal.';

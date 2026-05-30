@@ -314,7 +314,7 @@ const LayananSection = () => (
   <section className="section reveal" id="services">
     <div className="layanan-container-flex">
       <div className="layanan-photo-side">
-         <img src="/images/alineabanner.png" alt="Pricelist Alinea Laundry" className="pricelist-img-flex" width="330" height="330" />
+         <img src="/images/alineabanner.png" alt="Pricelist Alinea Laundry" className="pricelist-img-flex" width="330" height="330" loading="lazy" />
       </div>
       <div className="layanan-content-side">
         <h2 className="section-title-left">Satu Tempat, Semua Kebutuhan Cuci Anda</h2>
@@ -351,7 +351,7 @@ const ParfumShop = () => {
           {currentParfums.map((p, idx) => (
             <div key={idx} className="parfum-card-new">
               <div className="parfum-img-wrapper">
-                <img src={p.img} alt={p.name} className="parfum-card-img" />
+                <img src={p.img} alt={p.name} className="parfum-card-img" loading="lazy" />
               </div>
               <h3>{p.name}</h3>
               <p className="parfum-desc">{p.desc}</p>
@@ -443,7 +443,7 @@ const TestimoniCard = ({ item, isMobile, isActive }) => {
       textAlign: 'left'
     }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? 12 : 15, marginBottom: isMobile ? 12 : 20 }}>
-        <img src={item.img} alt={item.name} style={{ width: isMobile ? 44 : 56, height: isMobile ? 44 : 56, borderRadius: '50%', objectFit: 'cover' }} />
+        <img src={item.img} alt={item.name} style={{ width: isMobile ? 44 : 56, height: isMobile ? 44 : 56, borderRadius: '50%', objectFit: 'cover' }} loading="lazy" />
         <div>
           <strong style={{ display: 'block', fontSize: isMobile ? '1rem' : '1.1rem', color: '#0f172a' }}>{item.name}</strong>
           <div className="stars" style={{ display: 'flex', gap: 2, marginTop: 4 }}>

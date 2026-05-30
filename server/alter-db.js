@@ -9,6 +9,9 @@ async function run() {
     await pool.query('ALTER TABLE orders ADD COLUMN IF NOT EXISTS courier_notes TEXT DEFAULT \'\'');
     console.log('✅ Berhasil menambahkan kolom courier_notes ke tabel orders!');
 
+    await pool.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS google_id VARCHAR(255)');
+    console.log('✅ Berhasil menambahkan kolom google_id ke tabel users!');
+
     await pool.query('CREATE INDEX IF NOT EXISTS idx_orders_order_code ON orders (order_code)');
     await pool.query('CREATE INDEX IF NOT EXISTS idx_orders_status ON orders (status)');
     await pool.query('CREATE INDEX IF NOT EXISTS idx_users_email ON users (email)');

@@ -1,11 +1,11 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { showSuccess, showError, showWarning, showLoading } from '../utils/swal';
+import { showSuccess, showError, showWarning, showLoading, closeLoading } from '../utils/swal';
 import { FiUser, FiMail, FiLock, FiPhone, FiMapPin, FiEye, FiEyeOff, FiCheck, FiX, FiArrowLeft } from 'react-icons/fi';
 import GetMyLocation from '../components/GetMyLocation';
 
-const Register = () => {
+const Register = ({ onLogin }) => {
   const [form, setForm] = useState({
     name: '',
     email: '',
@@ -19,6 +19,65 @@ const Register = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+
+  const handleGoogleCallback = async (response) => {
+    showLoading('Sedang Masuk', 'Menghubungkan ke Google...');
+    try {
+      const base = process.env.REACT_APP_API_URL || '';
+      const res = await axios.post(`${base}/api/auth/google-login`, {
+        credential: response.credential
+      });
+      closeLoading();
+      
+      showSuccess('Selamat Datang!', `Berhasil mendaftar & masuk sebagai ${res.data.user.name}!`);
+
+      if (onLogin) {
+        onLogin(res.data.user, res.data.token);
+      }
+      navigate('/dashboard');
+    } catch (err) {
+      closeLoading();
+      const msg = err.response?.data?.message || 'Registrasi dengan Google gagal.';
+      showError('Google Registrasi Gagal', msg);
+    }
+  };
+
+  useEffect(() => {
+    // Google Client ID Alinea Laundry
+    const googleClientId = process.env.REACT_APP_GOOGLE_CLIENT_ID || '1008719970978-hb24n2dstb40o45d4feuo2kt27y36fh1.apps.googleusercontent.com';
+
+    const initGoogle = () => {
+      if (window.google && window.google.accounts) {
+        window.google.accounts.id.initialize({
+          client_id: googleClientId,
+          callback: handleGoogleCallback
+        });
+        
+        window.google.accounts.id.renderButton(
+          document.getElementById('googleButton'),
+          { 
+            theme: 'outline', 
+            size: 'large', 
+            width: '320', 
+            text: 'signup_with',
+            shape: 'pill'
+          }
+        );
+      }
+    };
+
+    if (window.google) {
+      initGoogle();
+    } else {
+      const interval = setInterval(() => {
+        if (window.google) {
+          initGoogle();
+          clearInterval(interval);
+        }
+      }, 250);
+      return () => clearInterval(interval);
+    }
+  }, [navigate]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -83,6 +142,10 @@ const Register = () => {
         <p style={{ color: 'var(--navy-30)', fontSize: '0.9rem', marginBottom: 20 }}>
           Daftar untuk mulai menggunakan layanan Alinea Laundry
         </p>
+
+        <div style={{ display: 'flex', justifyContent: 'center', width: '100%', minHeight: '44px', marginBottom: '20px', borderBottom: '1px solid var(--border)', paddingBottom: '20px' }}>
+          <div id="googleButton"></div>
+        </div>
 
         <form onSubmit={handleSubmit}>
           <div className="input-group">

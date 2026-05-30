@@ -253,9 +253,81 @@ router.post('/reset-password', async (req, res) => {
       [hash, userId]
     );
 
-    res.status(200).json({ message: 'Password Anda berhasil diperbarui! Silakan masuk kembali. ✅' });
+// Google Login / Verification
+router.post('/google-login', async (req, res) => {
+  const { credential } = req.body;
+  if (!credential) {
+    return res.status(400).json({ message: 'Token Google tidak ditemukan' });
+  }
+
+  try {
+    // 1. Verifikasi ID Token dari Google via tokeninfo API
+    const verifyRes = await fetch(`https://oauth2.googleapis.com/tokeninfo?id_token=${credential}`);
+    if (!verifyRes.ok) {
+      return res.status(400).json({ message: 'Verifikasi Token Google gagal' });
+    }
+    
+    const payload = await verifyRes.json();
+    
+    // Verifikasi aud (audience) agar sama dengan CLIENT_ID Google aplikasi kita
+    const googleClientId = process.env.GOOGLE_CLIENT_ID;
+    if (googleClientId && payload.aud !== googleClientId) {
+      return res.status(400).json({ message: 'Google Client ID tidak cocok (Unauthorized)' });
+    }
+
+    const { email, name, sub: google_id } = payload;
+    if (!email) {
+      return res.status(400).json({ message: 'Email tidak ditemukan dari akun Google Anda' });
+    }
+    
+    // 2. Cek apakah user sudah terdaftar di database dengan email tersebut
+    let userRes = await pool.query(
+      'SELECT id, email, password, role, name, phone, branch_id, google_id FROM users WHERE email = $1',
+      [email]
+    );
+
+    let user;
+    if (userRes.rows.length === 0) {
+      // User belum terdaftar -> Daftarkan otomatis sebagai customer
+      // Buat password acak yang panjang & aman
+      const randomPassword = crypto.randomBytes(32).toString('hex');
+      const hash = await bcrypt.hash(randomPassword, 12);
+      
+      const insertRes = await pool.query(
+        'INSERT INTO users (name, email, password, role, google_id) VALUES ($1, $2, $3, $4, $5) RETURNING id, email, role, name, phone, branch_id',
+        [name, email, hash, 'customer', google_id]
+      );
+      user = insertRes.rows[0];
+    } else {
+      user = userRes.rows[0];
+      // Jika user sudah ada tetapi google_id belum tersimpan, simpan google_id-nya
+      if (!user.google_id) {
+        await pool.query('UPDATE users SET google_id = $1 WHERE id = $2', [google_id, user.id]);
+      }
+    }
+
+    // 3. Buat JWT token untuk login resmi Alinea Laundry
+    const expiresIn = user.role === 'customer' ? '30d' : '8h';
+    const token = jwt.sign(
+      { id: user.id, email: user.email, role: user.role, branch_id: user.branch_id },
+      SECRET,
+      { expiresIn }
+    );
+    
+    res.json({ 
+      token, 
+      user: { 
+        id: user.id, 
+        name: user.name, 
+        email: user.email, 
+        phone: user.phone, 
+        role: user.role, 
+        branch_id: user.branch_id 
+      } 
+    });
+
   } catch (err) {
-    console.error('Reset password error:', err);
+    console.error('Google Login error:', err);
     res.status(500).json({ error: 'Server error' });
   }
 });

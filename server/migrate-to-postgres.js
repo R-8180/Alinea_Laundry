@@ -30,6 +30,7 @@ async function migrate() {
         address VARCHAR(255),
         phone VARCHAR(20),
         points INTEGER DEFAULT 0,
+        google_id VARCHAR(255),
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
     `);

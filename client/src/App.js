@@ -211,7 +211,7 @@ function App() {
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/login" element={!user ? <Login onLogin={handleLogin} /> : <Navigate to="/dashboard" />} />
-        <Route path="/register" element={!user ? <Register /> : <Navigate to="/dashboard" />} />
+        <Route path="/register" element={!user ? <Register onLogin={handleLogin} /> : <Navigate to="/dashboard" />} />
         <Route path="/forgot-password" element={!user ? <Suspense fallback={<PageLoader />}><ForgotPassword /></Suspense> : <Navigate to="/dashboard" />} />
         <Route path="/reset-password" element={!user ? <Suspense fallback={<PageLoader />}><ResetPassword /></Suspense> : <Navigate to="/dashboard" />} />
         

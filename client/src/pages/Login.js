@@ -2,8 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import { FiMail, FiLock, FiEye, FiEyeOff, FiArrowLeft } from 'react-icons/fi';
-import { showError, showLoading, closeLoading } from '../utils/swal';
-import { FcGoogle } from 'react-icons/fc';
+import { showError, showLoading, closeLoading, showSuccess } from '../utils/swal';
 
 const Login = ({ onLogin }) => {
   const [email, setEmail] = useState('');
@@ -11,6 +10,63 @@ const Login = ({ onLogin }) => {
   const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
+
+  const handleGoogleCallback = async (response) => {
+    showLoading('Sedang Masuk', 'Menghubungkan ke Google...');
+    try {
+      const base = process.env.REACT_APP_API_URL || '';
+      const res = await axios.post(`${base}/api/auth/google-login`, {
+        credential: response.credential
+      });
+      closeLoading();
+      
+      showSuccess('Selamat Datang!', `Berhasil masuk sebagai ${res.data.user.name}!`);
+
+      onLogin(res.data.user, res.data.token);
+      navigate('/dashboard');
+    } catch (err) {
+      closeLoading();
+      const msg = err.response?.data?.message || 'Login dengan Google gagal.';
+      showError('Google Login Gagal', msg);
+    }
+  };
+
+  useEffect(() => {
+    // Google Client ID Alinea Laundry
+    const googleClientId = process.env.REACT_APP_GOOGLE_CLIENT_ID || '1008719970978-hb24n2dstb40o45d4feuo2kt27y36fh1.apps.googleusercontent.com';
+
+    const initGoogle = () => {
+      if (window.google && window.google.accounts) {
+        window.google.accounts.id.initialize({
+          client_id: googleClientId,
+          callback: handleGoogleCallback
+        });
+        
+        window.google.accounts.id.renderButton(
+          document.getElementById('googleButton'),
+          { 
+            theme: 'outline', 
+            size: 'large', 
+            width: '320', // Width matches the container
+            text: 'signin_with',
+            shape: 'pill'
+          }
+        );
+      }
+    };
+
+    if (window.google) {
+      initGoogle();
+    } else {
+      const interval = setInterval(() => {
+        if (window.google) {
+          initGoogle();
+          clearInterval(interval);
+        }
+      }, 250);
+      return () => clearInterval(interval);
+    }
+  }, [navigate]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);
@@ -121,9 +177,9 @@ const Login = ({ onLogin }) => {
           atau masuk dengan
         </p>
 
-        <button className="btn btn-secondary" style={{ width: '100%', justifyContent: 'center' }}>
-          <FcGoogle style={{ fontSize: '1.1rem' }} /> Masuk dengan Google
-        </button>
+        <div style={{ display: 'flex', justifyContent: 'center', width: '100%', minHeight: '44px', marginBottom: '8px' }}>
+          <div id="googleButton"></div>
+        </div>
 
         <p style={{ textAlign: 'center', marginTop: 20, fontSize: '0.875rem', color: 'var(--navy-60)' }}>
           Belum punya akun? <Link to="/register" style={{ color: 'var(--gold)', fontWeight: 600 }}>Daftar sekarang</Link>

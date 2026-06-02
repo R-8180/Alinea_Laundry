@@ -156,8 +156,10 @@ const CourierDashboard = () => {
   const [contacts, setContacts] = useState([]);
   const navigate = useNavigate();
   const location = useLocation();
-  const token = localStorage.getItem('token');
-  const h = { Authorization: `Bearer ${token}` };
+  const getHeaders = () => {
+    const token = localStorage.getItem('token');
+    return { Authorization: `Bearer ${token}` };
+  };
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);
@@ -175,7 +177,7 @@ const CourierDashboard = () => {
 
   const fetchHelpContacts = async () => {
     try {
-      const res = await axios.get('/api/courier/bantuan-directory', { headers: h });
+      const res = await axios.get('/api/courier/bantuan-directory', { headers: getHeaders() });
       setContacts(res.data);
     } catch (err) {
       console.error('Gagal ambil kontak bantuan:', err);
@@ -184,7 +186,7 @@ const CourierDashboard = () => {
 
   const fetchActiveOrders = async () => {
     try {
-      const res = await axios.get('/api/courier/orders', { headers: h });
+      const res = await axios.get('/api/courier/orders', { headers: getHeaders() });
       setOrders(res.data);
     } catch (err) {
       console.error('Gagal ambil order:', err);
@@ -197,7 +199,7 @@ const CourierDashboard = () => {
 
   const updateStatus = async (orderId, newStatus) => {
     try {
-      await axios.put(`/api/courier/orders/${orderId}/status`, { status: newStatus }, { headers: h });
+      await axios.put(`/api/courier/orders/${orderId}/status`, { status: newStatus }, { headers: getHeaders() });
       fetchActiveOrders();
     } catch (err) {
       showError('Gagal Ubah Status', err.response?.data?.message || err.message || 'Gagal memperbarui status order');
@@ -214,7 +216,7 @@ const CourierDashboard = () => {
     fd.append('photo', pickupPhoto);
     try {
       await axios.post(`/api/courier/orders/${pickupModal.id}/pickup-photo`, fd, {
-        headers: { ...h, 'Content-Type': 'multipart/form-data' }
+        headers: { ...getHeaders(), 'Content-Type': 'multipart/form-data' }
       });
       showSuccess('Sukses Jemput', 'Foto barang berhasil diunggah!');
       setPickupModal(null);
@@ -241,7 +243,7 @@ const CourierDashboard = () => {
     fd.append('photo', deliveryPhoto);
     try {
       await axios.post(`/api/courier/orders/${deliveryModal.id}/deliver`, fd, {
-        headers: { ...h, 'Content-Type': 'multipart/form-data' }
+        headers: { ...getHeaders(), 'Content-Type': 'multipart/form-data' }
       });
       setDeliverySuccess(true);
       fetchActiveOrders();

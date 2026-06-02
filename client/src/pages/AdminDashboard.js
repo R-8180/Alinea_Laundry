@@ -492,8 +492,10 @@ const AdminDashboard = () => {
   const [activeFaq, setActiveFaq] = useState(null);
   const [newOrderForm, setNewOrderForm] = useState({ address: '', notes: '', service_speed: 'reguler', items: [{ service_type: 'kiloan', name: '' }] });
   const [couriers, setCouriers] = useState([]);
-  const token = localStorage.getItem('token');
-  const h = { Authorization: `Bearer ${token}` };
+  const getHeaders = () => {
+    const token = localStorage.getItem('token');
+    return { Authorization: `Bearer ${token}` };
+  };
 
   // Parse user and branch filter state
   const user = JSON.parse(localStorage.getItem('user') || '{}');
@@ -522,7 +524,7 @@ const AdminDashboard = () => {
   const fetchOrders = useCallback(async () => {
     try {
       const url = selectedBranchFilter ? `/api/admin/orders?branch_id=${selectedBranchFilter}` : '/api/admin/orders';
-      const res = await axios.get(url, { headers: h });
+      const res = await axios.get(url, { headers: getHeaders() });
       setOrders(res.data);
       cachedOrders = res.data; // Simpan di cache
     } catch { showError('Gagal Memuat', 'Gagal memuat data order laundry.'); } finally { setLoading(false); }
@@ -531,7 +533,7 @@ const AdminDashboard = () => {
   const fetchYesterdayStats = useCallback(async () => {
     try {
       const url = selectedBranchFilter ? `/api/admin/stats/yesterday?branch_id=${selectedBranchFilter}` : '/api/admin/stats/yesterday';
-      const res = await axios.get(url, { headers: h });
+      const res = await axios.get(url, { headers: getHeaders() });
       setYesterdayStats(res.data);
       cachedYesterdayStats = res.data; // Simpan di cache
     } catch { }
@@ -540,7 +542,7 @@ const AdminDashboard = () => {
   const fetchCustomers = useCallback(async () => {
     try {
       const url = selectedBranchFilter ? `/api/admin/customers?branch_id=${selectedBranchFilter}` : '/api/admin/customers';
-      const res = await axios.get(url, { headers: h });
+      const res = await axios.get(url, { headers: getHeaders() });
       setCustomers(res.data || []);
     } catch (err) {
       console.error('fetchCustomers error:', err.response?.data || err.message);
@@ -550,7 +552,7 @@ const AdminDashboard = () => {
 
   const fetchBantuanDirectory = useCallback(async () => {
     try {
-      const res = await axios.get('/api/admin/bantuan-directory', { headers: h });
+      const res = await axios.get('/api/admin/bantuan-directory', { headers: getHeaders() });
       setBantuanDirectory(res.data || []);
     } catch (err) {
       console.error('fetchBantuanDirectory error:', err);
@@ -561,7 +563,7 @@ const AdminDashboard = () => {
   const fetchFeedbacks = useCallback(async () => {
     setFeedbackLoading(true);
     try {
-      const res = await axios.get('/api/feedback', { headers: h });
+      const res = await axios.get('/api/feedback', { headers: getHeaders() });
       setFeedbacks(res.data || []);
     } catch (err) {
       console.error('fetchFeedbacks error:', err);
@@ -580,7 +582,7 @@ const AdminDashboard = () => {
     
     showLoading('Menghapus...', 'Sedang menghapus semua data feedback...');
     try {
-      await axios.delete('/api/feedback', { headers: h });
+      await axios.delete('/api/feedback', { headers: getHeaders() });
       setFeedbacks([]);
       showSuccess('Hapus Berhasil', 'Semua masukan kritik & saran berhasil dibersihkan.');
     } catch (err) {
@@ -597,7 +599,7 @@ const AdminDashboard = () => {
 
     showLoading('Menghapus...', 'Sedang menghapus feedback...');
     try {
-      await axios.delete(`/api/feedback/${id}`, { headers: h });
+      await axios.delete(`/api/feedback/${id}`, { headers: getHeaders() });
       setFeedbacks(prev => prev.filter(f => f.id !== id));
       showSuccess('Hapus Berhasil', 'Masukan kritik & saran berhasil dihapus.');
     } catch (err) {
@@ -613,7 +615,7 @@ const AdminDashboard = () => {
   /* ---------- HANDLERS ---------- */
   const fetchCouriers = async () => {
     try {
-      const res = await axios.get('/api/admin/couriers', { headers: h });
+      const res = await axios.get('/api/admin/couriers', { headers: getHeaders() });
       setCouriers(res.data || []);
     } catch (err) {
       console.error('fetchCouriers error:', err);
@@ -623,7 +625,7 @@ const AdminDashboard = () => {
 
   const updatePaymentStatus = async (id, newStatus) => {
     try {
-      await axios.put(`/api/admin/orders/${id}/payment-status`, { payment_status: newStatus }, { headers: h });
+      await axios.put(`/api/admin/orders/${id}/payment-status`, { payment_status: newStatus }, { headers: getHeaders() });
       setOrders(prev => prev.map(o => o.id === id ? { ...o, payment_status: newStatus } : o));
       showSuccess('Status Pembayaran Diperbarui', 'Berhasil mengubah status pembayaran.');
       fetchYesterdayStats();
@@ -646,7 +648,7 @@ const AdminDashboard = () => {
     
     showLoading('Memperbarui Status', 'Mohon tunggu sebentar...');
     try {
-      await axios.put(`/api/admin/orders/${id}/status`, { status: newStatus }, { headers: h });
+      await axios.put(`/api/admin/orders/${id}/status`, { status: newStatus }, { headers: getHeaders() });
       setOrders(prev => prev.map(o => o.id === id ? { ...o, status: newStatus } : o));
       fetchCustomers(); // update riwayat pengguna saat status berubah
       showSuccess('Status Diperbarui', `Status pesanan #${id} menjadi ${newStatus}`);
@@ -665,12 +667,12 @@ const AdminDashboard = () => {
         const fd = new FormData();
         fd.append('photo', completePhoto);
         await axios.put(`/api/admin/orders/${completeModal.orderId}/complete`, fd, {
-          headers: { ...h, 'Content-Type': 'multipart/form-data' }
+          headers: { ...getHeaders(), 'Content-Type': 'multipart/form-data' }
         });
       } else {
         // Jika tanpa foto, kirim JSON biasa
         await axios.put(`/api/admin/orders/${completeModal.orderId}/complete`, {}, {
-          headers: h
+          headers: getHeaders()
         });
       }
       setCompleteModal(null);
@@ -690,8 +692,8 @@ const AdminDashboard = () => {
     setCustomerModal(customer);
     try {
       const [resOrders, resAddresses] = await Promise.all([
-        axios.get(`/api/admin/customers/${customer.id}/orders`, { headers: h }),
-        axios.get(`/api/admin/customers/${customer.id}/addresses`, { headers: h })
+        axios.get(`/api/admin/customers/${customer.id}/orders`, { headers: getHeaders() }),
+        axios.get(`/api/admin/customers/${customer.id}/addresses`, { headers: getHeaders() })
       ]);
       setCustomerOrders(resOrders.data);
       setCustomerAddresses(resAddresses.data);
@@ -713,7 +715,7 @@ const AdminDashboard = () => {
         notes: newOrderForm.notes,
         service_speed: newOrderForm.service_speed,
         items: newOrderForm.items,
-      }, { headers: h });
+      }, { headers: getHeaders() });
       showSuccess('Order Berhasil', `Pesanan baru berhasil dibuat dengan Kode: ${res.data.order_code}`);
       setAddOrderModal(null);
       setNewOrderForm({ address: '', notes: '', service_speed: 'reguler', items: [{ service_type: 'kiloan', name: '' }] });
@@ -724,7 +726,7 @@ const AdminDashboard = () => {
   const validatePayment = async (oid) => {
     showLoading('Memvalidasi Pembayaran', 'Sedang memproses validasi bukti bayar...');
     try {
-      await axios.put(`/api/admin/payments/validate/${oid}`, {}, { headers: h });
+      await axios.put(`/api/admin/payments/validate/${oid}`, {}, { headers: getHeaders() });
       setOrders(prev => prev.map(o => o.id === oid ? { ...o, payment_status: 'paid' } : o));
       setPaymentModal(null);
       showSuccess('Validasi Berhasil', 'Bukti pembayaran pelanggan berhasil divalidasi!');
@@ -737,7 +739,7 @@ const AdminDashboard = () => {
     if (!assignModal || !selectedCourier) return;
     showLoading('Menugaskan Kurir', 'Sedang memproses penugasan kurir...');
     try {
-      await axios.put(`/api/admin/orders/${assignModal.orderId}/assign`, { courier_id: parseInt(selectedCourier) }, { headers: h });
+      await axios.put(`/api/admin/orders/${assignModal.orderId}/assign`, { courier_id: parseInt(selectedCourier) }, { headers: getHeaders() });
       showSuccess('Penugasan Berhasil', 'Kurir operasional berhasil ditugaskan untuk pesanan ini!');
       setAssignModal(null);
       setSelectedCourier('');
@@ -763,7 +765,7 @@ const AdminDashboard = () => {
       const order = orders.find(o => o.id === orderId) || detailModal;
       const payload = { estimated_days: parseInt(days) || 0, estimated_hours: parseInt(hours) || 0 };
       if (order && order.courier_id) payload.courier_id = order.courier_id;
-      const res = await axios.put(`/api/admin/orders/${orderId}/assign`, payload, { headers: h });
+      const res = await axios.put(`/api/admin/orders/${orderId}/assign`, payload, { headers: getHeaders() });
       
       setOrders(prev => prev.map(o => o.id === orderId
         ? { ...o, estimated_days: parseInt(days) || 0, estimated_hours: parseInt(hours) || 0, estimated_start: res.data.estimated_start || null }
@@ -781,18 +783,18 @@ const AdminDashboard = () => {
   };
 
   const openDetail = async (orderId) => {
-    const res = await axios.get(`/api/admin/orders/${orderId}`, { headers: h });
+    const res = await axios.get(`/api/admin/orders/${orderId}`, { headers: getHeaders() });
     setDetailModal(res.data);
   };
 
   const openPaymentModal = async (orderId) => {
-    const res = await axios.get(`/api/admin/orders/${orderId}`, { headers: h });
+    const res = await axios.get(`/api/admin/orders/${orderId}`, { headers: getHeaders() });
     setPaymentModal(res.data);
   };
 
   const openValidateModal = async (orderId) => {
     try {
-      const res = await axios.get(`/api/admin/orders/${orderId}`, { headers: h });
+      const res = await axios.get(`/api/admin/orders/${orderId}`, { headers: getHeaders() });
       const order = res.data;
       setValidateModal({
         ...order,
@@ -828,7 +830,7 @@ const AdminDashboard = () => {
           admin_note: validateModal.admin_note,
           additional_charge: validateModal.additional_charge || 0
         },
-        { headers: h }
+        { headers: getHeaders() }
       );
       showSuccess('Validasi Berat/Harga', `Validasi berat & harga berhasil disimpan! Total Tagihan Baru: Rp ${Math.floor(res.data.total).toLocaleString('id-ID')}`);
       setValidateModal(null);

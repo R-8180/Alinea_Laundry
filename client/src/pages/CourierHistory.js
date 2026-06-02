@@ -56,8 +56,10 @@ const CourierHistory = () => {
   const [history, setHistory] = useState([]);
   const [detailModal, setDetailModal] = useState(null);
   const [loading, setLoading] = useState(true);
-  const token = localStorage.getItem('token');
-  const h = { Authorization: `Bearer ${token}` };
+  const getHeaders = () => {
+    const token = localStorage.getItem('token');
+    return { Authorization: `Bearer ${token}` };
+  };
 
   useEffect(() => {
     fetchHistory();
@@ -66,7 +68,7 @@ const CourierHistory = () => {
   const fetchHistory = async () => {
     setLoading(true);
     try {
-      const res = await axios.get('/api/courier/history', { headers: h });
+      const res = await axios.get('/api/courier/history', { headers: getHeaders() });
       setHistory(res.data);
     } catch (err) {
       console.error('Gagal ambil riwayat:', err);

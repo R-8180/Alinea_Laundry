@@ -84,28 +84,23 @@ pool.query(`
 });
 
 // Membuat tabel feedback_saran secara otomatis (Clean schema migration)
-pool.query(`DROP TABLE IF EXISTS feedback_saran CASCADE;`)
-  .then(() => {
-    pool.query(`
-      CREATE TABLE feedback_saran (
-        id SERIAL PRIMARY KEY,
-        user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
-        rating_kebersihan INTEGER CHECK (rating_kebersihan >= 1 AND rating_kebersihan <= 5),
-        rating_kerapian INTEGER CHECK (rating_kerapian >= 1 AND rating_kerapian <= 5),
-        rating_parfum INTEGER CHECK (rating_parfum >= 1 AND rating_parfum <= 5),
-        rating_waktu INTEGER CHECK (rating_waktu >= 1 AND rating_waktu <= 5),
-        rating_web INTEGER CHECK (rating_web >= 1 AND rating_web <= 5),
-        comment TEXT,
-        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-      );
-    `).then(() => {
-      console.log('✅ Feedback_saran table created with optional ratings');
-    }).catch(err => {
-      console.error('❌ Error creating feedback_saran table:', err);
-    });
-  }).catch(err => {
-    console.error('❌ Error dropping feedback_saran table:', err);
-  });
+pool.query(`
+  CREATE TABLE IF NOT EXISTS feedback_saran (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+    rating_kebersihan INTEGER CHECK (rating_kebersihan >= 1 AND rating_kebersihan <= 5),
+    rating_kerapian INTEGER CHECK (rating_kerapian >= 1 AND rating_kerapian <= 5),
+    rating_parfum INTEGER CHECK (rating_parfum >= 1 AND rating_parfum <= 5),
+    rating_waktu INTEGER CHECK (rating_waktu >= 1 AND rating_waktu <= 5),
+    rating_web INTEGER CHECK (rating_web >= 1 AND rating_web <= 5),
+    comment TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+  );
+`).then(() => {
+  console.log('✅ Feedback_saran table verified/created');
+}).catch(err => {
+  console.error('❌ Error verifying feedback_saran table:', err);
+});
 // Auto-migrate orders table for offline orders
 pool.query(`
   ALTER TABLE orders 

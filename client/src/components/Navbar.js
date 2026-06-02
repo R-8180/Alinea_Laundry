@@ -361,11 +361,10 @@ const Navbar = ({ user, onLogout }) => {
                   style={{
                     color: 'rgba(255, 255, 255, 0.9)',
                     cursor: 'pointer',
-                    fontSize: '0.92rem',
-                    fontWeight: 600,
+                    fontSize: '0.875rem',
+                    fontWeight: 500,
                     padding: '0 8px',
                     transition: 'color 0.2s',
-                    fontFamily: 'Outfit, sans-serif',
                     display: 'flex',
                     alignItems: 'center',
                     gap: 6
@@ -509,7 +508,7 @@ const Navbar = ({ user, onLogout }) => {
                     padding: '10px 14px',
                     borderRadius: 10,
                     fontSize: '0.95rem',
-                    fontWeight: 600,
+                    fontWeight: 500,
                     color: 'white',
                     transition: 'all 0.2s'
                   }}

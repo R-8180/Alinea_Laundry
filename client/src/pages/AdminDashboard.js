@@ -10,7 +10,7 @@ import {
   FiUserPlus, FiChevronDown, FiPhone, FiCamera, FiFileText, FiMapPin,
   FiTruck, FiEdit2, FiX, FiEye, FiUsers, FiTag, FiArrowUp, FiArrowDown,
   FiPlus, FiUser, FiMessageCircle, FiZap, FiCreditCard, FiHelpCircle, FiClipboard,
-  FiStar, FiTrash2
+  FiStar, FiTrash2, FiRefreshCw
 } from 'react-icons/fi';
 import { GiWeight } from 'react-icons/gi';
 import ReceiptDownloader from '../components/ReceiptDownloader';
@@ -503,6 +503,7 @@ const AdminDashboard = () => {
   const [activeFaq, setActiveFaq] = useState(null);
   const [newOrderForm, setNewOrderForm] = useState({ address: '', notes: '', service_speed: 'reguler', items: [{ service_type: 'kiloan', name: '' }] });
   const [couriers, setCouriers] = useState([]);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const getHeaders = () => {
     const token = localStorage.getItem('token');
     return { Authorization: `Bearer ${token}` };
@@ -588,6 +589,26 @@ const AdminDashboard = () => {
       setFeedbackLoading(false);
     }
   }, []); // eslint-disable-line
+
+  const handleRefresh = useCallback(async () => {
+    setIsRefreshing(true);
+    window.triggerLoadingBar?.();
+    try {
+      if (tab === 'order' || tab === 'riwayat') {
+        await Promise.all([fetchOrders(), fetchYesterdayStats()]);
+      } else if (tab === 'users') {
+        await fetchCustomers();
+      } else if (tab === 'bantuan') {
+        await fetchBantuanDirectory();
+      } else if (tab === 'feedback') {
+        await fetchFeedbacks();
+      }
+    } catch (err) {
+      console.error('Manual refresh error:', err);
+    } finally {
+      setIsRefreshing(false);
+    }
+  }, [tab, fetchOrders, fetchYesterdayStats, fetchCustomers, fetchBantuanDirectory, fetchFeedbacks]);
 
   const handleDeleteAllFeedbacks = async () => {
     const confirmRes = await showConfirm(
@@ -3275,6 +3296,47 @@ const AdminDashboard = () => {
           </div>
         </div>
       )}
+
+      {/* Floating Small Refresh Button */}
+      <button
+        onClick={handleRefresh}
+        disabled={isRefreshing}
+        style={{
+          position: 'fixed',
+          bottom: '24px',
+          right: '24px',
+          width: '42px',
+          height: '42px',
+          borderRadius: '50%',
+          backgroundColor: '#3b82f6',
+          color: 'white',
+          border: 'none',
+          boxShadow: '0 4px 12px rgba(59, 130, 246, 0.3)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          cursor: 'pointer',
+          zIndex: 999,
+          transition: 'all 0.3s ease',
+          opacity: 0.85,
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.transform = 'scale(1.1)';
+          e.currentTarget.style.opacity = '1';
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.transform = 'scale(1)';
+          e.currentTarget.style.opacity = '0.85';
+        }}
+        title="Segarkan Data"
+      >
+        <FiRefreshCw 
+          style={{ 
+            fontSize: '1.1rem',
+            animation: isRefreshing ? 'spin 1s linear infinite' : 'none'
+          }} 
+        />
+      </button>
 
     </div>
   );

@@ -128,6 +128,19 @@ const cleanOldUploads = async () => {
       console.error('[Cleanup] Gagal menjalankan pembersihan Supabase:', err.message);
     }
   }
+
+  // 3. Pembersihan Notifikasi Lama (> 30 hari)
+  try {
+    const notifCleanRes = await pool.query(
+      'DELETE FROM notifications WHERE created_at < $1',
+      [cutoffDate]
+    );
+    if (notifCleanRes.rowCount > 0) {
+      console.log(`🧹 [Cleanup] Berhasil menghapus ${notifCleanRes.rowCount} notifikasi lama (> 30 hari) dari database.`);
+    }
+  } catch (notifErr) {
+    console.error('[Cleanup] Gagal membersihkan notifikasi lama:', notifErr.message);
+  }
 };
 
 // Fungsi inisialisasi penjadwal otomatis (setiap 24 jam sekali)

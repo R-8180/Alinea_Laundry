@@ -19,6 +19,7 @@ const apiLimiter = rateLimit({
   message: { error: 'Terlalu banyak request dari IP ini. Coba lagi dalam 15 menit.' },
   standardHeaders: true,
   legacyHeaders: false,
+  skip: (req) => req.originalUrl && req.originalUrl.includes('/api/admin'),
 });
 
 // ──────────────────────────────────────────────────────────────────────
@@ -84,6 +85,7 @@ const speedLimiter = slowDown({
   windowMs: 15 * 60 * 1000,
   delayAfter: 50, // 50 request pertama berjalan normal
   delayMs: () => 500, // Request ke-51+ ditambah delay 500ms
+  skip: (req) => req.originalUrl && req.originalUrl.includes('/api/admin'),
 });
 
 module.exports = {

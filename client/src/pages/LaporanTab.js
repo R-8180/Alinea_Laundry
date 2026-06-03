@@ -219,7 +219,7 @@ const LaporanTab = ({ activeBranchId }) => {
         </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.5rem', marginBottom: '2rem' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: '1.5rem', marginBottom: '2rem' }}>
         {/* Main Chart */}
         <div style={{ ...cardStyle, gridColumn: '1 / -1' }}>
           <h3 style={cardTitleStyle}><FiActivity /> Trend Pendapatan</h3>
@@ -426,7 +426,7 @@ const LaporanTab = ({ activeBranchId }) => {
               <label style={labelStyle}>Tipe</label>
               <select className="form-input" value={txForm.type} onChange={e => setTxForm({...txForm, type: e.target.value})} required>
                 <option value="pengeluaran">Pengeluaran</option>
-                <option value="pendapatan_lain">Pemasukan Lain</option>
+                <option value="pendapatan_lain">Pendapatan Lain</option>
                 <option value="utang">Utang</option>
               </select>
             </div>
@@ -454,118 +454,53 @@ const LaporanTab = ({ activeBranchId }) => {
         </form>
       )}
 
-      {/* Desktop view */}
-      <div className="desktop-transactions-view">
-        <div className="table-responsive">
-          <table className="admin-order-table">
-            <thead>
-              <tr>
-                <th>Tanggal</th>
-                <th>Tipe</th>
-                <th>Kategori</th>
-                <th>Keterangan</th>
-                <th>Nominal</th>
-                <th>Aksi</th>
-              </tr>
-            </thead>
-            <tbody>
-              {transactions.length === 0 ? (
-                <tr><td colSpan="6" style={{ textAlign: 'center', padding: '2rem', color: '#64748b' }}>Belum ada catatan keuangan.</td></tr>
-              ) : (
-                transactions.map(tx => (
-                  <tr key={tx.id}>
-                    <td>{fmtDate(tx.date)}</td>
-                    <td>
-                      <span style={{
-                        padding: '4px 8px', borderRadius: '12px', fontSize: '0.75rem', fontWeight: 600,
-                        background: tx.type === 'pengeluaran' ? '#fef2f2' : tx.type === 'pendapatan_lain' ? '#f0fdfa' : '#fffbeb',
-                        color: tx.type === 'pengeluaran' ? '#ef4444' : tx.type === 'pendapatan_lain' ? '#0d9488' : '#d97706'
-                      }}>
-                        {tx.type === 'pengeluaran' ? 'Pengeluaran' : tx.type === 'pendapatan_lain' ? 'Pemasukan Lain' : 'Utang'}
-                      </span>
-                    </td>
-                    <td style={{ fontWeight: 500 }}>{tx.category}</td>
-                    <td>{tx.description || '-'}</td>
-                    <td style={{ fontWeight: 600 }}>{fmtRp(tx.amount)}</td>
-                    <td>
-                      <button onClick={() => handleDeleteTx(tx.id)} style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', padding: 4 }}>
-                        <FiTrash2 size={18} />
-                      </button>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      {/* Mobile view */}
-      <div className="mobile-transactions-view" style={{ display: 'none' }}>
-        {transactions.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '2rem', color: '#64748b' }}>Belum ada catatan keuangan.</div>
-        ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-            {transactions.map(tx => (
-              <div key={tx.id} style={{
-                background: 'rgba(255, 255, 255, 0.9)',
-                borderRadius: '12px',
-                padding: '1rem',
-                boxShadow: '0 4px 10px rgba(0,0,0,0.03)',
-                border: '1px solid var(--border)',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '0.5rem',
-                position: 'relative'
-              }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{
-                    padding: '3px 8px', borderRadius: '12px', fontSize: '0.7rem', fontWeight: 700,
-                    background: tx.type === 'pengeluaran' ? '#fef2f2' : tx.type === 'pendapatan_lain' ? '#f0fdfa' : '#fffbeb',
-                    color: tx.type === 'pengeluaran' ? '#ef4444' : tx.type === 'pendapatan_lain' ? '#0d9488' : '#d97706'
-                  }}>
-                    {tx.type === 'pengeluaran' ? 'Pengeluaran' : tx.type === 'pendapatan_lain' ? 'Pemasukan Lain' : 'Utang'}
-                  </span>
-                  <button onClick={() => handleDeleteTx(tx.id)} style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', padding: 4 }}>
-                    <FiTrash2 size={16} />
-                  </button>
-                </div>
-                <div>
-                  <div style={{ fontWeight: 800, fontSize: '0.925rem', color: 'var(--navy)' }}>{tx.category}</div>
-                  {tx.description && <div style={{ fontSize: '0.78rem', color: 'var(--text-3)', marginTop: '2px' }}>{tx.description}</div>}
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '4px', paddingTop: '8px', borderTop: '1px dashed var(--border)' }}>
-                  <span style={{ fontSize: '0.75rem', color: 'var(--text-4)' }}>{fmtDate(tx.date)}</span>
-                  <span style={{ fontWeight: 800, color: tx.type === 'pengeluaran' ? '#ef4444' : '#10b981', fontSize: '1rem' }}>
-                    {tx.type === 'pengeluaran' ? '-' : '+'}{fmtRp(tx.amount)}
-                  </span>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
+      <div className="table-responsive">
+        <table className="admin-order-table">
+          <thead>
+            <tr>
+              <th>Tanggal</th>
+              <th>Tipe</th>
+              <th>Kategori</th>
+              <th>Keterangan</th>
+              <th>Nominal</th>
+              <th>Aksi</th>
+            </tr>
+          </thead>
+          <tbody>
+            {transactions.length === 0 ? (
+              <tr><td colSpan="6" style={{ textAlign: 'center', padding: '2rem', color: '#64748b' }}>Belum ada catatan keuangan.</td></tr>
+            ) : (
+              transactions.map(tx => (
+                <tr key={tx.id}>
+                  <td>{fmtDate(tx.date)}</td>
+                  <td>
+                    <span style={{
+                      padding: '4px 8px', borderRadius: '12px', fontSize: '0.75rem', fontWeight: 600,
+                      background: tx.type === 'pengeluaran' ? '#fef2f2' : tx.type === 'pendapatan_lain' ? '#f0fdfa' : '#fffbeb',
+                      color: tx.type === 'pengeluaran' ? '#ef4444' : tx.type === 'pendapatan_lain' ? '#0d9488' : '#d97706'
+                    }}>
+                      {tx.type === 'pengeluaran' ? 'Pengeluaran' : tx.type === 'pendapatan_lain' ? 'Pemasukan Lain' : 'Utang'}
+                    </span>
+                  </td>
+                  <td style={{ fontWeight: 500 }}>{tx.category}</td>
+                  <td>{tx.description || '-'}</td>
+                  <td style={{ fontWeight: 600 }}>{fmtRp(tx.amount)}</td>
+                  <td>
+                    <button onClick={() => handleDeleteTx(tx.id)} style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', padding: 4 }}>
+                      <FiTrash2 size={18} />
+                    </button>
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
       </div>
     </div>
   );
 
   return (
     <div style={{ padding: '0 0 2rem' }} id="laporan-print-area">
-      <style>{`
-        .desktop-transactions-view {
-          display: block;
-        }
-        .mobile-transactions-view {
-          display: none;
-        }
-        @media (max-width: 768px) {
-          .desktop-transactions-view {
-            display: none !important;
-          }
-          .mobile-transactions-view {
-            display: block !important;
-          }
-        }
-      `}</style>
       {/* HEADER TABS */}
       <div style={{ display: 'flex', gap: '1rem', borderBottom: '1px solid #e2e8f0', marginBottom: '1.5rem', paddingBottom: '0.5rem' }}>
         <button 

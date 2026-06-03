@@ -867,10 +867,10 @@ const AdminDashboard = () => {
 
   /* ---------- STATISTIK ---------- */
   const today = new Date().toDateString();
-  const ordersToday = orders.filter(o => new Date(o.created_at).toDateString() === today && o.status !== 'batal');
+  const ordersToday = orders.filter(o => new Date(o.created_at).toDateString() === today);
   const countToday = ordersToday.length;
   const revenueToday = ordersToday.filter(o => o.payment_status === 'paid').reduce((s, o) => s + (o.total_price || 0), 0);
-  const activeOrders = orders.filter(o => o.status !== 'selesai' && o.status !== 'batal').length;
+  const activeOrders = orders.filter(o => o.status !== 'selesai').length;
   // Selesai hari ini = order yg statusnya selesai DAN dibuat hari ini
   const doneToday = orders.filter(o => o.status === 'selesai' && new Date(o.created_at).toDateString() === today).length;
 

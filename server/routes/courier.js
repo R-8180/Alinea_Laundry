@@ -24,7 +24,7 @@ router.get('/orders', async (req, res) => {
        FROM orders o
        JOIN users u ON o.user_id = u.id
        LEFT JOIN branches b ON o.branch_id = b.id
-       WHERE o.courier_id = $1 AND o.status != 'selesai'
+       WHERE o.courier_id = $1 AND o.status != 'selesai' AND o.status != 'batal'
        ORDER BY o.created_at DESC`,
       [req.user.id]
     );
@@ -258,7 +258,7 @@ router.get('/stats', async (req, res) => {
   try {
     const result = await pool.query(
       `SELECT 
-         (SELECT COUNT(*) FROM orders WHERE courier_id = $1 AND status != 'selesai')::integer AS active,
+         (SELECT COUNT(*) FROM orders WHERE courier_id = $1 AND status != 'selesai' AND status != 'batal')::integer AS active,
          (SELECT COUNT(*) FROM orders WHERE courier_id = $2 AND created_at::date = $3::date)::integer AS today_total,
          (SELECT COUNT(*) FROM orders WHERE courier_id = $4 AND status = 'selesai' AND created_at::date = $5::date)::integer AS today_delivered
       `,

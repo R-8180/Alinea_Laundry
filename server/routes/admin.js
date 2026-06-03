@@ -360,14 +360,14 @@ router.get('/stats/yesterday', async (req, res) => {
   try {
     const result = await db.query(
       `SELECT 
-         (SELECT COUNT(*) FROM orders WHERE created_at::date = $1${branchCondition})::integer AS orders_today,
-         (SELECT COUNT(*) FROM orders WHERE created_at::date = $2${branchCondition})::integer AS orders_yesterday,
-         (SELECT COUNT(*) FROM orders WHERE status != 'selesai'${branchCondition})::integer AS active_today,
-         (SELECT COUNT(*) FROM orders WHERE status != 'selesai' AND created_at::date = $3${branchCondition})::integer AS active_yesterday,
+         (SELECT COUNT(*) FROM orders WHERE created_at::date = $1 AND status != 'batal'${branchCondition})::integer AS orders_today,
+         (SELECT COUNT(*) FROM orders WHERE created_at::date = $2 AND status != 'batal'${branchCondition})::integer AS orders_yesterday,
+         (SELECT COUNT(*) FROM orders WHERE status != 'selesai' AND status != 'batal'${branchCondition})::integer AS active_today,
+         (SELECT COUNT(*) FROM orders WHERE status != 'selesai' AND status != 'batal' AND created_at::date = $3${branchCondition})::integer AS active_yesterday,
          (SELECT COUNT(*) FROM orders WHERE status = 'selesai' AND created_at::date = $4${branchCondition})::integer AS done_today,
          (SELECT COUNT(*) FROM orders WHERE status = 'selesai' AND created_at::date = $5${branchCondition})::integer AS done_yesterday,
-         COALESCE((SELECT SUM(total_price) FROM orders WHERE payment_status = 'paid' AND created_at::date = $6${branchCondition}), 0)::integer AS revenue_today,
-         COALESCE((SELECT SUM(total_price) FROM orders WHERE payment_status = 'paid' AND created_at::date = $7${branchCondition}), 0)::integer AS revenue_yesterday
+         COALESCE((SELECT SUM(total_price) FROM orders WHERE payment_status = 'paid' AND status != 'batal' AND created_at::date = $6${branchCondition}), 0)::integer AS revenue_today,
+         COALESCE((SELECT SUM(total_price) FROM orders WHERE payment_status = 'paid' AND status != 'batal' AND created_at::date = $7${branchCondition}), 0)::integer AS revenue_yesterday
       `,
       params
     );
@@ -876,7 +876,7 @@ router.get('/financial', async (req, res) => {
   let query = `SELECT 
     SUM(total_price) AS total_pendapatan, 
     COUNT(*) AS total_order 
-    FROM orders WHERE payment_status = 'paid'`;
+    FROM orders WHERE payment_status = 'paid' AND status != 'batal'`;
   const params = [];
   
   let finQuery = `SELECT type, SUM(amount) as total_amount FROM financial_records WHERE 1=1`;
@@ -941,7 +941,7 @@ router.get('/financial', async (req, res) => {
           COALESCE(COUNT(o.id), 0) AS total_order,
           COALESCE(SUM(o.total_price), 0) AS total_pendapatan
         FROM branches b
-        LEFT JOIN orders o ON o.branch_id = b.id AND o.payment_status = 'paid'
+        LEFT JOIN orders o ON o.branch_id = b.id AND o.payment_status = 'paid' AND o.status != 'batal'
       `;
       const branchParams = [];
       let bParamIdx = 1;
@@ -996,7 +996,7 @@ router.get('/chart', async (req, res) => {
   }
 
   let query = `SELECT ${dateSelect}, SUM(total_price) AS total
-    FROM orders WHERE payment_status = 'paid'`;
+    FROM orders WHERE payment_status = 'paid' AND status != 'batal'`;
   const params = [];
   let paramIndex = 1;
 
@@ -1034,7 +1034,7 @@ router.get('/daily-report', async (req, res) => {
   const activeBranchId = req.user.branch_id || (req.query.branch_id ? parseInt(req.query.branch_id) : null);
   
   let query = `SELECT created_at::date AS date, SUM(total_price) AS total, COUNT(*) AS order_count
-    FROM orders WHERE payment_status = 'paid'`;
+    FROM orders WHERE payment_status = 'paid' AND status != 'batal'`;
   const params = [];
   let paramIndex = 1;
 
@@ -1073,6 +1073,7 @@ router.get('/monthly-report', async (req, res) => {
         SUM(total_price) AS total
       FROM orders
       WHERE payment_status = 'paid'
+        AND status != 'batal'
         AND created_at >= CURRENT_DATE - INTERVAL '12 months'
     `;
     if (activeBranchId) {
@@ -1117,7 +1118,7 @@ router.get('/top-services', async (req, res) => {
     FROM order_items oi
     JOIN orders o ON oi.order_id = o.id
     LEFT JOIN services s ON oi.service_id = s.id
-    WHERE o.payment_status = 'paid'
+    WHERE o.payment_status = 'paid' AND o.status != 'batal'
   `;
   const params = [];
   if (activeBranchId) {
@@ -1141,7 +1142,7 @@ router.get('/top-branches', async (req, res) => {
       SELECT b.name as branch_name, SUM(o.total_price) as total_revenue
       FROM orders o
       JOIN branches b ON o.branch_id = b.id
-      WHERE o.payment_status = 'paid'
+      WHERE o.payment_status = 'paid' AND o.status != 'batal'
       GROUP BY b.name
       ORDER BY total_revenue DESC
       LIMIT 5

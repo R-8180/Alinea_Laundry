@@ -6,7 +6,7 @@ import {
 } from 'react-icons/fi';
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer,
-  PieChart, Pie, Cell, BarChart, Bar, Legend
+  PieChart, Pie, Cell
 } from 'recharts';
 
 const fmtRp = (n) => 'Rp ' + Number(n || 0).toLocaleString('id-ID');
@@ -83,7 +83,32 @@ const LaporanTab = ({ activeBranchId }) => {
           : new Date(d.date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })
       }));
       setChartData(formattedChart);
-      setTopServices(srvRes.data.map(s => ({ name: s.service_type || 'Lainnya', value: parseInt(s.total_sold) })));
+      const formattedServices = srvRes.data.map(s => {
+        let fullName = '';
+        const cat = s.category;
+        const type = s.service_type;
+        const sName = s.service_name;
+        const iName = s.item_name;
+
+        if (cat === 'cuci_setrika') {
+          fullName = `Cuci Setrika · ${sName || 'Reguler'}`;
+        } else if (cat === 'cuci_lipat') {
+          fullName = `Cuci Lipat · ${sName || 'Reguler'}`;
+        } else if (cat === 'satuan') {
+          fullName = `Satuan · ${sName || iName || 'Lainnya'}`;
+        } else {
+          if (type === 'kiloan') {
+            fullName = `Kiloan · ${sName || iName || 'Reguler'}`;
+          } else {
+            fullName = `Satuan · ${iName || sName || 'Lainnya'}`;
+          }
+        }
+        return {
+          name: fullName,
+          value: parseInt(s.total_sold) || 0
+        };
+      });
+      setTopServices(formattedServices);
       setTopBranches(brnRes.data);
     } catch {
       showToast('Gagal memuat data overview', 'error');
@@ -221,48 +246,148 @@ const LaporanTab = ({ activeBranchId }) => {
         </div>
 
         {/* Top Services */}
-        <div style={cardStyle}>
+        <div style={{ ...cardStyle, display: 'flex', flexDirection: 'column' }}>
           <h3 style={cardTitleStyle}><FiPieChart /> Layanan Terlaris</h3>
-          <div style={{ height: 260, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ display: 'flex', flex: 1, alignItems: 'center', justifyContent: 'center', flexWrap: 'wrap', gap: '24px', marginTop: '1.5rem' }}>
             {topServices.length > 0 ? (
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie data={topServices} cx="50%" cy="50%" innerRadius={60} outerRadius={90} paddingAngle={5} dataKey="value">
-                    {topServices.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                    ))}
-                  </Pie>
-                  <RechartsTooltip contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)' }} />
-                  <Legend verticalAlign="bottom" height={36} iconType="circle" />
-                </PieChart>
-              </ResponsiveContainer>
+              <>
+                {/* Chart Container */}
+                <div style={{ width: 180, height: 180, position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={topServices}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={55}
+                        outerRadius={85}
+                        paddingAngle={3}
+                        dataKey="value"
+                        labelLine={false}
+                        label={({ cx, cy, midAngle, innerRadius, outerRadius, percent }) => {
+                          const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
+                          const x = cx + radius * Math.cos(-midAngle * (Math.PI / 180));
+                          const y = cy + radius * Math.sin(-midAngle * (Math.PI / 180));
+                          return percent > 0.05 ? (
+                            <text x={x} y={y} fill="white" textAnchor="middle" dominantBaseline="central" style={{ fontSize: '0.75rem', fontWeight: 800 }}>
+                              {`${(percent * 100).toFixed(0)}%`}
+                            </text>
+                          ) : null;
+                        }}
+                      >
+                        {topServices.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                        ))}
+                      </Pie>
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
+
+                {/* Custom Legend */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', flex: '1 1 180px', minWidth: 180 }}>
+                  {topServices.map((item, index) => {
+                    const total = topServices.reduce((sum, s) => sum + s.value, 0);
+                    const percent = total > 0 ? Math.round((item.value / total) * 100) : 0;
+                    return (
+                      <div key={index} style={{ display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
+                        <span style={{
+                          width: '10px',
+                          height: '10px',
+                          borderRadius: '50%',
+                          background: COLORS[index % COLORS.length],
+                          marginTop: '4px',
+                          flexShrink: 0
+                        }} />
+                        <div style={{ display: 'flex', flexDirection: 'column', lineHeight: '1.2' }}>
+                          <span style={{ fontSize: '0.7rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                            {item.name}
+                          </span>
+                          <span style={{ fontSize: '0.95rem', fontWeight: 800, color: '#1e293b', marginTop: '2px' }}>
+                            {item.value} <span style={{ fontSize: '0.8rem', color: '#64748b', fontWeight: 500 }}>({percent}%)</span>
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </>
             ) : (
-              <p style={{ color: '#94a3b8', fontSize: '0.9rem' }}>Belum ada data layanan</p>
+              <div style={{ display: 'flex', height: 180, alignItems: 'center', justifyContent: 'center' }}>
+                <p style={{ color: '#94a3b8', fontSize: '0.9rem' }}>Belum ada data layanan</p>
+              </div>
             )}
           </div>
         </div>
 
         {/* Top Branches (Only if no activeBranchId) */}
         {!activeBranchId && (
-          <div style={cardStyle}>
+          <div style={{ ...cardStyle, display: 'flex', flexDirection: 'column' }}>
             <h3 style={cardTitleStyle}><FiBriefcase /> Performa Cabang</h3>
-            <div style={{ height: 260, marginTop: '1rem' }}>
+            <div style={{ display: 'flex', flex: 1, alignItems: 'center', justifyContent: 'center', flexWrap: 'wrap', gap: '24px', marginTop: '1.5rem' }}>
               {topBranches.length > 0 ? (
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={topBranches} layout="vertical" margin={{ top: 0, right: 30, left: 30, bottom: 0 }}>
-                    <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} stroke="#e2e8f0" />
-                    <XAxis type="number" hide />
-                    <YAxis dataKey="branch_name" type="category" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#475569' }} />
-                    <RechartsTooltip formatter={(val) => [fmtRp(val), 'Pendapatan']} cursor={{fill: 'transparent'}} contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)' }} />
-                    <Bar dataKey="total_revenue" fill="#14b8a6" radius={[0, 4, 4, 0]} barSize={24}>
-                      {topBranches.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                      ))}
-                    </Bar>
-                  </BarChart>
-                </ResponsiveContainer>
+                <>
+                  {/* Chart Container */}
+                  <div style={{ width: 180, height: 180, position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie
+                          data={topBranches.map(b => ({ name: b.branch_name, value: parseFloat(b.total_revenue) || 0 }))}
+                          cx="50%"
+                          cy="50%"
+                          innerRadius={55}
+                          outerRadius={85}
+                          paddingAngle={3}
+                          dataKey="value"
+                          labelLine={false}
+                          label={({ cx, cy, midAngle, innerRadius, outerRadius, percent }) => {
+                            const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
+                            const x = cx + radius * Math.cos(-midAngle * (Math.PI / 180));
+                            const y = cy + radius * Math.sin(-midAngle * (Math.PI / 180));
+                            return percent > 0.05 ? (
+                              <text x={x} y={y} fill="white" textAnchor="middle" dominantBaseline="central" style={{ fontSize: '0.75rem', fontWeight: 800 }}>
+                                {`${(percent * 100).toFixed(0)}%`}
+                              </text>
+                            ) : null;
+                          }}
+                        >
+                          {topBranches.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                          ))}
+                        </Pie>
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </div>
+
+                  {/* Custom Legend */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', flex: '1 1 180px', minWidth: 180 }}>
+                    {topBranches.map((item, index) => {
+                      const total = topBranches.reduce((sum, b) => sum + (parseFloat(b.total_revenue) || 0), 0);
+                      const percent = total > 0 ? Math.round(((parseFloat(item.total_revenue) || 0) / total) * 100) : 0;
+                      return (
+                        <div key={index} style={{ display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
+                          <span style={{
+                            width: '10px',
+                            height: '10px',
+                            borderRadius: '50%',
+                            background: COLORS[index % COLORS.length],
+                            marginTop: '4px',
+                            flexShrink: 0
+                          }} />
+                          <div style={{ display: 'flex', flexDirection: 'column', lineHeight: '1.2' }}>
+                            <span style={{ fontSize: '0.7rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                              {item.branch_name}
+                            </span>
+                            <span style={{ fontSize: '0.95rem', fontWeight: 800, color: '#1e293b', marginTop: '2px' }}>
+                              {fmtRp(item.total_revenue)} <span style={{ fontSize: '0.8rem', color: '#64748b', fontWeight: 500 }}>({percent}%)</span>
+                            </span>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </>
               ) : (
-                <div style={{ display: 'flex', height: '100%', alignItems: 'center', justifyContent: 'center' }}>
+                <div style={{ display: 'flex', height: 180, alignItems: 'center', justifyContent: 'center' }}>
                   <p style={{ color: '#94a3b8', fontSize: '0.9rem' }}>Belum ada data cabang</p>
                 </div>
               )}

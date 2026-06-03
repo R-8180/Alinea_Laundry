@@ -1108,9 +1108,15 @@ router.get('/bantuan-directory', async (req, res) => {
 router.get('/top-services', async (req, res) => {
   const activeBranchId = req.user.branch_id || (req.query.branch_id ? parseInt(req.query.branch_id) : null);
   let query = `
-    SELECT oi.service_type, COUNT(oi.id) as total_sold
+    SELECT 
+      s.category,
+      s.name as service_name,
+      oi.service_type,
+      oi.name as item_name,
+      COUNT(oi.id) as total_sold
     FROM order_items oi
     JOIN orders o ON oi.order_id = o.id
+    LEFT JOIN services s ON oi.service_id = s.id
     WHERE o.payment_status = 'paid'
   `;
   const params = [];
@@ -1118,7 +1124,7 @@ router.get('/top-services', async (req, res) => {
     query += ` AND o.branch_id = $1`;
     params.push(activeBranchId);
   }
-  query += ` GROUP BY oi.service_type ORDER BY total_sold DESC LIMIT 5`;
+  query += ` GROUP BY s.category, s.name, oi.service_type, oi.name ORDER BY total_sold DESC LIMIT 5`;
 
   try {
     const result = await db.query(query, params);

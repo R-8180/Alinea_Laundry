@@ -363,7 +363,7 @@ const useCountdown = (order) => {
   const [remaining, setRemaining] = useState('');
 
   useEffect(() => {
-    if (!order || order.status === 'selesai') { setRemaining(''); return; }
+    if (!order || order.status === 'selesai' || order.status === 'batal') { setRemaining(''); return; }
     if (!order.estimated_days && !order.estimated_hours) { setRemaining('-'); return; }
 
     const calc = () => {
@@ -373,7 +373,7 @@ const useCountdown = (order) => {
       const ms = ((order.estimated_days || 0) * 86400 + (order.estimated_hours || 0) * 3600) * 1000;
       const deadline = new Date(start.getTime() + ms);
       const diff = deadline - Date.now();
-      if (diff <= 0) return 'Selesai';
+      if (diff <= 0) return 'Terlambat';
       const h = Math.floor(diff / 3600000);
       const m = Math.floor((diff % 3600000) / 60000);
       if (h >= 24) return `${Math.ceil(h / 24)} hari lagi`;
@@ -401,8 +401,8 @@ const EstimasiCell = ({ order, onEdit, formatDateTime }) => {
             {order.estimated_days > 0 ? `${order.estimated_days}h ` : ''}
             {order.estimated_hours > 0 ? `${order.estimated_hours}j` : ''}
           </div>
-          {countdown && order.status !== 'selesai' && (
-            <div style={{ fontSize: '0.72rem', color: countdown === 'Selesai' ? 'var(--green)' : '#ef4444', fontWeight: 700 }}>
+          {countdown && order.status !== 'selesai' && order.status !== 'batal' && (
+            <div style={{ fontSize: '0.72rem', color: countdown === 'Terlambat' ? '#ef4444' : '#0284c7', fontWeight: 700 }}>
               {countdown}
             </div>
           )}
@@ -509,6 +509,8 @@ const AdminDashboard = () => {
   const [speedDropdownOpen, setSpeedDropdownOpen] = useState(false);
   const [activeModalItemTypeIndex, setActiveModalItemTypeIndex] = useState(null);
   const [editEstimasiModal, setEditEstimasiModal] = useState(null);
+  const [branchModal, setBranchModal] = useState(null);
+  const [selectedBranch, setSelectedBranch] = useState('');
   
   const branchOptions = [
     { id: '', name: 'Semua Cabang' },
@@ -574,11 +576,11 @@ const AdminDashboard = () => {
   }, []); // eslint-disable-line
 
   const handleDeleteAllFeedbacks = async () => {
-    const isConfirmed = await showConfirm(
+    const confirmRes = await showConfirm(
       'Hapus Semua Feedback',
       'Apakah Anda yakin ingin menghapus seluruh kritik & saran dari pelanggan? Tindakan ini permanen.'
     );
-    if (!isConfirmed) return;
+    if (!confirmRes.isConfirmed) return;
     
     showLoading('Menghapus...', 'Sedang menghapus semua data feedback...');
     try {
@@ -591,11 +593,11 @@ const AdminDashboard = () => {
   };
 
   const handleDeleteOneFeedback = async (id) => {
-    const isConfirmed = await showConfirm(
+    const confirmRes = await showConfirm(
       'Hapus Feedback',
       'Apakah Anda yakin ingin menghapus kritik & saran ini?'
     );
-    if (!isConfirmed) return;
+    if (!confirmRes.isConfirmed) return;
 
     showLoading('Menghapus...', 'Sedang menghapus feedback...');
     try {
@@ -782,6 +784,20 @@ const AdminDashboard = () => {
     }
   };
 
+  const handleTransferBranch = async () => {
+    if (!branchModal || !selectedBranch) return;
+    showLoading('Memindahkan Cabang', 'Sedang memproses pemindahan cabang pesanan...');
+    try {
+      await axios.put(`/api/admin/orders/${branchModal.orderId}/branch`, { branch_id: parseInt(selectedBranch) }, { headers: getHeaders() });
+      showSuccess('Cabang Dipindahkan', 'Pesanan berhasil dipindahkan ke cabang baru.');
+      setBranchModal(null);
+      setSelectedBranch('');
+      fetchOrders();
+    } catch (err) {
+      showError('Gagal Memindahkan', err.response?.data?.message || err.response?.data?.error || 'Gagal memindahkan cabang pesanan.');
+    }
+  };
+
   const openDetail = async (orderId) => {
     const res = await axios.get(`/api/admin/orders/${orderId}`, { headers: getHeaders() });
     setDetailModal(res.data);
@@ -874,11 +890,21 @@ const AdminDashboard = () => {
   };
 
   /* ---------- FILTER ---------- */
+  const checkIsOverdue = (o) => {
+    if (o.status === 'selesai' || o.status === 'batal') return false;
+    if (!o.estimated_days && !o.estimated_hours) return false;
+    const start = o.estimated_start ? new Date(o.estimated_start) : new Date(o.created_at);
+    const ms = ((o.estimated_days || 0) * 86400 + (o.estimated_hours || 0) * 3600) * 1000;
+    return Date.now() > start.getTime() + ms;
+  };
+
   const needWeightCount = orders.filter(o => o.status !== 'selesai' && o.status !== 'batal' && (!o.total_price || o.total_price === 0)).length;
   const needPaymentCount = orders.filter(o => o.status !== 'selesai' && o.status !== 'batal' && o.payment_proof && o.payment_status !== 'paid').length;
   const needCourierCount = orders.filter(o => o.status !== 'selesai' && o.status !== 'batal' && !o.is_offline && !o.courier_id).length;
+  const overdueCount = orders.filter(checkIsOverdue).length;
 
   const dynamicSubTabs = ['all_active'];
+  if (overdueCount > 0) dynamicSubTabs.push('overdue');
   if (needWeightCount > 0) dynamicSubTabs.push('need_weight');
   if (needPaymentCount > 0) dynamicSubTabs.push('need_payment');
   if (needCourierCount > 0) dynamicSubTabs.push('need_courier');
@@ -889,6 +915,8 @@ const AdminDashboard = () => {
     if (tab === 'order') {
       if (subTab === 'all_active') {
         if (o.status === 'selesai' || o.status === 'batal') return false;
+      } else if (subTab === 'overdue') {
+        if (!checkIsOverdue(o)) return false;
       } else if (subTab === 'need_weight') {
         if (o.status === 'selesai' || o.status === 'batal' || (o.total_price && o.total_price > 0)) return false;
       } else if (subTab === 'need_payment') {
@@ -913,6 +941,7 @@ const AdminDashboard = () => {
   // Fungsi hitung jumlah per status
   const countByStatus = (s) => {
     if (s === 'all_active') return orders.filter(o => o.status !== 'selesai' && o.status !== 'batal').length;
+    if (s === 'overdue') return overdueCount;
     if (s === 'need_weight') return needWeightCount;
     if (s === 'need_payment') return needPaymentCount;
     if (s === 'need_courier') return needCourierCount;
@@ -951,6 +980,7 @@ const AdminDashboard = () => {
   // Label untuk subtab
   const getSubTabLabel = (s) => {
     if (s === 'all_active') return 'Semua Aktif';
+    if (s === 'overdue') return 'Overdue (Terlambat)';
     if (s === 'need_weight') return 'Butuh Validasi Berat';
     if (s === 'need_payment') return 'Butuh Validasi Pembayaran';
     if (s === 'need_courier') return 'Perlu Assign Kurir';
@@ -1144,8 +1174,8 @@ const AdminDashboard = () => {
               {s !== 'selesai' && (
                 <span style={{
                   marginLeft: 5,
-                  background: (s === 'need_weight' || s === 'need_payment' || s === 'need_courier') ? (subTab === s ? 'white' : '#ef4444') : (subTab === s ? 'rgba(255,255,255,0.3)' : 'var(--sky-faint)'),
-                  color: (s === 'need_weight' || s === 'need_payment' || s === 'need_courier') ? (subTab === s ? '#ef4444' : 'white') : (subTab === s ? 'white' : 'var(--navy)'),
+                  background: (s === 'overdue' || s === 'need_weight' || s === 'need_payment' || s === 'need_courier') ? (subTab === s ? 'white' : '#ef4444') : (subTab === s ? 'rgba(255,255,255,0.3)' : 'var(--sky-faint)'),
+                  color: (s === 'overdue' || s === 'need_weight' || s === 'need_payment' || s === 'need_courier') ? (subTab === s ? '#ef4444' : 'white') : (subTab === s ? 'white' : 'var(--navy)'),
                   borderRadius: 20, padding: '1px 7px', fontSize: '0.72rem', fontWeight: 700
                 }}>
                   {countByStatus(s)}
@@ -1192,7 +1222,34 @@ const AdminDashboard = () => {
                         </div>
                         <div className="customer-name">{order.customer_name || '-'}</div>
                         {order.phone && <div className="customer-phone">{order.phone}</div>}
-                        {order.branch_name && (
+                        {isSuperAdmin ? (
+                          <div style={{ marginTop: 4 }}>
+                            <button
+                              onClick={() => {
+                                setBranchModal({ orderId: order.id });
+                                setSelectedBranch(order.branch_id || '');
+                              }}
+                              style={{
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '4px',
+                                padding: '2px 8px',
+                                borderRadius: '4px',
+                                fontSize: '0.72rem',
+                                fontWeight: 700,
+                                background: '#eff6ff',
+                                color: '#1e40af',
+                                border: '1.5px dashed #bfdbfe',
+                                cursor: 'pointer',
+                                transition: 'all 0.15s'
+                              }}
+                              onMouseEnter={e => { e.currentTarget.style.background = '#dbeafe'; }}
+                              onMouseLeave={e => { e.currentTarget.style.background = '#eff6ff'; }}
+                            >
+                              <FiMapPin style={{ marginRight: '2px', display: 'inline-block', verticalAlign: 'middle', marginTop: '-3px' }} /> {order.branch_name || 'Set Cabang'} <FiEdit2 size={10} style={{ marginLeft: 2 }} />
+                            </button>
+                          </div>
+                        ) : order.branch_name && (
                           <span style={{
                             display: 'inline-block',
                             marginTop: 4,
@@ -1478,8 +1535,8 @@ const AdminDashboard = () => {
                   {s !== 'selesai' && (
                     <span style={{
                       marginLeft: 5,
-                      background: (s === 'need_weight' || s === 'need_payment' || s === 'need_courier') ? (subTab === s ? 'white' : '#ef4444') : (subTab === s ? 'rgba(255,255,255,0.3)' : 'var(--sky-faint)'),
-                      color: (s === 'need_weight' || s === 'need_payment' || s === 'need_courier') ? (subTab === s ? '#ef4444' : 'white') : (subTab === s ? 'white' : 'var(--navy)'),
+                      background: (s === 'overdue' || s === 'need_weight' || s === 'need_payment' || s === 'need_courier') ? (subTab === s ? 'white' : '#ef4444') : (subTab === s ? 'rgba(255,255,255,0.3)' : 'var(--sky-faint)'),
+                      color: (s === 'overdue' || s === 'need_weight' || s === 'need_payment' || s === 'need_courier') ? (subTab === s ? '#ef4444' : 'white') : (subTab === s ? 'white' : 'var(--navy)'),
                       borderRadius: 20, padding: '1px 7px', fontSize: '0.72rem', fontWeight: 700
                     }}>
                       {countByStatus(s)}
@@ -1524,7 +1581,34 @@ const AdminDashboard = () => {
                       </div>
                       <div className="customer-name">{order.customer_name}</div>
                       {order.phone && <div className="customer-phone">{order.phone}</div>}
-                      {order.branch_name && (
+                      {isSuperAdmin ? (
+                        <div style={{ marginTop: 4 }}>
+                          <button
+                            onClick={() => {
+                              setBranchModal({ orderId: order.id });
+                              setSelectedBranch(order.branch_id || '');
+                            }}
+                            style={{
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '4px',
+                              padding: '2px 8px',
+                              borderRadius: '4px',
+                              fontSize: '0.72rem',
+                              fontWeight: 700,
+                              background: '#eff6ff',
+                              color: '#1e40af',
+                              border: '1.5px dashed #bfdbfe',
+                              cursor: 'pointer',
+                              transition: 'all 0.15s'
+                            }}
+                            onMouseEnter={e => { e.currentTarget.style.background = '#dbeafe'; }}
+                            onMouseLeave={e => { e.currentTarget.style.background = '#eff6ff'; }}
+                          >
+                            <FiMapPin style={{ marginRight: '2px', display: 'inline-block', verticalAlign: 'middle', marginTop: '-3px' }} /> {order.branch_name || 'Set Cabang'} <FiEdit2 size={10} style={{ marginLeft: 2 }} />
+                          </button>
+                        </div>
+                      ) : order.branch_name && (
                         <div style={{ marginTop: 4 }}>
                           <span style={{
                             display: 'inline-block',
@@ -3120,6 +3204,55 @@ const AdminDashboard = () => {
             <div className="modal-footer" style={{ marginTop: '20px' }}>
               <button className="btn btn-secondary" onClick={() => setEditEstimasiModal(null)}>Batal</button>
               <button className="btn" onClick={submitEditEstimasi}>Simpan</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Pindah Cabang */}
+      {branchModal && (
+        <div className="modal-overlay" onClick={() => setBranchModal(null)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '380px', width: '90%', borderRadius: '16px' }}>
+            <div className="modal-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--text-1)', display: 'flex', alignItems: 'center', gap: 6, margin: 0 }}>
+                <FiMapPin style={{ color: 'var(--blue)' }} /> Pindahkan Cabang
+              </h3>
+              <button onClick={() => setBranchModal(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8', fontSize: '1.2rem' }}>✕</button>
+            </div>
+            <div className="modal-body" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <p style={{ fontSize: '0.85rem', color: 'var(--text-3)', margin: 0 }}>
+                Pilih cabang tujuan untuk memindahkan pesanan ini:
+              </p>
+              <select
+                value={selectedBranch}
+                onChange={(e) => setSelectedBranch(e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '10px',
+                  borderRadius: '10px',
+                  border: '1.5px solid var(--border)',
+                  fontSize: '0.9rem',
+                  fontWeight: 600,
+                  outline: 'none',
+                  background: 'white'
+                }}
+              >
+                <option value="" disabled>-- Pilih Cabang --</option>
+                {branchOptions.filter(b => b.id !== '').map(b => (
+                  <option key={b.id} value={b.id}>{b.name}</option>
+                ))}
+              </select>
+            </div>
+            <div className="modal-footer" style={{ marginTop: '20px' }}>
+              <button className="btn btn-secondary" onClick={() => setBranchModal(null)}>Batal</button>
+              <button
+                className="btn"
+                onClick={handleTransferBranch}
+                disabled={!selectedBranch}
+                style={{ background: 'linear-gradient(135deg, var(--blue), var(--navy))' }}
+              >
+                Pindahkan
+              </button>
             </div>
           </div>
         </div>

@@ -725,6 +725,63 @@ router.put('/orders/:id/payment-status', idParamValidation, validate, async (req
   }
 });
 
+// PUT update branch of an order (super admin only)
+router.put('/orders/:id/branch', idParamValidation, validate, async (req, res) => {
+  // Check if current user is super admin (branch_id is null)
+  if (req.user.branch_id !== null) {
+    return res.status(403).json({ message: 'Akses ditolak. Hanya Super Admin yang dapat memindahkan cabang pesanan.' });
+  }
+
+  const orderId = req.params.id;
+  const { branch_id } = req.body;
+
+  if (branch_id === undefined || branch_id === null) {
+    return res.status(400).json({ message: 'Cabang tujuan harus ditentukan.' });
+  }
+
+  try {
+    const parsedBranchId = parseInt(branch_id, 10);
+    // Verify if branch exists
+    const branchCheck = await db.query('SELECT name FROM branches WHERE id = $1', [parsedBranchId]);
+    if (branchCheck.rows.length === 0) {
+      return res.status(404).json({ message: 'Cabang tujuan tidak ditemukan.' });
+    }
+    const branchName = branchCheck.rows[0].name;
+
+    // Update order
+    const result = await db.query(
+      'UPDATE orders SET branch_id = $1 WHERE id = $2 RETURNING order_code, user_id',
+      [parsedBranchId, orderId]
+    );
+
+    if (result.rowCount === 0) {
+      return res.status(404).json({ message: 'Pesanan tidak ditemukan.' });
+    }
+
+    const { order_code, user_id } = result.rows[0];
+
+    // Notify customer about branch transfer
+    if (user_id) {
+      const msg = `Pesanan Anda #${order_code} telah dipindahkan ke Cabang ${branchName}.`;
+      await db.query(
+        'INSERT INTO notifications (user_id, order_id, title, message) VALUES ($1, $2, $3, $4)',
+        [user_id, orderId, 'Cabang Pesanan Dipindahkan', msg]
+      );
+      sendWebPush(user_id, {
+        title: 'Cabang Pesanan Dipindahkan',
+        body: msg,
+        tag: `order-${orderId}`,
+        url: '/dashboard'
+      }).catch(e => console.error('Branch transfer push error:', e));
+    }
+
+    res.json({ message: `Pesanan berhasil dipindahkan ke Cabang ${branchName}`, branch_id: parsedBranchId });
+  } catch (err) {
+    console.error('Change order branch error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // PUT admin selesaikan pesanan + upload foto (opsional)
 router.put('/orders/:id/complete', uploadDelivery.single('photo'), idParamValidation, validate, async (req, res) => {
   const orderId = req.params.id;

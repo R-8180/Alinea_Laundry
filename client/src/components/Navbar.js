@@ -64,22 +64,43 @@ const Navbar = ({ user, onLogout }) => {
   // Audio synthesizer chime helper
   const playNotificationChime = () => {
     try {
-      const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-      const playTone = (freq, startTime, duration) => {
-        const osc = audioCtx.createOscillator();
-        const gain = audioCtx.createGain();
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(freq, startTime);
-        gain.gain.setValueAtTime(0.15, startTime);
-        gain.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
-        osc.connect(gain);
-        gain.connect(audioCtx.destination);
-        osc.start(startTime);
-        osc.stop(startTime + duration);
+      const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+      if (!AudioContextClass) return;
+      const audioCtx = new AudioContextClass();
+      
+      const playBell = () => {
+        const now = audioCtx.currentTime;
+        
+        // Harmonics frequencies for a nice bell-like chime (e.g. fundamental 880Hz, harmonics at 1320Hz and 1760Hz)
+        const frequencies = [880, 1320, 1760];
+        const gains = [0.15, 0.08, 0.04];
+        
+        frequencies.forEach((freq, index) => {
+          const osc = audioCtx.createOscillator();
+          const gainNode = audioCtx.createGain();
+          
+          osc.type = index === 0 ? 'sine' : 'triangle';
+          osc.frequency.setValueAtTime(freq, now);
+          
+          gainNode.gain.setValueAtTime(gains[index], now);
+          // Exponential decay for that bell ring-out sound
+          gainNode.gain.exponentialRampToValueAtTime(0.0001, now + 0.8);
+          
+          osc.connect(gainNode);
+          gainNode.connect(audioCtx.destination);
+          
+          osc.start(now);
+          osc.stop(now + 0.8);
+        });
       };
-      const now = audioCtx.currentTime;
-      playTone(698.46, now, 0.15); // F5
-      playTone(880.00, now + 0.12, 0.3); // A5
+      
+      if (audioCtx.state === 'suspended') {
+        audioCtx.resume().then(() => {
+          playBell();
+        }).catch(err => console.log('Audio resume failed:', err));
+      } else {
+        playBell();
+      }
     } catch (err) {
       console.error('Failed to play synthesized notification chime:', err);
     }

@@ -454,47 +454,82 @@ const LaporanTab = ({ activeBranchId }) => {
         </form>
       )}
 
-      <div className="table-responsive">
-        <table className="admin-order-table">
-          <thead>
-            <tr>
-              <th>Tanggal</th>
-              <th>Tipe</th>
-              <th>Kategori</th>
-              <th>Keterangan</th>
-              <th>Nominal</th>
-              <th>Aksi</th>
-            </tr>
-          </thead>
-          <tbody>
-            {transactions.length === 0 ? (
-              <tr><td colSpan="6" style={{ textAlign: 'center', padding: '2rem', color: '#64748b' }}>Belum ada catatan keuangan.</td></tr>
-            ) : (
-              transactions.map(tx => (
-                <tr key={tx.id}>
-                  <td>{fmtDate(tx.date)}</td>
-                  <td>
+      {/* Card list — fully mobile responsive, no horizontal scroll */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+        {transactions.length === 0 ? (
+          <div style={{
+            textAlign: 'center', padding: '3rem', color: '#94a3b8',
+            background: '#f8fafc', borderRadius: '12px', border: '1px dashed #e2e8f0'
+          }}>
+            <FiDollarSign style={{ fontSize: '2rem', marginBottom: 8, display: 'block', margin: '0 auto 8px' }} />
+            <div style={{ fontWeight: 600, fontSize: '0.9rem' }}>Belum ada catatan keuangan</div>
+            <div style={{ fontSize: '0.8rem', marginTop: 4 }}>Klik "Tambah Catatan" untuk mulai mencatat</div>
+          </div>
+        ) : (
+          transactions.map(tx => {
+            const isOut = tx.type === 'pengeluaran';
+            const isIn = tx.type === 'pendapatan_lain';
+            const badgeBg = isOut ? '#fef2f2' : isIn ? '#f0fdfa' : '#fffbeb';
+            const badgeColor = isOut ? '#ef4444' : isIn ? '#0d9488' : '#d97706';
+            const amountColor = isOut ? '#ef4444' : isIn ? '#0d9488' : '#d97706';
+            const typeLabel = isOut ? 'Pengeluaran' : isIn ? 'Pemasukan Lain' : 'Utang';
+            return (
+              <div key={tx.id} style={{
+                background: 'white', borderRadius: '12px', padding: '14px 16px',
+                border: '1px solid #e8edf3', boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+                display: 'flex', flexDirection: 'column', gap: '8px'
+              }}>
+                {/* Row 1: Badge + Amount + Delete */}
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
                     <span style={{
-                      padding: '4px 8px', borderRadius: '12px', fontSize: '0.75rem', fontWeight: 600,
-                      background: tx.type === 'pengeluaran' ? '#fef2f2' : tx.type === 'pendapatan_lain' ? '#f0fdfa' : '#fffbeb',
-                      color: tx.type === 'pengeluaran' ? '#ef4444' : tx.type === 'pendapatan_lain' ? '#0d9488' : '#d97706'
+                      padding: '4px 10px', borderRadius: '20px', fontSize: '0.72rem', fontWeight: 700,
+                      background: badgeBg, color: badgeColor, flexShrink: 0
                     }}>
-                      {tx.type === 'pengeluaran' ? 'Pengeluaran' : tx.type === 'pendapatan_lain' ? 'Pemasukan Lain' : 'Utang'}
+                      {typeLabel}
                     </span>
-                  </td>
-                  <td style={{ fontWeight: 500 }}>{tx.category}</td>
-                  <td>{tx.description || '-'}</td>
-                  <td style={{ fontWeight: 600 }}>{fmtRp(tx.amount)}</td>
-                  <td>
-                    <button onClick={() => handleDeleteTx(tx.id)} style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', padding: 4 }}>
-                      <FiTrash2 size={18} />
-                    </button>
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
+                    <span style={{ fontWeight: 800, fontSize: '1rem', color: amountColor }}>
+                      {isOut ? '−' : '+'}{fmtRp(tx.amount)}
+                    </span>
+                  </div>
+                  <button
+                    onClick={() => handleDeleteTx(tx.id)}
+                    style={{
+                      background: '#fef2f2', border: '1px solid #fecaca', color: '#ef4444',
+                      cursor: 'pointer', padding: '6px 10px', borderRadius: '8px',
+                      fontSize: '0.72rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 4,
+                      flexShrink: 0, transition: 'all 0.15s'
+                    }}
+                    onMouseEnter={e => { e.currentTarget.style.background = '#ef4444'; e.currentTarget.style.color = 'white'; }}
+                    onMouseLeave={e => { e.currentTarget.style.background = '#fef2f2'; e.currentTarget.style.color = '#ef4444'; }}
+                  >
+                    <FiTrash2 size={13} /> Hapus
+                  </button>
+                </div>
+
+                {/* Row 2: Kategori & Tanggal */}
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 4 }}>
+                  <span style={{ fontWeight: 600, fontSize: '0.88rem', color: '#1e293b' }}>
+                    {tx.category}
+                  </span>
+                  <span style={{ fontSize: '0.78rem', color: '#94a3b8', fontWeight: 500 }}>
+                    {fmtDate(tx.date)}
+                  </span>
+                </div>
+
+                {/* Row 3: Keterangan (kalau ada) */}
+                {tx.description && (
+                  <div style={{
+                    fontSize: '0.78rem', color: '#64748b', background: '#f8fafc',
+                    borderRadius: '8px', padding: '6px 10px', border: '1px solid #f1f5f9'
+                  }}>
+                    {tx.description}
+                  </div>
+                )}
+              </div>
+            );
+          })
+        )}
       </div>
     </div>
   );

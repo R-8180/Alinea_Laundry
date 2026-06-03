@@ -420,7 +420,7 @@ const CustomerDashboard = ({ user: propUser }) => {
           </div>
         </div>
 
-        {(order.status === 'antar' || order.status === 'pickup' || order.status === 'sedang_diantar') && order.courier_name && order.courier_phone && (
+        {order.status !== 'selesai' && order.status !== 'batal' && order.courier_name && order.courier_phone && (
           <div style={{
             marginBottom: 20, padding: '12px 16px',
             background: '#e6fcf0', borderRadius: 12,
@@ -432,7 +432,13 @@ const CustomerDashboard = ({ user: propUser }) => {
                 <FiTruck size={18} />
               </div>
               <div>
-                <div style={{ fontSize: '0.75rem', color: '#047857', fontWeight: 600 }}>{order.status === 'pickup' ? 'Kurir Penjemput' : 'Kurir Pengantar'}</div>
+                <div style={{ fontSize: '0.75rem', color: '#047857', fontWeight: 600 }}>
+                  {['menunggu', 'pickup'].includes(order.status)
+                    ? 'Kurir Penjemput'
+                    : ['antar', 'sedang_diantar'].includes(order.status)
+                    ? 'Kurir Pengantar'
+                    : 'Kurir Anda'}
+                </div>
                 <div style={{ fontSize: '0.9rem', color: '#065f46', fontWeight: 800 }}>{order.courier_name}</div>
               </div>
             </div>

@@ -40,7 +40,7 @@ const useCountdown = (order) => {
       const ms = ((order.estimated_days || 0) * 86400 + (order.estimated_hours || 0) * 3600) * 1000;
       const deadline = new Date(start.getTime() + ms);
       const diff = deadline - Date.now();
-      if (diff <= 0) return 'Selesai';
+      if (diff <= 0) return 'Terlambat';
       const h = Math.floor(diff / 3600000);
       const m = Math.floor((diff % 3600000) / 60000);
       if (h >= 24) return `${Math.ceil(h / 24)} hari lagi`;
@@ -392,8 +392,15 @@ const CustomerDashboard = ({ user: propUser }) => {
                 <FiCopy size={14} />
               </button>
             </div>
-            <div style={{ fontSize: '0.72rem', color: 'var(--text-4)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.3px' }}>
-              {formatDateTime(order.created_at)}
+            <div style={{ textAlign: 'right' }}>
+              <div style={{ fontSize: '0.72rem', color: 'var(--text-4)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.3px' }}>
+                {formatDateTime(order.created_at)}
+              </div>
+              {remaining && remaining !== '-' && (
+                <div style={{ fontSize: '0.68rem', color: '#ef4444', fontWeight: 800, marginTop: 4, letterSpacing: '0.3px' }}>
+                  {remaining}
+                </div>
+              )}
             </div>
           </div>
         </div>

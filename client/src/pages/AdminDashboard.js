@@ -417,6 +417,17 @@ const EstimasiCell = ({ order, onEdit, formatDateTime }) => {
   );
 };
 
+/* ---------- SMALL COUNTDOWN (FOR MOBILE CARDS) ---------- */
+const SmallCountdown = ({ order }) => {
+  const countdown = useCountdown(order);
+  if (!countdown || countdown === '-' || order.status === 'selesai' || order.status === 'batal') return null;
+  return (
+    <div style={{ fontSize: '0.68rem', color: '#ef4444', fontWeight: 800, marginTop: 3 }}>
+      {countdown}
+    </div>
+  );
+};
+
 /* ================================================================
    ADMIN DASHBOARD
    ================================================================ */
@@ -1796,7 +1807,10 @@ const AdminDashboard = () => {
                   {/* Info rows */}
                   <div style={{ display: 'flex', justifyContent: 'space-between', padding: '7px 0', borderTop: '1px solid var(--border)', fontSize: '0.82rem' }}>
                     <span style={{ color: 'var(--text-3)' }}>Tanggal</span>
-                    <span>{formatDateTime(order.created_at)}</span>
+                    <div style={{ textAlign: 'right' }}>
+                      <div>{formatDateTime(order.created_at)}</div>
+                      <SmallCountdown order={order} />
+                    </div>
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', padding: '7px 0', borderTop: '1px solid var(--border)', fontSize: '0.82rem', alignItems: 'center' }}>
                     <span style={{ color: 'var(--text-3)' }}>Pembayaran</span>

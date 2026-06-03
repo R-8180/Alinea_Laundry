@@ -173,8 +173,13 @@ app.use(cors({
       // Regex untuk memastikan origin berakhiran .vercel.app dan terafiliasi dengan alinea
       const isVercelOrigin = hostname.endsWith('.vercel.app') && 
                              /^[a-zA-Z0-9-]*alinea[a-zA-Z0-9-]*\.vercel\.app$/.test(hostname);
+      // Custom production domain
+      const isCustomDomain = hostname === 'alinealaundry.web.id' || 
+                             hostname === 'www.alinealaundry.web.id' ||
+                             hostname === 'alinealaundry.biz.id' || 
+                             hostname === 'www.alinealaundry.biz.id';
 
-      if (allowedOrigins.indexOf(origin) !== -1 || isLocal || isVercelOrigin) {
+      if (allowedOrigins.indexOf(origin) !== -1 || isLocal || isVercelOrigin || isCustomDomain) {
         return callback(null, true);
       } else {
         return callback(new Error('The CORS policy for this site does not allow access from the specified Origin.'), false);
@@ -265,6 +270,20 @@ app.use(express.static(path.join(__dirname, '../client/public'), {
 
 // ==========================================
 // 10. IMPORT & REGISTRASI ROUTING API
+// ==========================================
+// HEALTH CHECK ENDPOINT (DIAGNOSTIK PRODUKSI)
+// ==========================================
+app.get('/api/health', (req, res) => {
+  res.json({
+    status: 'ok',
+    env: process.env.NODE_ENV || 'development',
+    jwt: process.env.JWT_SECRET ? 'SET ✅' : 'MISSING ❌',
+    db: process.env.DB_HOST ? 'SET ✅' : 'MISSING ❌',
+    vapid: process.env.VAPID_PUBLIC_KEY ? 'SET ✅' : 'MISSING ❌',
+    timestamp: new Date().toISOString()
+  });
+});
+
 // ==========================================
 const authRoutes = require('./routes/auth');
 const orderRoutes = require('./routes/orders');

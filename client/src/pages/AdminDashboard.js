@@ -540,7 +540,10 @@ const AdminDashboard = () => {
       const res = await axios.get(url, { headers: getHeaders() });
       setOrders(res.data);
       cachedOrders = res.data; // Simpan di cache
-    } catch { showError('Gagal Memuat', 'Gagal memuat data order laundry.'); } finally { setLoading(false); }
+    } catch (err) {
+      console.error('fetchOrders error:', err.response?.status, err.response?.data || err.message);
+      showError('Gagal Memuat', 'Gagal memuat data order laundry.');
+    } finally { setLoading(false); }
   }, [selectedBranchFilter]); // eslint-disable-line
 
   const fetchYesterdayStats = useCallback(async () => {

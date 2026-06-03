@@ -92,6 +92,10 @@ const Login = ({ onLogin }) => {
       onLogin(res.data.user, res.data.token);
       navigate('/dashboard');
     } catch (err) {
+      if (!err.response) {
+        showError('Login Gagal', 'Koneksi ke server gagal. Pastikan server backend sudah dijalankan di local (port 5000) dan tidak terblokir. 🔌');
+        return;
+      }
       const data = err.response?.data;
       // Handle express-validator error format: { errors: [{msg: '...'}] }
       const msg = (Array.isArray(data?.errors) && data.errors[0]?.msg)

@@ -31,14 +31,6 @@ router.get('/couriers', async (req, res) => {
 // GET semua order dengan badge perlu_validasi
 router.get('/orders', async (req, res) => {
   try {
-    // ⚠️ SAFETY: Auto-migrate to prevent "column does not exist" on Vercel
-    try {
-      await db.query(`ALTER TABLE orders ADD COLUMN IF NOT EXISTS is_offline BOOLEAN DEFAULT FALSE`);
-      await db.query(`ALTER TABLE orders ADD COLUMN IF NOT EXISTS guest_name VARCHAR(255)`);
-      await db.query(`ALTER TABLE orders ADD COLUMN IF NOT EXISTS guest_phone VARCHAR(50)`);
-      await db.query(`ALTER TABLE orders ADD COLUMN IF NOT EXISTS payment_proof VARCHAR(255)`);
-    } catch (e) { console.error('Migration error in GET /orders:', e); }
-
     const activeBranchId = req.user.branch_id || (req.query.branch_id ? parseInt(req.query.branch_id) : null);
     const queryParams = [];
     let queryStr = `
@@ -46,7 +38,7 @@ router.get('/orders', async (req, res) => {
              COALESCE(u.name, o.guest_name) AS customer_name, 
              COALESCE(u.phone, o.guest_phone) AS phone,
              c.name AS courier_name,
-             p.payment_proof,
+             COALESCE(o.payment_proof, (SELECT payment_proof FROM payments WHERE order_id = o.id ORDER BY created_at DESC LIMIT 1)) AS payment_proof,
              b.name AS branch_name,
              (SELECT COUNT(*) FROM payments WHERE order_id = o.id AND validated = FALSE)::integer AS need_validation,
              (SELECT s.name FROM order_items oi JOIN services s ON oi.service_id = s.id WHERE oi.order_id = o.id LIMIT 1) AS service_name,
@@ -57,7 +49,6 @@ router.get('/orders', async (req, res) => {
       FROM orders o
       LEFT JOIN users u ON o.user_id = u.id
       LEFT JOIN users c ON o.courier_id = c.id
-      LEFT JOIN payments p ON p.order_id = o.id
       LEFT JOIN branches b ON o.branch_id = b.id
     `;
     if (activeBranchId) {
@@ -94,14 +85,6 @@ router.post('/offline-order', uploadImage.fields([{name: 'photo'}, {name: 'payme
   const client = await db.connect();
   try {
     await client.query('BEGIN');
-    
-    // Safety check migration inside POST too
-    try {
-      await client.query(`ALTER TABLE orders ADD COLUMN IF NOT EXISTS is_offline BOOLEAN DEFAULT FALSE`);
-      await client.query(`ALTER TABLE orders ADD COLUMN IF NOT EXISTS guest_name VARCHAR(255)`);
-      await client.query(`ALTER TABLE orders ADD COLUMN IF NOT EXISTS guest_phone VARCHAR(50)`);
-      await client.query(`ALTER TABLE orders ADD COLUMN IF NOT EXISTS payment_proof VARCHAR(255)`);
-    } catch (e) {}
 
     const { guest_name, guest_phone, notes, total_price, payment_status, items, service_id } = req.body;
     

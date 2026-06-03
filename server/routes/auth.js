@@ -9,10 +9,10 @@ const authMiddleware = require('../middleware/auth');
 const { loginLimiter, registerLimiter } = require('../middleware/rateLimiter');
 
 if (!process.env.JWT_SECRET) {
-  throw new Error('JWT_SECRET must be defined');
+  console.warn('⚠️  WARNING: JWT_SECRET not set. Login will not work properly!');
 }
 
-const SECRET = process.env.JWT_SECRET;
+const SECRET = process.env.JWT_SECRET || '';
 
 // Register
 router.post('/register', registerLimiter, registerValidation, validate, async (req, res) => {

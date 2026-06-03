@@ -1,13 +1,16 @@
 const jwt = require('jsonwebtoken');
 
-if (!process.env.JWT_SECRET) {
-  console.error('❌ FATAL: JWT_SECRET not set in environment variables!');
-  process.exit(1);
+const JWT_SECRET_MISSING = !process.env.JWT_SECRET;
+if (JWT_SECRET_MISSING) {
+  console.error('❌ FATAL: JWT_SECRET not set in environment variables! Auth will be disabled.');
 }
 
-const SECRET = process.env.JWT_SECRET;
+const SECRET = process.env.JWT_SECRET || 'FALLBACK_NOT_SECURE';
 
 module.exports = (req, res, next) => {
+  if (JWT_SECRET_MISSING) {
+    return res.status(503).json({ message: 'Server belum dikonfigurasi (JWT_SECRET tidak ada). Hubungi administrator.' });
+  }
   const authHeader = req.headers.authorization;
   
   if (!authHeader || !authHeader.startsWith('Bearer ')) {

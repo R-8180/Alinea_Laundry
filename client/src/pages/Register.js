@@ -148,6 +148,10 @@ const Register = ({ onLogin }) => {
       }
     } catch (err) {
       closeLoading();
+      if (!err.response) {
+        showError('Registrasi Gagal', 'Koneksi ke server gagal. Pastikan server backend sudah dijalankan di local (port 5000) dan tidak terblokir. 🔌');
+        return;
+      }
       // Handle express-validator error array format
       const data = err.response?.data;
       if (data?.errors && Array.isArray(data.errors)) {

@@ -41,6 +41,10 @@ const ResetPassword = () => {
       navigate('/login');
     } catch (err) {
       closeLoading();
+      if (!err.response) {
+        showError('Gagal Reset Password', 'Koneksi ke server gagal. Pastikan server backend sudah dijalankan di local (port 5000) dan tidak terblokir. 🔌');
+        return;
+      }
       const data = err.response?.data;
       let msg = 'Terjadi kesalahan saat mengatur ulang password.';
       if (data) {

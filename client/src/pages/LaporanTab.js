@@ -223,7 +223,10 @@ const LaporanTab = ({ activeBranchId }) => {
         {/* Main Chart */}
         <div style={{ ...cardStyle, gridColumn: '1 / -1' }}>
           <h3 style={cardTitleStyle}><FiActivity /> Trend Pendapatan</h3>
-          <div style={{ height: 320, width: '100%', marginTop: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={chartData.length > 0 
+            ? { height: 320, width: '100%', marginTop: '1rem' } 
+            : { height: 320, width: '100%', marginTop: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }
+          }>
             {chartData.length > 0 ? (
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={chartData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
@@ -259,7 +262,7 @@ const LaporanTab = ({ activeBranchId }) => {
             {topServices.length > 0 ? (
               <>
                 {/* Chart Container */}
-                <div style={{ width: 180, height: 180, position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <div style={{ width: 180, height: 180, position: 'relative' }}>
                   <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
                       <Pie
@@ -334,7 +337,7 @@ const LaporanTab = ({ activeBranchId }) => {
               {topBranches.length > 0 ? (
                 <>
                   {/* Chart Container */}
-                  <div style={{ width: 180, height: 180, position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <div style={{ width: 180, height: 180, position: 'relative' }}>
                     <ResponsiveContainer width="100%" height="100%">
                       <PieChart>
                         <Pie

@@ -1288,7 +1288,8 @@ const AdminDashboard = () => {
 
                       {/* Kolom Tanggal */}
                       <td style={{ fontSize: '0.78rem', color: 'var(--text-3)', whiteSpace: 'nowrap' }}>
-                        {formatDateTime(order.created_at)}
+                        <div>{formatDateTime(order.created_at)}</div>
+                        <SmallCountdown order={order} />
                       </td>
 
                       {/* Kolom Status */}

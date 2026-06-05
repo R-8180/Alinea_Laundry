@@ -122,6 +122,23 @@ const AdminLayout = ({ user, onLogout, children }) => {
                 popup: 'swal-premium-popup-toast'
               }
             });
+
+            // Trigger native browser desktop notification if permission is granted
+            if ('Notification' in window && Notification.permission === 'granted') {
+              try {
+                const nativeNotif = new Notification(n.title || 'Notifikasi Baru', {
+                  body: n.message,
+                  icon: '/images/logo-square.png',
+                  tag: `notif-${n.id}`,
+                  renotify: true
+                });
+                nativeNotif.onclick = () => {
+                  window.focus();
+                };
+              } catch (e) {
+                console.error('Failed to show native desktop notification:', e);
+              }
+            }
           }
         });
 
@@ -182,6 +199,11 @@ const AdminLayout = ({ user, onLogout, children }) => {
 
   useEffect(() => {
     if (user && (user.role === 'admin' || user.role === 'courier')) {
+      // Request native desktop notification permission for admins/couriers
+      if ('Notification' in window && Notification.permission === 'default') {
+        Notification.requestPermission().catch(err => console.error('Notification permission request failed:', err));
+      }
+
       fetchNotifications();
       const interval = setInterval(fetchNotifications, 20000); // Check every 20s for admins/couriers
       return () => clearInterval(interval);

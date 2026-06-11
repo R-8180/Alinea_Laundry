@@ -908,6 +908,33 @@ label {
   background: var(--navy);
 }
 
+.hero-wave-divider {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  overflow: hidden;
+  line-height: 0;
+  z-index: 3;
+}
+
+.hero-wave-divider svg {
+  position: relative;
+  display: block;
+  width: calc(100% + 1.3px);
+  height: 60px;
+}
+
+@media (max-width: 768px) {
+  .hero-wave-divider svg {
+    height: 30px;
+  }
+}
+
+.hero-wave-divider .shape-fill {
+  fill: #f0f7ff;
+}
+
 /* Background Animated Gradient & Floating Shapes */
 .hero-bg-anim {
   position: absolute;
@@ -1277,6 +1304,7 @@ label {
 
 .layanan-photo-side {
   flex: 0 0 450px;
+  aspect-ratio: 1 / 1;
   border-radius: var(--r-xl);
   overflow: hidden;
   box-shadow: var(--sh-lg);
@@ -1286,8 +1314,25 @@ label {
 
 .pricelist-img-flex {
   width: 100%;
+  height: 100%;
   display: block;
-  object-fit: contain;
+  object-fit: cover;
+}
+
+.layanan-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #e0f2fe;
+  color: #0284c7;
+  padding: 6px 14px;
+  border-radius: 30px;
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin-bottom: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
 .layanan-content-side {

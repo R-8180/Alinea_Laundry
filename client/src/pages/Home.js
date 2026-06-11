@@ -168,6 +168,13 @@ const HeroWithTrack = () => {
           {error && <div style={{ color: '#fca5a5', marginTop: 12, fontSize: '0.9rem' }}>{error}</div>}
         </div>
       </div>
+      
+      {/* Wave Shape Divider */}
+      <div className="hero-wave-divider">
+        <svg data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 120" preserveAspectRatio="none">
+          <path d="M321.39,56.44c58-10.79,114.16-30.13,172-41.86,82.39-16.72,168.19-17.73,250.45-.39C823.78,31,906.67,72,985.66,92.83c70.05,18.48,146.53,26.09,214.34,3V120H0V0C26.9,8.75,53.05,18,79.54,26.54,152.92,50.18,229.56,69.31,321.39,56.44Z" className="shape-fill"></path>
+        </svg>
+      </div>
     </section>
   );
 };
@@ -314,11 +321,11 @@ const LayananSection = () => (
   <section className="section reveal" id="services">
     <div className="layanan-container-flex">
       <div className="layanan-photo-side">
-         <img src="/images/alineabanner.png" alt="Pricelist Alinea Laundry" className="pricelist-img-flex" width="330" height="330" loading="lazy" />
+         <img src="/images/pricelist.webp" alt="Pricelist Alinea Laundry" className="pricelist-img-flex" width="330" height="330" loading="lazy" />
       </div>
       <div className="layanan-content-side">
-        <h2 className="section-title-left">Satu Tempat, Semua Kebutuhan Cuci Anda</h2>
-        <h3 className="section-subtitle-left">Alinea Laundry</h3>
+        <span className="layanan-badge">Layanan &amp; Pricelist</span>
+        <h2 className="section-subtitle-left">Satu Tempat, Semua Kebutuhan Cuci Anda</h2>
         <div className="layanan-grid-circle">
           {layananList.map((item, idx) => (
             <div key={idx} className="layanan-card-circle">

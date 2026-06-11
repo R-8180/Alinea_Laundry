@@ -23,6 +23,7 @@ const morgan = require('morgan');
 const compression = require('compression');
 const logger = require('./utils/logger');
 const { apiLimiter, speedLimiter } = require('./middleware/rateLimiter');
+const sanitizeInput = require('./middleware/sanitize');
 const { startCleanupScheduler } = require('./utils/cleanup');
 const app = express();
 
@@ -201,6 +202,9 @@ app.use(cors({
 app.use(express.json({ limit: '100kb' }));
 app.use(express.urlencoded({ extended: true, limit: '100kb' }));
 
+// Sanitasi semua input dari user (XSS prevention) — dijalankan setelah body parser
+app.use(sanitizeInput);
+
 
 // ==========================================
 // 6. SISTEM LOGGING (AKSES DAN AKTIVITAS)
@@ -273,15 +277,24 @@ app.use(express.static(path.join(__dirname, '../client/public'), {
 // ==========================================
 // HEALTH CHECK ENDPOINT (DIAGNOSTIK PRODUKSI)
 // ==========================================
+// Endpoint publik hanya mengembalikan status minimal.
+// Detail konfigurasi (JWT, DB, VAPID) hanya bisa diakses dengan HEALTH_CHECK_KEY
+// yang disimpan sebagai environment variable.
 app.get('/api/health', (req, res) => {
-  res.json({
-    status: 'ok',
-    env: process.env.NODE_ENV || 'development',
-    jwt: process.env.JWT_SECRET ? 'SET ✅' : 'MISSING ❌',
-    db: process.env.DB_HOST ? 'SET ✅' : 'MISSING ❌',
-    vapid: process.env.VAPID_PUBLIC_KEY ? 'SET ✅' : 'MISSING ❌',
-    timestamp: new Date().toISOString()
-  });
+  const adminKey = req.headers['x-health-key'];
+  if (adminKey && adminKey === process.env.HEALTH_CHECK_KEY) {
+    // Detail lengkap hanya untuk yang punya key
+    return res.json({
+      status: 'ok',
+      env: process.env.NODE_ENV || 'development',
+      jwt: process.env.JWT_SECRET ? 'SET ✅' : 'MISSING ❌',
+      db: process.env.DB_HOST ? 'SET ✅' : 'MISSING ❌',
+      vapid: process.env.VAPID_PUBLIC_KEY ? 'SET ✅' : 'MISSING ❌',
+      timestamp: new Date().toISOString()
+    });
+  }
+  // Publik: hanya status minimal
+  res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
 // ==========================================

@@ -61,7 +61,7 @@ router.get('/orders', async (req, res) => {
     res.json(result.rows);
   } catch (err) {
     console.error('Get admin orders error:', err);
-    res.status(500).json({ message: 'DB Error GET orders: ' + err.message });
+    res.status(500).json({ message: 'Terjadi kesalahan server.' });
   }
 });
 
@@ -190,7 +190,7 @@ router.get('/orders/:id', idParamValidation, validate, async (req, res) => {
     res.json({ ...orderRes.rows[0], items: updatedItems });
   } catch (err) {
     console.error('Get admin order detail error:', err);
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: 'Terjadi kesalahan server.' });
   }
 });
 
@@ -229,7 +229,7 @@ router.get('/customers', async (req, res) => {
     res.json(result.rows);
   } catch (err) {
     console.error('Get customers error:', err);
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: 'Terjadi kesalahan server.' });
   }
 });
 
@@ -268,7 +268,7 @@ router.get('/customers/:id/orders', idParamValidation, validate, async (req, res
     res.json(result.rows);
   } catch (err) {
     console.error('Get customer orders error:', err);
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: 'Terjadi kesalahan server.' });
   }
 });
 
@@ -324,7 +324,7 @@ router.post('/orders/create', async (req, res) => {
   } catch (err) {
     await client.query('ROLLBACK');
     console.error('Admin create order error:', err);
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: 'Terjadi kesalahan server.' });
   } finally {
     client.release();
   }
@@ -357,7 +357,7 @@ router.get('/stats/yesterday', async (req, res) => {
     res.json(result.rows[0]);
   } catch (err) {
     console.error('Stats yesterday error:', err);
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: 'Terjadi kesalahan server.' });
   }
 });
 
@@ -508,7 +508,7 @@ router.put('/orders/:id/assign', idParamValidation, validate, async (req, res) =
   } catch (err) {
     await client.query('ROLLBACK');
     console.error('Assign order error:', err);
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: 'Terjadi kesalahan server.' });
   } finally {
     client.release();
   }
@@ -521,7 +521,7 @@ router.put('/orders/:id/reset-estimasi', idParamValidation, validate, async (req
     res.json({ message: 'Estimasi direset' });
   } catch (err) {
     console.error('Reset estimation error:', err);
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: 'Terjadi kesalahan server.' });
   }
 });
 
@@ -619,7 +619,7 @@ router.put('/orders/:id/validate-items', idParamValidation, validate, async (req
   } catch (err) {
     await client.query('ROLLBACK');
     console.error('Validate items error:', err);
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: 'Terjadi kesalahan server.' });
   } finally {
     client.release();
   }
@@ -688,7 +688,7 @@ router.put('/orders/:id/status', updateStatusValidation, validate, async (req, r
     res.json({ message: 'Status diupdate' });
   } catch (err) {
     console.error('Update status error:', err);
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: 'Terjadi kesalahan server.' });
   }
 });
 
@@ -704,7 +704,7 @@ router.put('/orders/:id/payment-status', idParamValidation, validate, async (req
     res.json({ message: 'Status pembayaran diupdate' });
   } catch (err) {
     console.error('Update payment status error:', err);
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: 'Terjadi kesalahan server.' });
   }
 });
 
@@ -761,7 +761,7 @@ router.put('/orders/:id/branch', idParamValidation, validate, async (req, res) =
     res.json({ message: `Pesanan berhasil dipindahkan ke Cabang ${branchName}`, branch_id: parsedBranchId });
   } catch (err) {
     console.error('Change order branch error:', err);
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: 'Terjadi kesalahan server.' });
   }
 });
 
@@ -810,7 +810,7 @@ router.put('/orders/:id/complete', uploadDelivery.single('photo'), idParamValida
     res.json({ message: 'Pesanan berhasil diselesaikan', delivery_proof: photoUrl });
   } catch (err) {
     console.error('Complete order error:', err);
-    return res.status(500).json({ error: err.message || 'Database error' });
+    return res.status(500).json({ error: 'Terjadi kesalahan server.' });
   }
 });
 
@@ -845,7 +845,7 @@ router.put('/payments/validate/:id', idParamValidation, validate, async (req, re
   } catch (err) {
     await client.query('ROLLBACK');
     console.error('Validate payment error:', err);
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: 'Terjadi kesalahan server.' });
   } finally {
     client.release();
   }
@@ -961,7 +961,7 @@ router.get('/financial', async (req, res) => {
     });
   } catch (err) {
     console.error('Get financial stats error:', err);
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: 'Terjadi kesalahan server.' });
   }
 });
 
@@ -1008,7 +1008,7 @@ router.get('/chart', async (req, res) => {
     res.json(result.rows);
   } catch (err) {
     console.error('Get chart data error:', err);
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: 'Terjadi kesalahan server.' });
   }
 });
 // Laporan harian detail (per-hari dalam range atau 30 hari terakhir)
@@ -1040,7 +1040,7 @@ router.get('/daily-report', async (req, res) => {
     res.json(result.rows);
   } catch (err) {
     console.error('Get daily report error:', err);
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: 'Terjadi kesalahan server.' });
   }
 });
 
@@ -1070,7 +1070,7 @@ router.get('/monthly-report', async (req, res) => {
     res.json(result.rows);
   } catch (err) {
     console.error('Get monthly report error:', err);
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: 'Terjadi kesalahan server.' });
   }
 });
 
@@ -1083,7 +1083,7 @@ router.get('/bantuan-directory', async (req, res) => {
     res.json(result.rows);
   } catch (err) {
     console.error('Get bantuan directory error:', err);
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: 'Terjadi kesalahan server.' });
   }
 });
 
@@ -1113,7 +1113,8 @@ router.get('/top-services', async (req, res) => {
     const result = await db.query(query, params);
     res.json(result.rows);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error('Get top services error:', err);
+    res.status(500).json({ error: 'Terjadi kesalahan server.' });
   }
 });
 
@@ -1131,7 +1132,8 @@ router.get('/top-branches', async (req, res) => {
     `);
     res.json(result.rows);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error('Get top branches error:', err);
+    res.status(500).json({ error: 'Terjadi kesalahan server.' });
   }
 });
 
@@ -1150,7 +1152,8 @@ router.get('/transactions', async (req, res) => {
     const result = await db.query(query, params);
     res.json(result.rows);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error('Get transactions error:', err);
+    res.status(500).json({ error: 'Terjadi kesalahan server.' });
   }
 });
 
@@ -1167,7 +1170,8 @@ router.post('/transactions', async (req, res) => {
     );
     res.json(result.rows[0]);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error('Post transaction error:', err);
+    res.status(500).json({ error: 'Terjadi kesalahan server.' });
   }
 });
 
@@ -1177,7 +1181,8 @@ router.delete('/transactions/:id', async (req, res) => {
     await db.query('DELETE FROM financial_records WHERE id = $1', [req.params.id]);
     res.json({ message: 'Deleted' });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error('Delete transaction error:', err);
+    res.status(500).json({ error: 'Terjadi kesalahan server.' });
   }
 });
 
@@ -1187,7 +1192,8 @@ router.get('/vouchers', async (req, res) => {
     const result = await db.query('SELECT * FROM voucher_templates ORDER BY id ASC');
     res.json(result.rows);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error('Get vouchers error:', err);
+    res.status(500).json({ error: 'Terjadi kesalahan server.' });
   }
 });
 
@@ -1201,7 +1207,8 @@ router.post('/vouchers', async (req, res) => {
     );
     res.json(result.rows[0]);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error('Post voucher error:', err);
+    res.status(500).json({ error: 'Terjadi kesalahan server.' });
   }
 });
 
@@ -1215,7 +1222,8 @@ router.put('/vouchers/:id', async (req, res) => {
     );
     res.json(result.rows[0]);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error('Put voucher error:', err);
+    res.status(500).json({ error: 'Terjadi kesalahan server.' });
   }
 });
 
@@ -1225,7 +1233,8 @@ router.delete('/vouchers/:id', async (req, res) => {
     await db.query('DELETE FROM voucher_templates WHERE id = $1', [req.params.id]);
     res.json({ message: 'Deleted' });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error('Delete voucher error:', err);
+    res.status(500).json({ error: 'Terjadi kesalahan server.' });
   }
 });
 
@@ -1253,7 +1262,8 @@ router.post('/notifications/broadcast', async (req, res) => {
     }
     res.json({ message: 'Broadcast terkirim' });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error('Broadcast notification error:', err);
+    res.status(500).json({ error: 'Terjadi kesalahan server.' });
   }
 });
 

@@ -139,7 +139,8 @@ router.get('/', auth, async (req, res) => {
     );
     res.json(result.rows);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error('Get orders error:', err);
+    res.status(500).json({ error: 'Terjadi kesalahan server.' });
   }
 });
 
@@ -167,7 +168,8 @@ router.get('/:id', auth, idParamValidation, validate, async (req, res) => {
     const itemsRes = await pool.query('SELECT * FROM order_items WHERE order_id = $1', [orderId]);
     res.json({ ...orderRes.rows[0], items: itemsRes.rows });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error('Get order detail error:', err);
+    res.status(500).json({ error: 'Terjadi kesalahan server.' });
   }
 });
 
@@ -185,7 +187,8 @@ router.put('/:id/cancel', auth, idParamValidation, validate, async (req, res) =>
     if (result.rowCount === 0) return res.status(400).json({ message: 'Pesanan tidak ditemukan atau tidak bisa dibatalkan' });
     res.json({ message: 'Pesanan berhasil dibatalkan' });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error('Cancel order error:', err);
+    res.status(500).json({ error: 'Terjadi kesalahan server.' });
   }
 });
 
@@ -198,7 +201,8 @@ router.get('/voucher/status', auth, async (req, res) => {
     
     res.json({ points, templates: templatesResult.rows });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error('Get voucher status error:', err);
+    res.status(500).json({ error: 'Terjadi kesalahan server.' });
   }
 });
 
@@ -220,7 +224,7 @@ router.post('/voucher/claim', auth, async (req, res) => {
     
     await client.query('UPDATE users SET points = points - $1 WHERE id = $2', [template.points_required, req.user.id]);
     
-    const code = 'VOC-' + Math.random().toString(36).substring(2, 8).toUpperCase();
+    const code = 'VOC-' + crypto.randomBytes(3).toString('hex').toUpperCase();
     await client.query(
       'INSERT INTO vouchers (user_id, code, voucher_name, discount_amount) VALUES ($1, $2, $3, $4)',
       [req.user.id, code, template.name, template.discount_amount]
@@ -241,7 +245,8 @@ router.get('/voucher/list', auth, async (req, res) => {
     const result = await pool.query('SELECT * FROM vouchers WHERE user_id = $1 AND used = FALSE', [req.user.id]);
     res.json(result.rows);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error('Get voucher list error:', err);
+    res.status(500).json({ error: 'Terjadi kesalahan server.' });
   }
 });
 

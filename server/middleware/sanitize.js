@@ -8,7 +8,7 @@
  * Dijalankan SETELAH body-parser dan SEBELUM semua routes API.
  * ====================================================================
  */
-const createDOMPurify = require('isomorphic-dompurify');
+const xss = require('xss');
 
 /**
  * Field-field yang TIDAK boleh di-sanitasi karena mengandung data sensitif
@@ -33,9 +33,10 @@ function sanitizeValue(value, key) {
     return value;
   }
   if (typeof value === 'string') {
-    return createDOMPurify.sanitize(value, {
-      ALLOWED_TAGS: [],    // Tidak ada tag HTML yang diperbolehkan
-      ALLOWED_ATTR: [],    // Tidak ada atribut HTML yang diperbolehkan
+    return xss(value, {
+      whiteList: {}, // Tidak ada tag HTML yang diperbolehkan
+      stripIgnoreTag: true, // Hapus semua tag yang tidak diizinkan
+      stripIgnoreTagBody: ['script', 'style'] // Hapus isi tag script dan style
     });
   }
   // Jika nilai adalah objek atau array, rekursi ke dalamnya

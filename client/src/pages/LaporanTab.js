@@ -405,6 +405,35 @@ const LaporanTab = ({ activeBranchId }) => {
           </div>
         )}
       </div>
+
+      {/* Tabel Pendapatan */}
+      <div style={{ ...cardStyle, marginBottom: '2rem' }}>
+        <h3 style={cardTitleStyle}><FiBarChart2 /> Tabel Pendapatan {filterMode === 'year' ? 'Bulanan' : 'Harian'}</h3>
+        <div style={{ marginTop: '1.5rem', overflowX: 'auto', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+            <thead style={{ background: '#f8fafc' }}>
+              <tr style={{ borderBottom: '2px solid #e2e8f0', color: '#475569', fontSize: '0.9rem' }}>
+                <th style={{ padding: '14px 20px', fontWeight: 700 }}>{filterMode === 'year' ? 'Bulan' : 'Tanggal'}</th>
+                <th style={{ padding: '14px 20px', fontWeight: 700 }}>Total Pendapatan (Omset)</th>
+              </tr>
+            </thead>
+            <tbody>
+              {chartData.length > 0 ? chartData.map((row, idx) => (
+                <tr key={idx} style={{ borderBottom: '1px solid #f1f5f9', transition: 'background 0.2s', background: 'white' }} onMouseEnter={e => e.currentTarget.style.background = '#f8fafc'} onMouseLeave={e => e.currentTarget.style.background = 'white'}>
+                  <td style={{ padding: '14px 20px', color: '#1e293b', fontWeight: 600, fontSize: '0.95rem' }}>{row.displayDate}</td>
+                  <td style={{ padding: '14px 20px', color: '#059669', fontWeight: 800, fontSize: '1.05rem' }}>{fmtRp(row.total)}</td>
+                </tr>
+              )) : (
+                <tr>
+                  <td colSpan="2" style={{ padding: '30px 20px', textAlign: 'center', color: '#94a3b8', fontSize: '0.95rem', fontWeight: 500, background: 'white' }}>
+                    Tidak ada data untuk periode ini
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
     </>
   );
 

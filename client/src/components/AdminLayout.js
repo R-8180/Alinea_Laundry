@@ -211,7 +211,10 @@ const AdminLayout = ({ user, onLogout, children }) => {
       // Fetch visit count
       if (user.role === 'admin') {
         axios.get('/api/settings/visit_count', { silent: true })
-          .then(res => setVisitCount(parseInt(res.data) || 0))
+          .then(res => {
+            const val = res.data;
+            setVisitCount(typeof val === 'number' ? val : parseInt(val, 10) || 0);
+          })
           .catch(err => console.error('Error fetch visit_count:', err));
       }
 

@@ -67,12 +67,13 @@ router.post('/visit', async (req, res) => {
   try {
     const result = await db.query(
       `INSERT INTO app_settings (setting_key, setting_value) 
-       VALUES ('visit_count', '1') 
+       VALUES ('visit_count', '1'::jsonb) 
        ON CONFLICT (setting_key) 
-       DO UPDATE SET setting_value = (COALESCE(NULLIF(app_settings.setting_value, ''), '0')::integer + 1)::text, updated_at = CURRENT_TIMESTAMP 
+       DO UPDATE SET setting_value = (COALESCE(app_settings.setting_value #>> '{}', '0')::integer + 1)::text::jsonb, updated_at = CURRENT_TIMESTAMP 
        RETURNING *`
     );
-    res.json({ count: parseInt(result.rows[0].setting_value, 10) });
+    const val = result.rows[0].setting_value;
+    res.json({ count: typeof val === 'number' ? val : parseInt(val, 10) || 0 });
   } catch (err) {
     console.error('Error incrementing visit count:', err);
     res.status(500).json({ error: 'Server error' });

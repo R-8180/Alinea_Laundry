@@ -2,19 +2,11 @@ require('dotenv').config({ path: './server/.env' });
 const db = require('./server/db');
 
 const query = `
-  SELECT 
-    s.category,
-    s.name as service_name,
-    oi.service_type,
-    oi.name as item_name,
-    COUNT(oi.id) as total_sold
-  FROM order_items oi
-  JOIN orders o ON oi.order_id = o.id
-  LEFT JOIN services s ON oi.service_id = s.id
-  WHERE o.payment_status = 'paid'
-  GROUP BY s.category, s.name, oi.service_type, oi.name 
-  ORDER BY total_sold DESC 
-  LIMIT 5
+  INSERT INTO app_settings (setting_key, setting_value) 
+  VALUES ('visit_count', '1'::jsonb) 
+  ON CONFLICT (setting_key) 
+  DO UPDATE SET setting_value = (COALESCE(app_settings.setting_value #>> '{}', '0')::integer + 1)::text::jsonb 
+  RETURNING *;
 `;
 
 db.query(query)

@@ -349,16 +349,17 @@ const AdminLayout = ({ user, onLogout, children }) => {
 
         {user?.role === 'admin' && (
           <div style={{ 
-            padding: '0 16px', 
-            marginBottom: '4px', 
+            margin: '0 10px 10px',
+            padding: '0 12px', 
             fontSize: '0.75rem', 
-            color: 'var(--text-3)', 
+            color: 'rgba(255, 255, 255, 0.56)', 
             display: 'flex', 
             alignItems: 'center', 
-            gap: '6px',
+            gap: '8px',
             fontFamily: 'Outfit, sans-serif'
           }}>
-            <FiUsers /> Total Kunjungan Web: <strong style={{color: 'var(--navy)'}}>{visitCount}</strong>
+            <FiUsers style={{ color: 'var(--sky)', fontSize: '0.9rem' }} /> 
+            <span>Total Kunjungan: <strong style={{ color: '#ffffff', fontWeight: '700' }}>{visitCount}</strong></span>
           </div>
         )}
 

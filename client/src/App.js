@@ -132,6 +132,17 @@ function App() {
     // Jalankan validasi awal
     checkSession();
 
+    // Increment visit count (sekali per sesi)
+    if (!sessionStorage.getItem('hasVisited')) {
+      const apiBase = process.env.REACT_APP_API_URL || '';
+      fetch(`${apiBase}/api/settings/visit`, { method: 'POST' })
+        .then(res => res.json())
+        .then(() => {
+          sessionStorage.setItem('hasVisited', 'true');
+        })
+        .catch(err => console.error('Error tracking visit:', err));
+    }
+
     // Jalankan validasi proaktif setiap kali tab difokuskan kembali
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible') {

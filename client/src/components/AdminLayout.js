@@ -29,6 +29,7 @@ const AdminLayout = ({ user, onLogout, children }) => {
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [notifications, setNotifications] = useState([]);
   const [notifOpen, setNotifOpen] = useState(false);
+  const [visitCount, setVisitCount] = useState(0);
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -206,6 +207,14 @@ const AdminLayout = ({ user, onLogout, children }) => {
 
       fetchNotifications();
       const interval = setInterval(fetchNotifications, 20000); // Check every 20s for admins/couriers
+      
+      // Fetch visit count
+      if (user.role === 'admin') {
+        axios.get('/api/settings/visit_count', { silent: true })
+          .then(res => setVisitCount(parseInt(res.data) || 0))
+          .catch(err => console.error('Error fetch visit_count:', err));
+      }
+
       return () => clearInterval(interval);
     } else {
       setNotifications([]);
@@ -337,6 +346,21 @@ const AdminLayout = ({ user, onLogout, children }) => {
             </div>
           ))}
         </nav>
+
+        {user?.role === 'admin' && (
+          <div style={{ 
+            padding: '0 16px', 
+            marginBottom: '4px', 
+            fontSize: '0.75rem', 
+            color: 'var(--text-3)', 
+            display: 'flex', 
+            alignItems: 'center', 
+            gap: '6px',
+            fontFamily: 'Outfit, sans-serif'
+          }}>
+            <FiUsers /> Total Kunjungan Web: <strong style={{color: 'var(--navy)'}}>{visitCount}</strong>
+          </div>
+        )}
 
         <button className="sidebar-logout" style={{ flexShrink: 0, margin: '12px 16px 24px' }} onClick={handleLogoutClick}>
           <FiLogOut /> Keluar

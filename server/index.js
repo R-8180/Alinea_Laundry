@@ -102,6 +102,37 @@ pool.query(`
 }).catch(err => {
   console.error('❌ Error verifying feedback_saran table:', err);
 });
+
+// Membuat tabel site_visits secara otomatis
+pool.query(`
+  CREATE TABLE IF NOT EXISTS site_visits (
+    visit_date DATE PRIMARY KEY DEFAULT CURRENT_DATE,
+    count INTEGER DEFAULT 1
+  );
+`).then(async () => {
+  console.log('✅ Site visits table verified/created');
+  try {
+    const checkOld = await pool.query("SELECT setting_value FROM app_settings WHERE setting_key = 'visit_count'");
+    if (checkOld.rows.length > 0) {
+      const oldCount = parseInt(checkOld.rows[0].setting_value, 10) || 0;
+      if (oldCount > 0) {
+        await pool.query(`
+          INSERT INTO site_visits (visit_date, count)
+          VALUES (CURRENT_DATE, $1)
+          ON CONFLICT (visit_date)
+          DO UPDATE SET count = site_visits.count + $1;
+        `, [oldCount]);
+        await pool.query("DELETE FROM app_settings WHERE setting_key = 'visit_count'");
+        console.log(`✅ Migrated ${oldCount} visits from app_settings to site_visits`);
+      }
+    }
+  } catch (err) {
+    console.error('❌ Error migrating old visit_count:', err);
+  }
+}).catch(err => {
+  console.error('❌ Error verifying site_visits table:', err);
+});
+
 // Auto-migrate orders table for offline orders
 pool.query(`
   ALTER TABLE orders 

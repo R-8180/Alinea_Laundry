@@ -29,7 +29,7 @@ const AdminLayout = ({ user, onLogout, children }) => {
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [notifications, setNotifications] = useState([]);
   const [notifOpen, setNotifOpen] = useState(false);
-  const [visitCount, setVisitCount] = useState(0);
+  const [visitStats, setVisitStats] = useState({ today: 0, month: 0, total: 0 });
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -208,14 +208,19 @@ const AdminLayout = ({ user, onLogout, children }) => {
       fetchNotifications();
       const interval = setInterval(fetchNotifications, 20000); // Check every 20s for admins/couriers
       
-      // Fetch visit count
+      // Fetch visit stats
       if (user.role === 'admin') {
-        axios.get('/api/settings/visit_count', { silent: true })
+        axios.get('/api/settings/visit/stats', { silent: true })
           .then(res => {
-            const val = res.data;
-            setVisitCount(typeof val === 'number' ? val : parseInt(val, 10) || 0);
+            if (res.data) {
+              setVisitStats({
+                today: res.data.today || 0,
+                month: res.data.month || 0,
+                total: res.data.total || 0
+              });
+            }
           })
-          .catch(err => console.error('Error fetch visit_count:', err));
+          .catch(err => console.error('Error fetching visit stats:', err));
       }
 
       return () => clearInterval(interval);
@@ -352,17 +357,26 @@ const AdminLayout = ({ user, onLogout, children }) => {
 
         {user?.role === 'admin' && (
           <div style={{ 
-            margin: '0 10px 10px',
-            padding: '0 12px', 
-            fontSize: '0.75rem', 
-            color: 'rgba(255, 255, 255, 0.56)', 
-            display: 'flex', 
-            alignItems: 'center', 
-            gap: '8px',
-            fontFamily: 'Outfit, sans-serif'
+            margin: '0 16px 10px',
+            padding: '12px 0 0', 
+            fontSize: '0.74rem', 
+            color: 'rgba(255, 255, 255, 0.5)', 
+            fontFamily: 'Outfit, sans-serif',
+            borderTop: '1px solid rgba(255, 255, 255, 0.08)',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '5px'
           }}>
-            <FiUsers style={{ color: 'var(--sky)', fontSize: '0.9rem' }} /> 
-            <span>Total Kunjungan: <strong style={{ color: '#ffffff', fontWeight: '700' }}>{visitCount}</strong></span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <FiUsers style={{ color: 'var(--sky)', fontSize: '0.85rem' }} />
+              <span>Hari Ini: <strong style={{ color: '#ffffff', fontWeight: '700' }}>{visitStats.today}</strong></span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', paddingLeft: '14px' }}>
+              <span>Bulan Ini: <strong style={{ color: '#ffffff', fontWeight: '700' }}>{visitStats.month}</strong></span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', paddingLeft: '14px' }}>
+              <span>Total: <strong style={{ color: '#ffffff', fontWeight: '700' }}>{visitStats.total}</strong></span>
+            </div>
           </div>
         )}
 

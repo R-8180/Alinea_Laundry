@@ -5,6 +5,45 @@ const auth = require('../middleware/auth');
 const { adminLimiter } = require('../middleware/rateLimiter');
 const { uploadImage, getFileUrl } = require('../utils/upload');
 
+// PUBLIC GET route to fetch visit stats (MUST be before GET /:key)
+router.get('/visit/stats', async (req, res) => {
+  try {
+    const result = await db.query(`
+      SELECT 
+        COALESCE((SELECT count FROM site_visits WHERE visit_date = CURRENT_DATE), 0) as today,
+        COALESCE((SELECT SUM(count) FROM site_visits WHERE DATE_TRUNC('month', visit_date) = DATE_TRUNC('month', CURRENT_DATE)), 0) as month,
+        COALESCE((SELECT SUM(count) FROM site_visits), 0) as total
+    `);
+    
+    const stats = result.rows[0];
+    res.json({
+      today: parseInt(stats.today, 10) || 0,
+      month: parseInt(stats.month, 10) || 0,
+      total: parseInt(stats.total, 10) || 0
+    });
+  } catch (err) {
+    console.error('Error fetching visit stats:', err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// PUBLIC POST route to increment visit count (MUST be before GET /:key)
+router.post('/visit', async (req, res) => {
+  try {
+    const result = await db.query(
+      `INSERT INTO site_visits (visit_date, count) 
+       VALUES (CURRENT_DATE, 1) 
+       ON CONFLICT (visit_date) 
+       DO UPDATE SET count = site_visits.count + 1 
+       RETURNING count`
+    );
+    res.json({ count: result.rows[0].count });
+  } catch (err) {
+    console.error('Error incrementing visit count:', err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
 // PUBLIC GET route to fetch settings (e.g. for Home.js)
 router.get('/:key', async (req, res) => {
   try {
@@ -59,24 +98,6 @@ router.post('/upload', auth, adminLimiter, uploadImage.single('photo'), async (r
   } catch (err) {
     console.error('Error uploading setting photo:', err);
     res.status(500).json({ error: 'Upload error' });
-  }
-});
-
-// PUBLIC POST route to increment visit count
-router.post('/visit', async (req, res) => {
-  try {
-    const result = await db.query(
-      `INSERT INTO app_settings (setting_key, setting_value) 
-       VALUES ('visit_count', '1'::jsonb) 
-       ON CONFLICT (setting_key) 
-       DO UPDATE SET setting_value = (COALESCE(app_settings.setting_value #>> '{}', '0')::integer + 1)::text::jsonb, updated_at = CURRENT_TIMESTAMP 
-       RETURNING *`
-    );
-    const val = result.rows[0].setting_value;
-    res.json({ count: typeof val === 'number' ? val : parseInt(val, 10) || 0 });
-  } catch (err) {
-    console.error('Error incrementing visit count:', err);
-    res.status(500).json({ error: 'Server error' });
   }
 });
 

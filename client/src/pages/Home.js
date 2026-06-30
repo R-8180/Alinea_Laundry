@@ -133,10 +133,13 @@ const HeroWithTrack = () => {
       <div className="hero-content-wrapper">
         <span className="hero-badge"> Laundry Express Semarang 24 Jam</span>
         <h1 className="hero-title-new">{cms?.heroTitle || 'Laundry Bersih, Wangi, & Praktis'}</h1>
-        <p className="hero-subtitle-new">{cms?.heroSubtitle || 'Tanpa Keluar Rumah!'}</p>
+        <h2 className="hero-subtitle-new" style={{ fontSize: '1.5rem', fontWeight: 700, opacity: 0.9, marginTop: 4, color: 'white', border: 'none', background: 'none' }}>{cms?.heroSubtitle || 'Tanpa Keluar Rumah!'}</h2>
         <p className="hero-description-new">
-          Gratis antar-jemput di seluruh area Semarang. Cukup order via website, kurir kami siap menjemput pakaian kotor Anda kapan saja, tanpa perlu repot keluar rumah.
+          {cms?.heroDescription || 'Gratis antar-jemput di seluruh area Semarang. Cukup order via website, kurir kami siap menjemput pakaian kotor Anda kapan saja, tanpa perlu repot keluar rumah.'}
         </p>
+        <div style={{ fontSize: '0.82rem', background: 'rgba(255,255,255,0.15)', color: 'white', padding: '8px 16px', borderRadius: '30px', display: 'inline-block', marginBottom: '20px', fontWeight: 600 }}>
+          🕒 Jam Buka: {cms?.operationalHours || 'Senin - Minggu: 08.00 - 20.00'}
+        </div>
         <div className="hero-actions">
           <Link to="/register" className="btn hero-btn-primary">Mulai Laundry Sekarang</Link>
         </div>
@@ -317,27 +320,52 @@ const PromoSlider = () => {
   );
 };
 
-const LayananSection = () => (
-  <section className="section reveal" id="services">
-    <div className="layanan-container-flex">
-      <div className="layanan-photo-side">
-         <img src="/images/pricelist.webp" alt="Pricelist Alinea Laundry" className="pricelist-img-flex" width="330" height="330" loading="lazy" />
-      </div>
-      <div className="layanan-content-side">
-        <span className="layanan-badge">Layanan &amp; Pricelist</span>
-        <h2 className="section-subtitle-left">Satu Tempat, Semua Kebutuhan Cuci Anda</h2>
-        <div className="layanan-grid-circle">
-          {layananList.map((item, idx) => (
-            <div key={idx} className="layanan-card-circle">
-              <div className="layanan-circle-icon">{item.icon}</div>
-              <span className="layanan-circle-name">{item.name}</span>
-            </div>
-          ))}
+const renderLayananIcon = (val) => {
+  switch (val) {
+    case 'FiDroplet': return <FiDroplet />;
+    case 'FiBox': return <FiBox />;
+    case 'FiBriefcase': return <FiBriefcase />;
+    case 'FiMapPin': return <FiMapPin />;
+    case 'FiSettings': return <FiSettings />;
+    default: return <FiPackage />;
+  }
+};
+
+const LayananSection = () => {
+  const cms = React.useContext(CMSContext);
+  const currentLayananList = cms?.layananList?.length ? cms.layananList : null;
+
+  return (
+    <section className="section reveal" id="services">
+      <div className="layanan-container-flex">
+        <div className="layanan-photo-side">
+           <img src="/images/pricelist.webp" alt="Pricelist Alinea Laundry" className="pricelist-img-flex" width="330" height="330" loading="lazy" />
+        </div>
+        <div className="layanan-content-side">
+          <span className="layanan-badge">Layanan &amp; Pricelist</span>
+          <h2 className="section-subtitle-left">Satu Tempat, Semua Kebutuhan Cuci Anda</h2>
+          <div className="layanan-grid-circle">
+            {currentLayananList ? (
+              currentLayananList.map((item, idx) => (
+                <div key={idx} className="layanan-card-circle">
+                  <div className="layanan-circle-icon">{renderLayananIcon(item.iconValue)}</div>
+                  <span className="layanan-circle-name">{item.name}</span>
+                </div>
+              ))
+            ) : (
+              layananList.map((item, idx) => (
+                <div key={idx} className="layanan-card-circle">
+                  <div className="layanan-circle-icon">{item.icon}</div>
+                  <span className="layanan-circle-name">{item.name}</span>
+                </div>
+              ))
+            )}
+          </div>
         </div>
       </div>
-    </div>
-  </section>
-);
+    </section>
+  );
+};
 
 const ParfumShop = () => {
   const cms = React.useContext(CMSContext);
@@ -377,6 +405,9 @@ const ParfumShop = () => {
 };
 
 const FAQSection = () => {
+  const cms = React.useContext(CMSContext);
+  const currentFaqList = cms?.faqList?.length ? cms.faqList : faqList;
+
   const [showAll, setShowAll] = useState(false);
   const [openIndex, setOpenIndex] = useState(null);
   const [isMobile, setIsMobile] = useState(() => window.matchMedia('(max-width: 768px)').matches);
@@ -389,7 +420,7 @@ const FAQSection = () => {
   }, []);
 
   const limit = isMobile ? 5 : 10;
-  const visibleFaqs = showAll ? faqList : faqList.slice(0, limit);
+  const visibleFaqs = showAll ? currentFaqList : currentFaqList.slice(0, limit);
   const toggleFaq = (index) => setOpenIndex(openIndex === index ? null : index);
   return (
     <section className="section reveal" id="faq">
@@ -406,10 +437,10 @@ const FAQSection = () => {
           </div>
         ))}
       </div>
-      {faqList.length > limit && (
+      {currentFaqList.length > limit && (
         <div style={{ textAlign: 'center', marginTop: 16 }}>
           <button className="btn btn-sm btn-secondary" onClick={() => setShowAll(!showAll)}>
-            {showAll ? 'Sembunyikan' : `Lihat Lengkap (${faqList.length} pertanyaan)`}
+            {showAll ? 'Sembunyikan' : `Lihat Lengkap (${currentFaqList.length} pertanyaan)`}
           </button>
         </div>
       )}
@@ -491,6 +522,8 @@ const TestimoniCard = ({ item, isMobile, isActive }) => {
 };
 
 const TestimoniSection = () => {
+  const cms = React.useContext(CMSContext);
+  const currentTestiList = cms?.testimoniList?.length ? cms.testimoniList : testimoniList;
   const [isMobile, setIsMobile] = useState(() => window.matchMedia('(max-width: 768px)').matches);
 
   useEffect(() => {
@@ -501,7 +534,7 @@ const TestimoniSection = () => {
   }, []);
 
   // Double the list to create a seamless infinite marquee scrolling effect
-  const doubleList = [...testimoniList, ...testimoniList];
+  const doubleList = [...currentTestiList, ...currentTestiList];
 
   return (
     <section id="testimoni" className="section reveal">

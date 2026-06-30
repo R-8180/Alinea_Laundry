@@ -1,18 +1,11 @@
-const { Pool } = require('pg');
+require('dotenv').config();
+const pool = require('./db');
 const bcrypt = require('bcryptjs');
 
-console.log('⏳ Menghubungkan ke Supabase Production...');
+// PENTING: Script ini menggunakan koneksi database dari file .env
+// Pastikan file .env sudah terisi dengan kredensial yang benar sebelum menjalankan script ini.
 
-// Kredensial Supabase Production (menggunakan Pooler IPv4)
-const pool = new Pool({
-  host: 'aws-1-ap-southeast-1.pooler.supabase.com',
-  port: 6543,
-  user: 'postgres.nmuxiduvphjfdmtpztzc',
-  password: 's8ZURDnpX0coSfcu',
-  database: 'postgres',
-  ssl: { rejectUnauthorized: false },
-  connectionTimeoutMillis: 10000
-});
+console.log('⏳ Menghubungkan ke database (lewat .env)...');
 
 async function seed() {
   const client = await pool.connect();
@@ -20,24 +13,26 @@ async function seed() {
   try {
     await client.query('BEGIN');
     
-    // Hash password "password" dengan 12 rounds
+    // CATATAN KEAMANAN:
+    // Password default di bawah ini ('password') HANYA untuk testing awal.
+    // Segera ubah password semua akun ini setelah pertama kali login!
     const hashedPassword = await bcrypt.hash('password', 12);
     
+    console.log('⚠️  PERINGATAN: Akun dibuat dengan password default "password". SEGERA UBAH setelah login!');
+    
     console.log('⏳ Memasukkan data Admin Utama (admin@alinea.com)...');
-    // Cek apakah admin sudah ada
     const checkAdmin = await client.query('SELECT id FROM users WHERE email = $1', ['admin@alinea.com']);
     if (checkAdmin.rows.length === 0) {
       await client.query(`
         INSERT INTO users (name, email, password, role, address, phone)
         VALUES ('Admin Alinea', 'admin@alinea.com', $1, 'admin', 'Jl. Talangsari No.36A Semarang', '081227884654')
       `, [hashedPassword]);
-      console.log('✅ Akun Admin berhasil dibuat!');
+      console.log('✅ Akun Admin berhasil dibuat! (password: "password" — SEGERA GANTI!)');
     } else {
       console.log('ℹ️ Akun Admin sudah ada di database.');
     }
 
     console.log('⏳ Memasukkan data Pelanggan/User (bagas@mail.com)...');
-    // Cek Pelanggan 1
     const checkCustomer1 = await client.query('SELECT id FROM users WHERE email = $1', ['bagas@mail.com']);
     if (checkCustomer1.rows.length === 0) {
       await client.query(`
@@ -50,7 +45,6 @@ async function seed() {
     }
     
     console.log('⏳ Memasukkan data Kurir Uji Coba...');
-    // Cek Kurir 1
     const checkCourier1 = await client.query('SELECT id FROM users WHERE email = $1', ['rian@mail.com']);
     if (checkCourier1.rows.length === 0) {
       await client.query(`
@@ -59,7 +53,6 @@ async function seed() {
       `, [hashedPassword]);
     }
     
-    // Cek Kurir 2
     const checkCourier2 = await client.query('SELECT id FROM users WHERE email = $1', ['budi@mail.com']);
     if (checkCourier2.rows.length === 0) {
       await client.query(`
@@ -70,7 +63,6 @@ async function seed() {
     console.log('✅ Akun Kurir berhasil disiapkan!');
     
     console.log('⏳ Memasukkan data Layanan Laundry Asli...');
-    // Cek & masukkan layanan
     const checkServices = await client.query('SELECT id FROM services LIMIT 1');
     if (checkServices.rows.length === 0) {
       await client.query(`
@@ -96,7 +88,8 @@ async function seed() {
     }
     
     await client.query('COMMIT');
-    console.log('\n🎉 ALL DONE! Database Supabase telah berhasil dipopulasikan dengan data asli Anda!');
+    console.log('\n🎉 ALL DONE! Database telah berhasil dipopulasikan!');
+    console.log('\n⚠️  INGAT: Segera ganti password semua akun setelah login pertama!\n');
     
   } catch (err) {
     await client.query('ROLLBACK');

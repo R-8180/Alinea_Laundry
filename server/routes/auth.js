@@ -4,9 +4,11 @@ const pool = require('../db');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
+const { OAuth2Client } = require('google-auth-library'); // Library resmi Google (sudah ter-install)
 const { registerValidation, loginValidation, validate } = require('../utils/validators');
 const authMiddleware = require('../middleware/auth');
-const { loginLimiter, registerLimiter } = require('../middleware/rateLimiter');
+const { loginLimiter, registerLimiter, forgotPasswordLimiter } = require('../middleware/rateLimiter');
+
 
 if (!process.env.JWT_SECRET) {
   console.warn('⚠️  WARNING: JWT_SECRET not set. Login will not work properly!');
@@ -92,7 +94,7 @@ router.post('/login', loginLimiter, loginValidation, validate, async (req, res) 
   
   try {
     const result = await pool.query(
-      'SELECT id, email, password, role, name, phone, branch_id FROM users WHERE email = $1',
+      'SELECT id, email, password, role, name, phone, branch_id, is_active FROM users WHERE email = $1',
       [email]
     );
     
@@ -101,6 +103,12 @@ router.post('/login', loginLimiter, loginValidation, validate, async (req, res) 
     }
     
     const user = result.rows[0];
+
+    // SECURITY CHECK: Pastikan akun tidak dinonaktifkan/diblokir oleh Admin
+    if (user.is_active === false) {
+      return res.status(403).json({ message: 'Akun Anda telah dinonaktifkan oleh administrator ❌' });
+    }
+    
     const match = await bcrypt.compare(password, user.password);
     
     if (!match) {
@@ -125,7 +133,7 @@ router.post('/login', loginLimiter, loginValidation, validate, async (req, res) 
 router.get('/me', authMiddleware, async (req, res) => {
   try {
     const result = await pool.query(
-      'SELECT id, name, email, role, points, address, phone, branch_id FROM users WHERE id = $1',
+      'SELECT id, name, email, role, points, address, phone, branch_id, is_active FROM users WHERE id = $1',
       [req.user.id]
     );
     
@@ -133,7 +141,14 @@ router.get('/me', authMiddleware, async (req, res) => {
       return res.status(404).json({ message: 'User tidak ditemukan' });
     }
     
-    res.json(result.rows[0]);
+    const user = result.rows[0];
+
+    // SECURITY CHECK: Blokir session jika akun dinonaktifkan saat sedang aktif
+    if (user.is_active === false) {
+      return res.status(401).json({ message: 'Akun dinonaktifkan' });
+    }
+    
+    res.json(user);
   } catch (err) {
     console.error('Get user error:', err);
     res.status(500).json({ error: 'Server error' });
@@ -141,7 +156,8 @@ router.get('/me', authMiddleware, async (req, res) => {
 });
 
 // Forgot Password - Minta reset link
-router.post('/forgot-password', async (req, res) => {
+// SECURITY FIX: Tambah rate limiter agar tidak bisa spam email ke korban
+router.post('/forgot-password', forgotPasswordLimiter, async (req, res) => {
   const { email } = req.body;
   if (!email) {
     return res.status(400).json({ message: 'Email wajib diisi ❌' });
@@ -289,19 +305,25 @@ router.post('/google-login', async (req, res) => {
     return res.status(400).json({ message: 'Token Google tidak ditemukan' });
   }
 
+  const googleClientId = process.env.GOOGLE_CLIENT_ID;
+  if (!googleClientId) {
+    return res.status(500).json({ message: 'Google Client ID belum dikonfigurasi di server' });
+  }
+
   try {
-    // 1. Verifikasi ID Token dari Google via tokeninfo API
-    const verifyRes = await fetch(`https://oauth2.googleapis.com/tokeninfo?id_token=${credential}`);
-    if (!verifyRes.ok) {
-      return res.status(400).json({ message: 'Verifikasi Token Google gagal' });
-    }
-    
-    const payload = await verifyRes.json();
-    
-    // Verifikasi aud (audience) agar sama dengan CLIENT_ID Google aplikasi kita
-    const googleClientId = process.env.GOOGLE_CLIENT_ID;
-    if (googleClientId && payload.aud !== googleClientId) {
-      return res.status(400).json({ message: 'Google Client ID tidak cocok (Unauthorized)' });
+    // SECURITY FIX: Ganti fetch manual ke tokeninfo (deprecated/unstable) dengan
+    // library resmi google-auth-library yang sudah ter-install tapi belum dipakai
+    const client = new OAuth2Client(googleClientId);
+    let payload;
+    try {
+      const ticket = await client.verifyIdToken({
+        idToken: credential,
+        audience: googleClientId,
+      });
+      payload = ticket.getPayload();
+    } catch (verifyErr) {
+      console.error('Google token verification failed:', verifyErr.message);
+      return res.status(400).json({ message: 'Verifikasi Token Google gagal. Token tidak valid atau sudah kadaluarsa.' });
     }
 
     const { email, name, sub: google_id } = payload;
@@ -309,7 +331,7 @@ router.post('/google-login', async (req, res) => {
       return res.status(400).json({ message: 'Email tidak ditemukan dari akun Google Anda' });
     }
     
-    // 2. Cek apakah user sudah terdaftar di database dengan email tersebut
+    // Cek apakah user sudah terdaftar di database dengan email tersebut
     let userRes = await pool.query(
       'SELECT id, email, password, role, name, phone, branch_id, google_id FROM users WHERE email = $1',
       [email]
@@ -334,7 +356,7 @@ router.post('/google-login', async (req, res) => {
       }
     }
 
-    // 3. Buat JWT token untuk login resmi Alinea Laundry
+    // Buat JWT token untuk login resmi Alinea Laundry
     const expiresIn = user.role === 'customer' ? '30d' : '8h';
     const token = jwt.sign(
       { id: user.id, email: user.email, role: user.role, branch_id: user.branch_id },

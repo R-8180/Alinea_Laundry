@@ -60,12 +60,12 @@ router.get('/:key', async (req, res) => {
   }
 });
 
-// PROTECTED PUT route to update settings
+// PROTECTED PUT route to update settings (Global Admin Only)
 router.put('/:key', auth, adminLimiter, async (req, res) => {
   try {
-    // Only superadmin (or admin) can update global settings
-    if (req.user.role !== 'admin') {
-      return res.status(403).json({ message: 'Akses ditolak' });
+    // Hanya Admin Utama (Super Admin) yang boleh merubah konfigurasi global
+    if (req.user.role !== 'admin' || req.user.branch_id !== null) {
+      return res.status(403).json({ message: 'Akses ditolak. Hanya Admin Utama (Super Admin) yang diperbolehkan.' });
     }
 
     const { key } = req.params;
@@ -87,13 +87,17 @@ router.put('/:key', auth, adminLimiter, async (req, res) => {
   }
 });
 
-// PROTECTED POST route to upload promo images for the CMS
+// PROTECTED POST route to upload promo images for the CMS (Global Admin Only)
 router.post('/upload', auth, adminLimiter, uploadImage.single('photo'), async (req, res) => {
   try {
-    if (req.user.role !== 'admin') return res.status(403).json({ message: 'Akses ditolak' });
+    if (req.user.role !== 'admin' || req.user.branch_id !== null) {
+      return res.status(403).json({ message: 'Akses ditolak' });
+    }
     if (!req.file) return res.status(400).json({ message: 'No file uploaded' });
 
-    const photoUrl = getFileUrl(req.file.filename);
+    // FIX: Kirim objek req.file secara utuh bukan string req.file.filename
+    // agar getFileUrl bisa meresolve path Supabase Storage maupun Local storage dengan benar
+    const photoUrl = getFileUrl(req.file);
     res.json({ url: photoUrl });
   } catch (err) {
     console.error('Error uploading setting photo:', err);

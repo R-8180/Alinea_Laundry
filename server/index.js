@@ -35,6 +35,20 @@ const pool = require('./db');
 // ==========================================
 // 2. INISIALISASI & AUTO-VERIFIKASI DATABASE
 // ==========================================
+// Membuat tabel app_settings secara otomatis (dibutuhkan oleh CMS)
+pool.query(`
+  CREATE TABLE IF NOT EXISTS app_settings (
+    id SERIAL PRIMARY KEY,
+    setting_key VARCHAR(255) UNIQUE NOT NULL,
+    setting_value JSONB,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+  );
+`).then(() => {
+  console.log('✅ App settings table verified/created');
+}).catch(err => {
+  console.error('❌ Error verifying app_settings table:', err);
+});
+
 // Membuat tabel notifications secara otomatis jika belum ada di database
 pool.query(`
   CREATE TABLE IF NOT EXISTS notifications (
@@ -153,6 +167,28 @@ pool.query(`UPDATE orders SET status = 'proses' WHERE status = 'cuci'`)
   }).catch(err => {
     console.error('❌ Error updating status cuci -> proses:', err);
   });
+
+// Auto-migrate branches table for active/address columns (CMS Support)
+pool.query(`
+  ALTER TABLE branches 
+  ADD COLUMN IF NOT EXISTS address VARCHAR(255),
+  ADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT TRUE;
+`).then(() => {
+  console.log('✅ Branches table verified/migrated for CMS');
+}).catch(err => {
+  console.error('❌ Error migrating branches table:', err);
+});
+
+// Auto-migrate users table for active/inactive staff blocking
+pool.query(`
+  ALTER TABLE users 
+  ADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT TRUE;
+`).then(() => {
+  console.log('✅ Users table verified/migrated for active status');
+}).catch(err => {
+  console.error('❌ Error migrating users table:', err);
+});
+
 
 // ==========================================
 // 3. MIDDLEWARE KEAMANAN & PENGATURAN PROXY

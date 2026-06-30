@@ -109,6 +109,8 @@ router.get('/history', async (req, res) => {
 router.get('/orders/:id', async (req, res) => {
   const { id } = req.params;
   try {
+    // SECURITY FIX: Tambahkan AND courier_id = $2 agar kurir hanya bisa lihat
+    // detail order yang ditugaskan ke dia sendiri (mencegah IDOR lintas-kurir)
     const orderRes = await pool.query(
       `SELECT o.*, u.name AS customer_name, u.address AS customer_address, u.phone AS customer_phone, b.name AS branch_name,
               (SELECT s.name FROM order_items oi JOIN services s ON oi.service_id = s.id WHERE oi.order_id = o.id LIMIT 1) AS service_name,
@@ -119,8 +121,8 @@ router.get('/orders/:id', async (req, res) => {
        FROM orders o
        JOIN users u ON o.user_id = u.id
        LEFT JOIN branches b ON o.branch_id = b.id
-       WHERE o.id = $1`,
-      [id]
+       WHERE o.id = $1 AND o.courier_id = $2`,
+      [id, req.user.id]
     );
 
     if (!orderRes.rows.length) return res.status(404).json({ message: 'Tidak ditemukan' });

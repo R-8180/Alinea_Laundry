@@ -234,8 +234,20 @@ router.get('/customers', async (req, res) => {
 });
 
 // GET alamat per customer
+// SECURITY FIX: Tambah validasi kepemilikan cabang sebelum return alamat customer
+// Admin cabang A tidak boleh lihat alamat customer yang tidak pernah order di cabangnya
 router.get('/customers/:id/addresses', idParamValidation, validate, async (req, res) => {
   try {
+    // Kalau admin punya branch_id, pastikan customer ini pernah order di cabang yang sama
+    if (req.user.branch_id) {
+      const branchCheck = await db.query(
+        'SELECT 1 FROM orders WHERE user_id = $1 AND branch_id = $2 LIMIT 1',
+        [req.params.id, req.user.branch_id]
+      );
+      if (branchCheck.rows.length === 0) {
+        return res.status(403).json({ message: 'Customer ini bukan milik cabang Anda' });
+      }
+    }
     const result = await db.query(
       'SELECT id, label, address, note, is_primary FROM addresses WHERE user_id = $1 ORDER BY created_at DESC',
       [req.params.id]
@@ -396,7 +408,15 @@ router.put('/orders/:id/assign', idParamValidation, validate, async (req, res) =
   }
 
   values.push(orderId);
-  const sql = `UPDATE orders SET ${updates.join(', ')} WHERE id = $${paramIndex}`;
+  // SECURITY FIX: Tambah validasi branch_id agar admin cabang A tidak bisa
+  // assign kurir atau ubah estimasi pesanan milik cabang B
+  let sql;
+  if (req.user.branch_id) {
+    values.push(req.user.branch_id);
+    sql = `UPDATE orders SET ${updates.join(', ')} WHERE id = $${paramIndex} AND branch_id = $${paramIndex + 1}`;
+  } else {
+    sql = `UPDATE orders SET ${updates.join(', ')} WHERE id = $${paramIndex}`;
+  }
 
   const client = await db.connect();
   try {
@@ -635,11 +655,24 @@ router.put('/orders/:id/status', updateStatusValidation, validate, async (req, r
   }
 
   try {
-    const orderInfo = await db.query('SELECT user_id, order_code FROM orders WHERE id = $1', [orderId]);
+    // SECURITY FIX #1: Baca status LAMA sekaligus validasi kepemilikan cabang
+    // agar admin cabang A tidak bisa ubah status pesanan cabang B
+    const branchCondition = req.user.branch_id ? 'AND branch_id = $2' : '';
+    const orderInfoParams = req.user.branch_id ? [orderId, req.user.branch_id] : [orderId];
+    const orderInfo = await db.query(
+      `SELECT user_id, order_code, status AS old_status FROM orders WHERE id = $1 ${branchCondition}`,
+      orderInfoParams
+    );
+
+    if (orderInfo.rows.length === 0) {
+      return res.status(404).json({ message: 'Pesanan tidak ditemukan atau bukan milik cabang Anda' });
+    }
+
+    const { user_id, order_code, old_status } = orderInfo.rows[0];
+
     await db.query('UPDATE orders SET status = $1 WHERE id = $2', [status, orderId]);
     
-    if (orderInfo.rows.length > 0 && orderInfo.rows[0].user_id) {
-      const { user_id, order_code } = orderInfo.rows[0];
+    if (user_id) {
       let msg = `Pesanan Anda #${order_code} sekarang berstatus: ${status.toUpperCase()}.`;
       let title = 'Update Status Pesanan';
       
@@ -679,8 +712,10 @@ router.put('/orders/:id/status', updateStatusValidation, validate, async (req, r
     }
 
     if (status === 'selesai') {
-      if (orderInfo.rows.length > 0 && orderInfo.rows[0].user_id) {
-        await db.query('UPDATE users SET points = COALESCE(points, 0) + 10 WHERE id = $1', [orderInfo.rows[0].user_id]);
+      // SECURITY FIX #2 (exploit poin): Poin hanya ditambah jika status SEBELUMNYA bukan 'selesai'
+      // Mencegah admin klik selesai → proses → selesai berulang untuk dapat poin tanpa batas
+      if (user_id && old_status !== 'selesai') {
+        await db.query('UPDATE users SET points = COALESCE(points, 0) + 10 WHERE id = $1', [user_id]);
       }
       notifyAdmins(orderId, 'completed').catch(err => console.error('Admin notification error:', err));
     }
@@ -778,19 +813,69 @@ router.put('/orders/:id/complete', uploadDelivery.single('photo'), idParamValida
     updates.push(`delivery_proof = $${paramIndex++}`);
     values.push(photoUrl);
   }
+
+  // SECURITY FIX: Tambah filter branch_id agar admin cabang A tidak bisa
+  // selesaikan pesanan milik cabang B
+  if (req.user.branch_id) {
+    values.push(orderId, req.user.branch_id);
+    const sql = `UPDATE orders SET ${updates.join(', ')} WHERE id = $${paramIndex} AND branch_id = $${paramIndex + 1}`;
+
+    try {
+      // Baca status lama DULU untuk guard exploit poin
+      const orderInfo = await db.query(
+        'SELECT user_id, order_code, status AS old_status FROM orders WHERE id = $1 AND branch_id = $2',
+        [orderId, req.user.branch_id]
+      );
+      if (orderInfo.rows.length === 0) {
+        return res.status(404).json({ message: 'Order tidak ditemukan atau bukan milik cabang Anda' });
+      }
+      const result = await db.query(sql, values);
+      if (result.rowCount === 0) {
+        return res.status(404).json({ message: 'Order tidak ditemukan' });
+      }
+      const { user_id, order_code, old_status } = orderInfo.rows[0];
+      // Poin hanya ditambah jika status sebelumnya BUKAN 'selesai' (cegah exploit)
+      if (user_id && old_status !== 'selesai') {
+        await db.query('UPDATE users SET points = COALESCE(points, 0) + 10 WHERE id = $1', [user_id]);
+      }
+      if (user_id) {
+        await db.query(
+          'INSERT INTO notifications (user_id, order_id, title, message) VALUES ($1, $2, $3, $4)',
+          [user_id, orderId, 'Pesanan Selesai', `Pesanan Anda #${order_code} telah selesai diproses oleh Admin. Terima kasih. (+10 Poin)`]
+        );
+        sendWebPush(user_id, {
+          title: 'Pesanan Selesai',
+          body: `Pesanan Anda #${order_code} telah selesai diproses oleh Admin. Terima kasih. (+10 Poin)`,
+          tag: `order-${orderId}`,
+          url: '/dashboard'
+        }).catch(e => console.error('Complete order push error:', e));
+      }
+      notifyAdmins(orderId, 'completed').catch(err => console.error('Admin notification error:', err));
+      res.json({ message: 'Pesanan berhasil diselesaikan', delivery_proof: photoUrl });
+    } catch (err) {
+      console.error('Complete order error:', err);
+      return res.status(500).json({ error: 'Terjadi kesalahan server.' });
+    }
+    return;
+  }
+
+  // Super admin (branch_id null) — boleh selesaikan semua cabang
   values.push(orderId);
   const sql = `UPDATE orders SET ${updates.join(', ')} WHERE id = $${paramIndex}`;
 
   try {
-    const orderInfo = await db.query('SELECT user_id, order_code FROM orders WHERE id = $1', [orderId]);
+    const orderInfo = await db.query('SELECT user_id, order_code, status AS old_status FROM orders WHERE id = $1', [orderId]);
     const result = await db.query(sql, values);
     if (result.rowCount === 0) {
       return res.status(404).json({ message: 'Order tidak ditemukan' });
     }
     
     if (orderInfo.rows.length > 0 && orderInfo.rows[0].user_id) {
-      const { user_id, order_code } = orderInfo.rows[0];
-      await db.query('UPDATE users SET points = COALESCE(points, 0) + 10 WHERE id = $1', [user_id]);
+      const { user_id, order_code, old_status } = orderInfo.rows[0];
+      // Poin hanya ditambah jika status sebelumnya BUKAN 'selesai'
+      if (old_status !== 'selesai') {
+        await db.query('UPDATE users SET points = COALESCE(points, 0) + 10 WHERE id = $1', [user_id]);
+      }
       await db.query(
         'INSERT INTO notifications (user_id, order_id, title, message) VALUES ($1, $2, $3, $4)',
         [user_id, orderId, 'Pesanan Selesai', `Pesanan Anda #${order_code} telah selesai diproses oleh Admin. Terima kasih. (+10 Poin)`]
@@ -798,7 +883,6 @@ router.put('/orders/:id/complete', uploadDelivery.single('photo'), idParamValida
       sendWebPush(user_id, {
         title: 'Pesanan Selesai',
         body: `Pesanan Anda #${order_code} telah selesai diproses oleh Admin. Terima kasih. (+10 Poin)`,
-
         tag: `order-${orderId}`,
         url: '/dashboard'
       }).catch(e => console.error('Complete order push error:', e));
@@ -814,12 +898,29 @@ router.put('/orders/:id/complete', uploadDelivery.single('photo'), idParamValida
   }
 });
 
+
+
 // PUT validasi pembayaran
+// SECURITY FIX: Tambah validasi branch_id agar admin cabang A tidak bisa
+// memvalidasi pembayaran pesanan milik cabang B
 router.put('/payments/validate/:id', idParamValidation, validate, async (req, res) => {
   const orderId = req.params.id;
   const client = await db.connect();
   try {
     await client.query('BEGIN');
+
+    // Cek kepemilikan cabang sebelum validasi pembayaran
+    if (req.user.branch_id) {
+      const branchCheck = await client.query(
+        'SELECT 1 FROM orders WHERE id = $1 AND branch_id = $2',
+        [orderId, req.user.branch_id]
+      );
+      if (branchCheck.rows.length === 0) {
+        await client.query('ROLLBACK');
+        return res.status(403).json({ message: 'Pesanan ini bukan milik cabang Anda' });
+      }
+    }
+
     await client.query('UPDATE payments SET validated = true WHERE order_id = $1', [orderId]);
     await client.query('UPDATE orders SET payment_status = $1 WHERE id = $2', ['paid', orderId]);
 
@@ -834,7 +935,6 @@ router.put('/payments/validate/:id', idParamValidation, validate, async (req, re
       sendWebPush(user_id, {
         title: 'Pembayaran Diterima',
         body: `Pembayaran untuk pesanan Anda #${order_code} telah divalidasi dan diterima. Terima kasih!`,
-
         tag: `order-${orderId}`,
         url: '/dashboard'
       }).catch(e => console.error('Validate payment push error:', e));
@@ -1263,6 +1363,163 @@ router.post('/notifications/broadcast', async (req, res) => {
     res.json({ message: 'Broadcast terkirim' });
   } catch (err) {
     console.error('Broadcast notification error:', err);
+    res.status(500).json({ error: 'Terjadi kesalahan server.' });
+  }
+});
+
+// ==========================================
+// API MANAJEMEN CABANG (GLOBAL ADMIN ONLY)
+// ==========================================
+router.get('/branches', async (req, res) => {
+  if (req.user.branch_id !== null) {
+    return res.status(403).json({ message: 'Akses ditolak. Hanya Super Admin.' });
+  }
+  try {
+    const result = await db.query('SELECT * FROM branches ORDER BY id ASC');
+    res.json(result.rows);
+  } catch (err) {
+    console.error('Get branches error:', err);
+    res.status(500).json({ error: 'Terjadi kesalahan server.' });
+  }
+});
+
+router.post('/branches', async (req, res) => {
+  if (req.user.branch_id !== null) {
+    return res.status(403).json({ message: 'Akses ditolak. Hanya Super Admin.' });
+  }
+  const { name, address } = req.body;
+  if (!name) return res.status(400).json({ message: 'Nama cabang wajib diisi' });
+  try {
+    const result = await db.query(
+      'INSERT INTO branches (name, address, is_active) VALUES ($1, $2, TRUE) RETURNING *',
+      [name, address || '']
+    );
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error('Create branch error:', err);
+    res.status(500).json({ error: 'Terjadi kesalahan server.' });
+  }
+});
+
+router.put('/branches/:id', async (req, res) => {
+  if (req.user.branch_id !== null) {
+    return res.status(403).json({ message: 'Akses ditolak. Hanya Super Admin.' });
+  }
+  const { name, address, is_active } = req.body;
+  try {
+    const result = await db.query(
+      'UPDATE branches SET name = COALESCE($1, name), address = COALESCE($2, address), is_active = COALESCE($3, is_active) WHERE id = $4 RETURNING *',
+      [name, address, is_active, req.params.id]
+    );
+    if (result.rowCount === 0) return res.status(404).json({ message: 'Cabang tidak ditemukan' });
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error('Update branch error:', err);
+    res.status(500).json({ error: 'Terjadi kesalahan server.' });
+  }
+});
+
+// ==========================================
+// API MANAJEMEN STAFF/ADMIN (GLOBAL ADMIN ONLY)
+// ==========================================
+router.get('/staff', async (req, res) => {
+  if (req.user.branch_id !== null) {
+    return res.status(403).json({ message: 'Akses ditolak. Hanya Super Admin.' });
+  }
+  try {
+    const result = await db.query(`
+      SELECT u.id, u.name, u.email, u.role, u.phone, u.branch_id, u.is_active, b.name as branch_name
+      FROM users u
+      LEFT JOIN branches b ON u.branch_id = b.id
+      WHERE u.role IN ('admin', 'courier')
+      ORDER BY u.role ASC, u.name ASC
+    `);
+    res.json(result.rows);
+  } catch (err) {
+    console.error('Get staff error:', err);
+    res.status(500).json({ error: 'Terjadi kesalahan server.' });
+  }
+});
+
+router.post('/staff', async (req, res) => {
+  if (req.user.branch_id !== null) {
+    return res.status(403).json({ message: 'Akses ditolak. Hanya Super Admin.' });
+  }
+  const { name, email, password, role, phone, branch_id } = req.body;
+  if (!name || !email || !password || !role) {
+    return res.status(400).json({ message: 'Data tidak lengkap' });
+  }
+
+  const bcrypt = require('bcryptjs');
+  try {
+    // Check if email already registered
+    const checkEmail = await db.query('SELECT id FROM users WHERE email = $1', [email]);
+    if (checkEmail.rows.length > 0) {
+      return res.status(400).json({ message: 'Email sudah digunakan akun lain' });
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 12);
+    const parsedBranchId = branch_id ? parseInt(branch_id, 10) : null;
+
+    const result = await db.query(
+      `INSERT INTO users (name, email, password, role, phone, branch_id, is_active)
+       VALUES ($1, $2, $3, $4, $5, $6, TRUE) RETURNING id, name, email, role, phone, branch_id, is_active`,
+      [name, email, hashedPassword, role, phone || null, parsedBranchId]
+    );
+
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error('Create staff error:', err);
+    res.status(500).json({ error: 'Terjadi kesalahan server.' });
+  }
+});
+
+router.put('/staff/:id', async (req, res) => {
+  if (req.user.branch_id !== null) {
+    return res.status(403).json({ message: 'Akses ditolak. Hanya Super Admin.' });
+  }
+  const { name, email, role, phone, branch_id, is_active, password } = req.body;
+  const staffId = req.params.id;
+
+  const bcrypt = require('bcryptjs');
+  try {
+    // Check if email is taken by other user
+    if (email) {
+      const checkEmail = await db.query('SELECT id FROM users WHERE email = $1 AND id != $2', [email, staffId]);
+      if (checkEmail.rows.length > 0) {
+        return res.status(400).json({ message: 'Email sudah digunakan akun lain' });
+      }
+    }
+
+    const updates = [];
+    const values = [];
+    let idx = 1;
+
+    if (name !== undefined) { updates.push(`name = $${idx++}`); values.push(name); }
+    if (email !== undefined) { updates.push(`email = $${idx++}`); values.push(email); }
+    if (role !== undefined) { updates.push(`role = $${idx++}`); values.push(role); }
+    if (phone !== undefined) { updates.push(`phone = $${idx++}`); values.push(phone); }
+    if (branch_id !== undefined) { updates.push(`branch_id = $${idx++}`); values.push(branch_id ? parseInt(branch_id, 10) : null); }
+    if (is_active !== undefined) { updates.push(`is_active = $${idx++}`); values.push(is_active); }
+    
+    if (password) {
+      const hashedPassword = await bcrypt.hash(password, 12);
+      updates.push(`password = $${idx++}`);
+      values.push(hashedPassword);
+    }
+
+    if (updates.length === 0) {
+      return res.status(400).json({ message: 'Tidak ada data yang diupdate' });
+    }
+
+    values.push(staffId);
+    const sql = `UPDATE users SET ${updates.join(', ')} WHERE id = $${idx} RETURNING id, name, email, role, phone, branch_id, is_active`;
+
+    const result = await db.query(sql, values);
+    if (result.rowCount === 0) return res.status(404).json({ message: 'Staff tidak ditemukan' });
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error('Update staff error:', err);
     res.status(500).json({ error: 'Terjadi kesalahan server.' });
   }
 });

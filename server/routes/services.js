@@ -14,7 +14,8 @@ router.get('/', async (req, res) => {
 
 router.get('/branches', async (req, res) => {
   try {
-    const result = await pool.query('SELECT * FROM branches ORDER BY id ASC');
+    // Hanya kembalikan cabang yang aktif (buka)
+    const result = await pool.query('SELECT * FROM branches WHERE is_active = true OR is_active IS NULL ORDER BY id ASC');
     res.json(result.rows);
   } catch (err) {
     res.status(500).json({ error: err.message });

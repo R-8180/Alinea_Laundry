@@ -5,7 +5,7 @@ import Swal from 'sweetalert2';
 import {
   FiHome, FiGrid, FiBarChart2, FiRotateCcw,
   FiLogOut, FiMenu, FiX, FiUsers, FiChevronDown, FiStar, FiTruck, FiBell, FiTrash2, FiHelpCircle, FiUser,
-  FiMessageCircle, FiCheckCircle, FiCreditCard, FiClock, FiAlertCircle, FiPackage, FiInfo
+  FiMessageCircle, FiCheckCircle, FiCreditCard, FiClock, FiAlertCircle, FiPackage, FiInfo, FiSettings
 } from 'react-icons/fi';
 import { GiWashingMachine } from 'react-icons/gi';
 
@@ -282,6 +282,7 @@ const AdminLayout = ({ user, onLogout, children }) => {
       items: [
         { key: 'services', path: '/services', icon: <GiWashingMachine />, label: 'Layanan' },
         { key: 'bantuan', path: '/dashboard?tab=bantuan', icon: <FiHelpCircle />, label: 'Bantuan' },
+        ...(user?.branch_id === null ? [{ key: 'cms', path: '/dashboard?tab=cms', icon: <FiSettings />, label: 'Pengaturan CMS' }] : [])
       ]
     }
   ];

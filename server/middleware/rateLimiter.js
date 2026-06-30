@@ -88,6 +88,17 @@ const speedLimiter = slowDown({
   skip: (req) => req.originalUrl && req.originalUrl.includes('/api/admin'),
 });
 
+// ──────────────────────────────────────────────────────────────────────
+// Forgot Password Limiter – cegah spam email & enumerasi user
+// ──────────────────────────────────────────────────────────────────────
+const forgotPasswordLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 jam
+  max: 5, // Maks 5 request per jam per IP (cukup untuk user yang lupa password)
+  message: { error: 'Terlalu banyak permintaan reset password. Coba lagi dalam 1 jam.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
 module.exports = {
   apiLimiter,
   loginLimiter,
@@ -96,4 +107,5 @@ module.exports = {
   adminLimiter,
   uploadLimiter,
   speedLimiter,
+  forgotPasswordLimiter,
 };

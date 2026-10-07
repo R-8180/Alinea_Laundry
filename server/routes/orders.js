@@ -144,6 +144,49 @@ router.get('/:id', auth, async (req, res) => {
   }
 });
 
+// POST – Scan QR untuk selesaikan order (admin only)
+router.post('/scan-qr', auth, async (req, res) => {
+  if (req.user.role !== 'admin') return res.status(403).json({ message: 'Hanya admin' });
+
+  const { order_code } = req.body;
+  if (!order_code) return res.status(400).json({ message: 'order_code diperlukan' });
+
+  try {
+    const orderRes = await pool.query(
+      `SELECT o.*, u.name AS customer_name, u.id AS customer_user_id
+       FROM orders o
+       JOIN users u ON o.user_id = u.id
+       WHERE o.order_code = $1`,
+      [order_code]
+    );
+
+    if (orderRes.rows.length === 0) {
+      return res.status(404).json({ message: 'Order tidak ditemukan', valid: false });
+    }
+
+    const order = orderRes.rows[0];
+
+    if (order.status === 'selesai') {
+      return res.status(400).json({ message: 'Pesanan sudah selesai', valid: false, order });
+    }
+    if (order.status === 'batal') {
+      return res.status(400).json({ message: 'Pesanan sudah dibatalkan', valid: false, order });
+    }
+
+    await pool.query('UPDATE orders SET status = $1 WHERE id = $2', ['selesai', order.id]);
+    await pool.query('UPDATE users SET points = points + 10 WHERE id = $1', [order.customer_user_id]);
+
+    res.json({
+      message: 'Pesanan berhasil diselesaikan via QR scan',
+      valid: true,
+      order: { ...order, status: 'selesai' }
+    });
+  } catch (err) {
+    console.error('Scan QR error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 router.put('/:id/complete', auth, async (req, res) => {
   if (req.user.role !== 'customer') return res.status(403).json({ message: 'Hanya customer' });
   try {

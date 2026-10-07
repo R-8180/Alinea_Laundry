@@ -5,10 +5,11 @@ import {
   FiPackage, FiClock, FiCheckCircle, FiDollarSign, FiSearch, FiAlertCircle,
   FiUserPlus, FiChevronDown, FiPhone, FiCamera, FiFileText, FiMapPin,
   FiTruck, FiEdit2, FiX, FiEye, FiUsers, FiTag, FiArrowUp, FiArrowDown,
-  FiPlus, FiUser, FiMessageCircle, FiZap, FiCreditCard
+  FiPlus, FiUser, FiMessageCircle, FiZap, FiCreditCard, FiGrid
 } from 'react-icons/fi';
 import { GiWeight } from 'react-icons/gi';
 import LaporanTab from './LaporanTab';
+import QrScannerModal from '../components/QrScannerModal';
 
 /* ---------- KONSTANTA ---------- */
 const statusLabels = { menunggu: 'Menunggu', pickup: 'Dijemput', cuci: 'Dicuci', antar: 'Diantar', selesai: 'Selesai', batal: 'Dibatalkan' };
@@ -150,6 +151,7 @@ const AdminDashboard = () => {
   const [addOrderModal, setAddOrderModal] = useState(null);
   const [newOrderForm, setNewOrderForm] = useState({ address: '', notes: '', service_speed: 'reguler', items: [{ service_type: 'kiloan', name: '' }] });
   const [couriers, setCouriers] = useState([]);
+  const [qrScannerOpen, setQrScannerOpen] = useState(false);
   const token = localStorage.getItem('token');
   const h = { Authorization: `Bearer ${token}` };
 
@@ -530,6 +532,15 @@ const AdminDashboard = () => {
             <FiSearch />
             <input type="text" placeholder="Cari kode / nama pelanggan..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
           </div>
+        )}
+        {tab === 'order' && (
+          <button
+            className="btn btn-sm"
+            style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'var(--navy)', color: 'white', whiteSpace: 'nowrap' }}
+            onClick={() => setQrScannerOpen(true)}
+          >
+            <FiGrid /> Scan QR
+          </button>
         )}
       </div>
 
@@ -1366,6 +1377,14 @@ const AdminDashboard = () => {
             </div>
           </div>
         </div>
+      )}
+
+      {/* ====== MODAL QR SCANNER ====== */}
+      {qrScannerOpen && (
+        <QrScannerModal
+          onClose={() => setQrScannerOpen(false)}
+          onSuccess={() => { fetchOrders(); fetchYesterdayStats(); }}
+        />
       )}
 
     </div>

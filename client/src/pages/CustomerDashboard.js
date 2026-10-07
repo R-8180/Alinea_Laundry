@@ -3,9 +3,10 @@ import ProfileTab from '../components/ProfileTab';
 import FloatingWA from '../components/FloatingWA';
 import axios from 'axios';
 import { Link, useNavigate } from 'react-router-dom';
+import { QRCodeSVG } from 'qrcode.react';
 import {
   FiClock, FiTruck, FiDroplet, FiPackage, FiCheckCircle,
-  FiList, FiPlus, FiGift, FiHome, FiCopy, FiEye, FiDollarSign, FiXCircle, FiZap, FiCreditCard, FiCamera, FiDownload
+  FiList, FiPlus, FiGift, FiHome, FiCopy, FiEye, FiDollarSign, FiXCircle, FiZap, FiCreditCard, FiCamera, FiDownload, FiGrid
 } from 'react-icons/fi';
 
 const categoryLabels = { cuci_setrika: 'Cuci Setrika', cuci_lipat: 'Cuci Lipat', satuan: 'Satuan' };
@@ -94,6 +95,7 @@ const CustomerDashboard = () => {
   const [orders, setOrders] = useState([]);
   const [paymentModal, setPaymentModal] = useState(null);
   const [detailModal, setDetailModal] = useState(null);
+  const [qrModal, setQrModal] = useState(null); // order_code string
   const [voucherStatus, setVoucherStatus] = useState(null);
   const [activeTab, setActiveTab] = useState('orders');
   const navigate = useNavigate();
@@ -564,6 +566,20 @@ const CustomerDashboard = () => {
                 )}
               </div>
 
+              {/* QR Code Section */}
+              <div style={{ borderTop: '1px solid var(--border)', padding: '16px 0 8px', textAlign: 'center' }}>
+                <p style={{ fontSize: '0.82rem', color: 'var(--text-3)', marginBottom: 12 }}>
+                  Tunjukkan QR ini ke admin/kasir untuk menyelesaikan pesanan
+                </p>
+                <button
+                  className="btn btn-secondary"
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}
+                  onClick={() => { setDetailModal(null); setQrModal(detailModal.order_code); }}
+                >
+                  <FiGrid /> Tampilkan QR Code
+                </button>
+              </div>
+
               <div className="modal-footer">
                 <button className="btn btn-secondary" onClick={() => setDetailModal(null)}>Tutup</button>
               </div>
@@ -571,6 +587,60 @@ const CustomerDashboard = () => {
           </div>
         )}
       </div>
+
+      {/* ====== MODAL QR CODE ====== */}
+      {qrModal && (
+        <div className="modal-overlay" onClick={() => setQrModal(null)}>
+          <div
+            className="modal-content"
+            onClick={e => e.stopPropagation()}
+            style={{ maxWidth: 340, textAlign: 'center' }}
+          >
+            <div className="detail-header">
+              <h3 style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <FiGrid /> QR Code Pesanan
+              </h3>
+              <button className="btn-close" onClick={() => setQrModal(null)}>×</button>
+            </div>
+            <div style={{ padding: '24px 20px' }}>
+              <div style={{
+                background: 'white',
+                border: '2px solid var(--sky)',
+                borderRadius: 16,
+                padding: 20,
+                display: 'inline-block',
+                marginBottom: 16,
+                boxShadow: '0 4px 20px rgba(0,0,0,0.08)'
+              }}>
+                <QRCodeSVG
+                  value={qrModal}
+                  size={220}
+                  level="H"
+                  includeMargin={false}
+                />
+              </div>
+              <div style={{
+                background: 'var(--sky-pale)',
+                border: '1px solid var(--sky)',
+                borderRadius: 10,
+                padding: '10px 14px',
+                fontSize: '0.9rem',
+                fontWeight: 800,
+                color: 'var(--blue)',
+                letterSpacing: '1px',
+                marginBottom: 16,
+              }}>
+                {qrModal}
+              </div>
+              <p style={{ fontSize: '0.82rem', color: 'var(--text-4)', marginBottom: 16 }}>
+                Perlihatkan QR ini ke kasir / admin untuk konfirmasi pengambilan laundry
+              </p>
+              <button className="btn btn-secondary" style={{ width: '100%' }} onClick={() => setQrModal(null)}>Tutup</button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <FloatingWA />
     </div>
   );
